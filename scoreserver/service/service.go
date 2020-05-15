@@ -27,3 +27,17 @@ func tokenExpiredTime() time.Time {
 func newToken() string {
 	return uuid.New().String()
 }
+
+func (app *app) ValidateRunning(t time.Time) error {
+	conf, err := app.repo.GetConfig()
+	if err != nil {
+		return err
+	}
+	if !t.After(conf.StartAt) {
+		return ErrorMessage("CTF has not started yet")
+	}
+	if !t.Before(conf.EndAt) {
+		return ErrorMessage("CTF has alredy finished")
+	}
+	return nil
+}

@@ -74,7 +74,7 @@ type Attachment struct {
 type Submission struct {
 	gorm.Model
 
-	ChallengeId uint
+	ChallengeId *uint
 	UserId      uint
 	TeamId      uint
 	IsCorrect   bool

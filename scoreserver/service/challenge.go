@@ -4,6 +4,7 @@ import (
 	"math"
 	"path/filepath"
 
+	"github.com/jinzhu/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 )
 
@@ -29,6 +30,7 @@ type Challenge struct {
 type ChallengeApp interface {
 	ListAllChallenges() ([]*Challenge, error)
 	ListOpenChallenges() ([]*Challenge, error)
+	SubmitFlag(user *model.User, flag string) (*model.Challenge, bool, bool, error)
 }
 
 func CalcChallengeScore(conf *model.Config, solveCount uint) uint {
@@ -93,10 +95,10 @@ func (app *app) ListAllChallenges() ([]*Challenge, error) {
 	}
 	solvedByMap := make(map[uint][]string)
 	for _, s := range submissions {
-		solvedByMap[s.ChallengeId] = make([]string, 0)
+		solvedByMap[*s.ChallengeId] = make([]string, 0)
 	}
 	for _, s := range submissions {
-		solvedByMap[s.ChallengeId] = append(solvedByMap[s.ChallengeId], teamMap[s.TeamId])
+		solvedByMap[*s.ChallengeId] = append(solvedByMap[*s.ChallengeId], teamMap[s.TeamId])
 	}
 
 	conf, err := app.repo.GetConfig()
@@ -135,4 +137,34 @@ func (app *app) ListOpenChallenges() ([]*Challenge, error) {
 		}
 	}
 	return result, nil
+}
+func (app *app) SubmitFlag(user *model.User, flag string) (*model.Challenge, bool, bool, error) {
+	correct := false
+	valid := false
+	chal, err := app.repo.FindChallengeByFlag(flag)
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		return nil, false, false, err
+	} else if err != nil {
+		correct = true
+	}
+	if correct {
+		_, err = app.repo.FindValidSubmission(user.TeamId, chal.ID)
+		if err != nil && !gorm.IsRecordNotFoundError(err) {
+			return nil, false, false, err
+		}
+		if gorm.IsRecordNotFoundError(err) {
+			valid = true
+		}
+	}
+	if err := app.repo.InsertSubmission(&model.Submission{
+		ChallengeId: &chal.ID,
+		UserId:      user.ID,
+		TeamId:      user.TeamId,
+		IsCorrect:   correct,
+		IsValid:     valid,
+		Flag:        flag,
+	}); err != nil {
+		return nil, false, false, err
+	}
+	return chal, correct, valid, nil
 }

@@ -8,6 +8,7 @@ type ChallengeRepository interface {
 	ListAllChallenges() ([]*model.Challenge, error)
 	ListAllTags() ([]*model.Tag, error)
 	ListAllAttachments() ([]*model.Attachment, error)
+	FindChallengeByFlag(flag string) (*model.Challenge, error)
 }
 
 func (r *repository) ListAllChallenges() ([]*model.Challenge, error) {
@@ -32,4 +33,12 @@ func (r *repository) ListAllAttachments() ([]*model.Attachment, error) {
 		return nil, err
 	}
 	return attachments, nil
+}
+
+func (r *repository) FindChallengeByFlag(flag string) (*model.Challenge, error) {
+	var c model.Challenge
+	if err := r.db.Where("flag = ?", flag).First(&c).Error; err != nil {
+		return nil, err
+	}
+	return &c, nil
 }

@@ -1,0 +1,21 @@
+$bg-color: #122c5a;
+$fg-color: #edf2f7;
+$dark-color: #0c1e3e;
+$accent-color: #fc0ff5;
+$light-color: #38b2ac;
+
+.accent-color {
+    color: $accent-color;
+}
+.bg-light-color {
+    background-color: $light-color;
+}
+.border-light-color {
+    border-color: $light-color;
+}
+.icon {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: text-bottom;
+}

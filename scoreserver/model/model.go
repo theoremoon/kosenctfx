@@ -49,7 +49,6 @@ type Challenge struct {
 	Flag        string `gorm:"unique"`
 	Description string `gorm:""`
 	Author      string
-	BaseScore   uint
 	Host        *string
 	Port        *string
 

@@ -23,6 +23,7 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	dbdsn += "?parseTime=true"
 
 	addr, err := getEnv("ADDR")
 	if err != nil {

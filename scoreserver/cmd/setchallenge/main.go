@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/theoremoon/kosenctfx/scoreserver/config"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
@@ -33,7 +34,7 @@ type Challenge struct {
 	Author      string
 	IsSurvey    bool
 	Host        *string
-	Port        *string
+	Port        *int
 
 	Tags []string
 }
@@ -44,9 +45,20 @@ func run() error {
 		flag.PrintDefaults()
 	}
 	path := flag.String("path", "", "path to directory which contains challenges")
+	transfersh := flag.String("transfersh", "", "uploading url of transfer.sh")
 	flag.Parse()
 
 	if path == nil || *path == "" {
+		flag.Usage()
+		return nil
+	}
+
+	var uploader Uploader
+	if transfersh != nil && *transfersh != "" {
+		uploader = &transfershUploader{
+			url: *transfersh,
+		}
+	} else {
 		flag.Usage()
 		return nil
 	}
@@ -62,6 +74,7 @@ func run() error {
 	defer db.Close()
 	db.BlockGlobalUpdate(true)
 	repo := repository.New(db)
+	repo.Migrate()
 
 	// dig into the directory
 	challenges := make([]string, 0)
@@ -85,10 +98,6 @@ func run() error {
 			return err
 		}
 		challengeMap[c] = cdata
-	}
-
-	uploader := &transfershUploader{
-		url: "",
 	}
 
 	// upload attachments

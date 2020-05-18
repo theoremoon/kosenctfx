@@ -1,0 +1,10 @@
+{
+    "name": "RSA",
+    "description": "RSA challenge. <pre>nc {.Host} {.Port}</pre>",
+    "flag": "KosenCTFx{c0mm0n_m0dulu5_4tt4ck}",
+    "tags":["crypto"],
+    "author": "yoshiking",
+    "is_survey": false,
+    "host": "crypto.kosenctfx.com",
+    "port": 11000
+}

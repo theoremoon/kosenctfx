@@ -50,7 +50,7 @@ type Challenge struct {
 	Description string `gorm:""`
 	Author      string
 	Host        *string
-	Port        *string
+	Port        *int
 
 	IsOpen   bool
 	IsSurvey bool

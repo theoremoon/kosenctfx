@@ -7,7 +7,13 @@ import (
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 )
 
-type App interface{}
+type App interface {
+	UserApp
+	TeamApp
+	ChallengeApp
+	CTFApp
+}
+
 type app struct {
 	repo repository.Repository
 }

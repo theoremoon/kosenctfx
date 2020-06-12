@@ -8,12 +8,21 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type User struct {
+}
+
 type UserApp interface {
-	LoginUser(username, password string) (bool, error)
+	LoginUser(username, password string) (*model.LoginToken, error)
 	LogoutUser(userId uint) error
+	GetLoginUser(token string) (*model.User, error)
+	GetUserByID(userID uint) (*User, error)
 
 	RegisterUserWithTeam(username, password, email, teamname string) error
 	RegisterUserAndJoinToTeam(username, password, email, teamToken string) error
+
+	PasswordResetRequest(email string) error
+	PasswordReset(token, newpassword string) error
+	PasswordUpdate(user *model.User, newpassword string) error
 }
 
 func hashPassword(password string) string {
@@ -25,26 +34,27 @@ func hashPassword(password string) string {
 	return string(passwordHash)
 }
 
-func (app *app) LoginUser(username, password string) (bool, error) {
+func (app *app) LoginUser(username, password string) (*model.LoginToken, error) {
 	u, err := app.repo.GetUserByUsername(username)
 	if err != nil && gorm.IsRecordNotFoundError(err) {
-		return false, ErrorMessage("no such user")
+		return nil, ErrorMessage("no such user")
 	} else if err != nil {
-		return false, err
+		return nil, err
 	}
 	passwordHash := hashPassword(password)
 	if u.PasswordHash != passwordHash {
-		return false, ErrorMessage("password mismatch")
+		return nil, ErrorMessage("password mismatch")
 	}
 
-	if err := app.repo.SetUserLoginToken(&model.LoginToken{
+	token := model.LoginToken{
 		UserId:    u.ID,
 		Token:     newToken(),
 		ExpiresAt: tokenExpiredTime(),
-	}); err != nil {
-		return false, err
 	}
-	return true, nil
+	if err := app.repo.SetUserLoginToken(&token); err != nil {
+		return nil, err
+	}
+	return &token, nil
 }
 
 func (app *app) LogoutUser(userId uint) error {
@@ -52,6 +62,20 @@ func (app *app) LogoutUser(userId uint) error {
 		return err
 	}
 	return nil
+}
+
+func (app *app) GetLoginUser(token string) (*model.User, error) {
+	user, err := app.repo.GetUserByLoginToken(token)
+	if err != nil && gorm.IsRecordNotFoundError(err) {
+		return nil, ErrorMessage("invalid token")
+	} else if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (app *app) GetUserByID(userID uint) (*User, error) {
+	return nil, ErrorMessage("not implemented")
 }
 
 func (app *app) RegisterUserWithTeam(username, password, email, teamname string) error {
@@ -109,6 +133,18 @@ func (app *app) RegisterUserAndJoinToTeam(username, password, email, teamToken s
 	}
 	return nil
 
+}
+
+func (app *app) PasswordResetRequest(email string) error {
+	return ErrorMessage("not implemented")
+}
+
+func (app *app) PasswordReset(token, newpassword string) error {
+	return ErrorMessage("not implemented")
+}
+
+func (app *app) PasswordUpdate(user *model.User, newpassword string) error {
+	return ErrorMessage("not implemented")
 }
 
 func (app *app) validateUsername(username string) error {

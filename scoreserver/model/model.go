@@ -12,6 +12,7 @@ type User struct {
 	Username     string `gorm:"unique"`
 	PasswordHash string
 	Email        string `gorm:"unique"`
+	IsAdmin      bool
 
 	IconPath *string
 	TeamId   uint
@@ -79,6 +80,20 @@ type Submission struct {
 	IsCorrect   bool
 	IsValid     bool
 	Flag        string
+}
+
+type Notification struct {
+	gorm.Model
+	Content string
+}
+
+type Qualification struct {
+	gorm.Model
+	Content      string
+	UserId       uint
+	ResponseType uint
+	Completed    bool
+	IsPublic     bool
 }
 
 type Config struct {

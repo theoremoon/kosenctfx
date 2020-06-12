@@ -5,8 +5,14 @@ import (
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 )
 
+type Team struct {
+}
+
 type TeamApp interface {
 	RegisterTeam(teamname string) (*model.Team, error)
+	GetTeamByID(teamID uint) (*Team, error)
+	GetUserTeam(userID uint) (*model.Team, error)
+	UpdateTeamname(teamID uint, newTeamname string) error
 }
 
 func (app *app) RegisterTeam(teamname string) (*model.Team, error) {
@@ -22,6 +28,18 @@ func (app *app) RegisterTeam(teamname string) (*model.Team, error) {
 		return nil, err
 	}
 	return &t, nil
+}
+
+func (app *app) GetTeamByID(teamID uint) (*Team, error) {
+	return nil, ErrorMessage("not implemented")
+}
+
+func (app *app) GetUserTeam(userID uint) (*model.Team, error) {
+	return nil, ErrorMessage("not implemented")
+}
+
+func (app *app) UpdateTeamname(teamID uint, newTeamname string) error {
+	return ErrorMessage("not implemented")
 }
 
 func (app *app) validateTeamname(teamname string) error {

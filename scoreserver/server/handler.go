@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/theoremoon/kosenctfx/scoreserver/model"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -215,7 +217,26 @@ func (s *server) userHandler() echo.HandlerFunc {
 
 func (s *server) doQualificationHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
+		lc := c.(*loginContext)
+		req := new(struct {
+			Content string
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, err)
+		}
+		qual, err := s.app.NewQualification(lc.User, req.Content)
+		if err != nil {
+			return errorHandle(c, err)
+		}
+
+		// FIXME
+		go s.adminWebhook.Post(fmt.Sprintf(
+			"New qualification is created: %s/admin/qualifications/%d\n```\n%s```",
+			c.Request().Host,
+			qual.ID,
+			qual.Content,
+		))
+		return messageHandle(c, QualificationSentMesssage)
 	}
 }
 
@@ -236,7 +257,7 @@ func (s *server) submitHandler() echo.HandlerFunc {
 		team, err := s.app.GetUserTeam(lc.User.ID)
 		if err != nil {
 			log.Println(err)
-			team := &model.Team{
+			team = &model.Team{
 				Teamname: "",
 			}
 		}
@@ -248,7 +269,7 @@ func (s *server) submitHandler() echo.HandlerFunc {
 				team.Teamname,
 				challenge.Name,
 			))
-			return messageHandle(fmt.Sprintf("correct! solved `%s` and got score", challenge.Name))
+			return messageHandle(c, fmt.Sprintf("correct! solved `%s` and got score", challenge.Name))
 		} else if correct {
 			s.adminWebhook.Post(fmt.Sprintf(
 				"`%s@%s` solved `%s`.",
@@ -256,15 +277,15 @@ func (s *server) submitHandler() echo.HandlerFunc {
 				team.Teamname,
 				challenge.Name,
 			))
-			return messageHandle(fmt.Sprintf("correct. solved `%s`", challenge.Name))
+			return messageHandle(c, fmt.Sprintf("correct. solved `%s`", challenge.Name))
 		} else {
 			s.adminWebhook.Post(fmt.Sprintf(
 				"`%s@%s` submit flag `%s`, but wrong.",
 				lc.User.Username,
 				team.Teamname,
-				flag,
+				req.Flag,
 			))
-			return messageHandle("wrong flag")
+			return messageHandle(c, "wrong flag")
 		}
 	}
 }
@@ -300,6 +321,12 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 }
 
 func (s *server) newNotificationHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
+	}
+}
+
+func (s *server) adminQualificationHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
 	}

@@ -23,6 +23,8 @@ var (
 	PasswordUpdateMessage         = "password is successfully reset"
 	TeamnameUpdateMessage         = "temaname is successfully updated"
 
+	QualificationSentMesssage = "new qualification created"
+
 	CTFAlreadyStartedMessage = "CTF has already started"
 	CTFNotStartedMessage     = "CTF has not started yet"
 	CTFNotRunningMessage     = "CTF not running"
@@ -78,6 +80,7 @@ func (s *server) Start(addr string) error {
 	e.POST("/admin/update-challenge", s.updateChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-challenge", s.newChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-notification", s.newNotificationHandler(), s.adminMiddleware)
+	e.GET("/admin/qualifications/:id", s.adminQualificationHandler(), s.adminMiddleware)
 
 	return e.Start(addr)
 }

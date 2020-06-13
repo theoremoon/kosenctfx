@@ -28,17 +28,17 @@ func (w *dummyWebhook) Post(message string) error {
 	return nil
 }
 
-type webhook struct {
+type discordWebhook struct {
 	url string
 }
 
-func New(url string) Webhook {
-	return &webhook{
+func NewDiscord(url string) Webhook {
+	return &discordWebhook{
 		url: url,
 	}
 }
 
-func (w *webhook) Post(message string) error {
+func (w *discordWebhook) Post(message string) error {
 	payload, err := json.Marshal(map[string]interface{}{
 		"content": message,
 	})

@@ -12,6 +12,7 @@ type App interface {
 	TeamApp
 	ChallengeApp
 	CTFApp
+	QualificationApp
 }
 
 type app struct {

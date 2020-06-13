@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
+	"github.com/theoremoon/kosenctfx/scoreserver/service"
 
 	"github.com/labstack/echo/v4"
 )
@@ -173,15 +174,23 @@ func (s *server) rankingHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) qualificationsHandler() echo.HandlerFunc {
+func (s *server) clarificationsHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
+		clars, err := s.app.ListOpenClarifications()
+		if err != nil {
+			return errorHandle(c, err)
+		}
+		return c.JSON(http.StatusOK, clars)
 	}
 }
 
 func (s *server) notificationsHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
+		notifications, err := s.app.ListNotifications()
+		if err != nil {
+			return errorHandle(c, err)
+		}
+		return c.JSON(http.StatusOK, notifications)
 	}
 }
 
@@ -215,7 +224,7 @@ func (s *server) userHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) doQualificationHandler() echo.HandlerFunc {
+func (s *server) doClarificationHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		lc := c.(*loginContext)
 		req := new(struct {
@@ -224,19 +233,19 @@ func (s *server) doQualificationHandler() echo.HandlerFunc {
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, err)
 		}
-		qual, err := s.app.NewQualification(lc.User, req.Content)
+		clar, err := s.app.NewClarification(lc.User, req.Content)
 		if err != nil {
 			return errorHandle(c, err)
 		}
 
 		// FIXME
 		go s.adminWebhook.Post(fmt.Sprintf(
-			"New qualification is created: %s/admin/qualifications/%d\n```\n%s```",
+			"New clarification is created: %s/admin/clarifications/%d\n```\n%s```",
 			c.Request().Host,
-			qual.ID,
-			qual.Content,
+			clar.ID,
+			clar.Content,
 		))
-		return messageHandle(c, QualificationSentMesssage)
+		return messageHandle(c, ClarificationSentMesssage)
 	}
 }
 
@@ -296,9 +305,26 @@ func (s *server) initializeHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) qualificationUpdateHandler() echo.HandlerFunc {
+func (s *server) clarificationUpdateHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
+		req := new(struct {
+			ID           uint
+			ResponseType service.ClarificationResponseType
+			IsCompleted  bool
+			IsPublic     bool
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, err)
+		}
+		if err := s.app.UpdateClarification(req.ID, req.ResponseType, req.IsCompleted, req.IsPublic); err != nil {
+			return errorHandle(c, err)
+		}
+
+		if req.ResponseType == service.ClarificationAnswerSupportIndivisually {
+			// TODO
+			panic("not implemented")
+		}
+		return c.JSON(http.StatusOK, ClarificationUpdateMessage)
 	}
 }
 
@@ -326,7 +352,7 @@ func (s *server) newNotificationHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) adminQualificationHandler() echo.HandlerFunc {
+func (s *server) adminClarificationHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
 	}

@@ -23,7 +23,8 @@ var (
 	PasswordUpdateMessage         = "password is successfully reset"
 	TeamnameUpdateMessage         = "temaname is successfully updated"
 
-	QualificationSentMesssage = "new qualification created"
+	ClarificationSentMesssage  = "new clar is posted"
+	ClarificationUpdateMessage = "clar is updated"
 
 	CTFAlreadyStartedMessage = "CTF has already started"
 	CTFNotStartedMessage     = "CTF has not started yet"
@@ -66,21 +67,21 @@ func (s *server) Start(addr string) error {
 
 	e.GET("/challenges", s.challengesHandler(), s.ctfStartedMiddleware)
 	e.GET("/ranking", s.rankingHandler(), s.ctfStartedMiddleware)
-	e.GET("/qualifications", s.qualificationsHandler(), s.ctfStartedMiddleware)
+	e.GET("/clarifications", s.clarificationsHandler(), s.ctfStartedMiddleware)
 	e.GET("/notifications", s.notificationsHandler())
 	e.GET("/team/:id", s.teamHandler())
 	e.GET("/user/:id", s.userHandler())
 
-	e.POST("/qualification", s.doQualificationHandler(), s.loginMiddleware, s.ctfRunningMiddleware)
+	e.POST("/clarification", s.doClarificationHandler(), s.loginMiddleware, s.ctfRunningMiddleware)
 	e.POST("/submit", s.submitHandler(), s.loginMiddleware, s.ctfStartedMiddleware)
 
 	e.POST("/admin/init", s.initializeHandler(), s.adminMiddleware)
-	e.POST("/admin/qualification/update", s.qualificationUpdateHandler(), s.adminMiddleware)
+	e.POST("/admin/clarification/update", s.clarificationUpdateHandler(), s.adminMiddleware)
 	e.POST("/admin/open-challenge", s.openChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/update-challenge", s.updateChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-challenge", s.newChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-notification", s.newNotificationHandler(), s.adminMiddleware)
-	e.GET("/admin/qualifications/:id", s.adminQualificationHandler(), s.adminMiddleware)
+	e.GET("/admin/clarification/:id", s.adminClarificationHandler(), s.adminMiddleware)
 
 	return e.Start(addr)
 }

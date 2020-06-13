@@ -84,10 +84,11 @@ type Submission struct {
 
 type Notification struct {
 	gorm.Model
+	UserId  *uint
 	Content string
 }
 
-type Qualification struct {
+type Clarification struct {
 	gorm.Model
 	Content      string
 	UserId       uint

@@ -12,7 +12,8 @@ type App interface {
 	TeamApp
 	ChallengeApp
 	CTFApp
-	QualificationApp
+	ClarificationApp
+	NotificationApp
 }
 
 type app struct {

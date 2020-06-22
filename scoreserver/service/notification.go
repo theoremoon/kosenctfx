@@ -6,8 +6,12 @@ import (
 
 type NotificationApp interface {
 	ListNotifications() ([]*model.Notification, error)
+	AddNotification(content string) (*model.Notification, error)
 }
 
 func (app *app) ListNotifications() ([]*model.Notification, error) {
+	return nil, ErrorMessage("not implemented")
+}
+func (app *app) AddNotification(content string) (*model.Notification, error) {
 	return nil, ErrorMessage("not implemented")
 }

@@ -330,25 +330,101 @@ func (s *server) clarificationUpdateHandler() echo.HandlerFunc {
 
 func (s *server) openChallengeHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
+		req := new(struct {
+			ChallengeID uint `json:"challenge_id"`
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, err)
+		}
+		if err := s.app.OpenChallenge(req.ChallengeID); err != nil {
+			return errorHandle(c, err)
+		}
+		chal, err := s.app.GetChallengeByID(req.ChallengeID)
+		if err != nil {
+			return errorHandle(c, err)
+		}
+		s.systemWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
+		return c.JSON(http.StatusOK, ChallengeOpenMessage)
 	}
 }
 
 func (s *server) updateChallengeHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
+		req := new(struct {
+			ID          uint
+			Name        string
+			Flag        string
+			Description string
+			Author      string
+			IsSurvey    bool `json:"is_survey"`
+			Tags        []string
+			Attachments []service.Attachment
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, err)
+		}
+		_, err := s.app.UpdateChallenge(
+			req.ID,
+			&service.Challenge{
+				Name:        req.Name,
+				Flag:        req.Flag,
+				Description: req.Description,
+				Author:      req.Author,
+				IsSurvey:    req.IsSurvey,
+				Tags:        req.Tags,
+				Attachments: req.Attachments,
+			})
+		if err != nil {
+			return errorHandle(c, err)
+		}
+		return c.JSON(http.StatusOK, ChallengeUpdateMessage)
 	}
 }
 
 func (s *server) newChallengeHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
+		req := new(struct {
+			Name        string
+			Flag        string
+			Description string
+			Author      string
+			IsSurvey    bool `json:"is_survey"`
+			Tags        []string
+			Attachments []service.Attachment
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, err)
+		}
+		_, err := s.app.AddChallenge(&service.Challenge{
+			Name:        req.Name,
+			Flag:        req.Flag,
+			Description: req.Description,
+			Author:      req.Author,
+			IsSurvey:    req.IsSurvey,
+			Tags:        req.Tags,
+			Attachments: req.Attachments,
+		})
+		if err != nil {
+			return errorHandle(c, err)
+		}
+		return c.JSON(http.StatusOK, ChallengeAddMessage)
 	}
 }
 
 func (s *server) newNotificationHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
+		req := new(struct {
+			Content string
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, err)
+		}
+		notification, err := s.app.AddNotification(req.Content)
+		if err != nil {
+			return errorHandle(c, err)
+		}
+		s.systemWebhook.Post(fmt.Sprintf("Notification: ```\n%s\n```", notification.Content))
+		return c.JSON(http.StatusOK, AddNotificationMessage)
 	}
 }
 

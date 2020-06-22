@@ -30,6 +30,12 @@ var (
 	CTFNotStartedMessage     = "CTF has not started yet"
 	CTFNotRunningMessage     = "CTF not running"
 
+	ChallengeOpenMessage   = "Open the challenge"
+	ChallengeAddMessage    = "Added the challenge"
+	ChallengeUpdateMessage = "Updated the challenge"
+
+	AddNotificationMessage = "Add New Notification"
+
 	NotImplementedMessage = "Not Implemented"
 )
 
@@ -77,11 +83,11 @@ func (s *server) Start(addr string) error {
 
 	e.POST("/admin/init", s.initializeHandler(), s.adminMiddleware)
 	e.POST("/admin/clarification/update", s.clarificationUpdateHandler(), s.adminMiddleware)
+	e.GET("/admin/clarification/:id", s.adminClarificationHandler(), s.adminMiddleware)
 	e.POST("/admin/open-challenge", s.openChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/update-challenge", s.updateChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-challenge", s.newChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-notification", s.newNotificationHandler(), s.adminMiddleware)
-	e.GET("/admin/clarification/:id", s.adminClarificationHandler(), s.adminMiddleware)
 
 	return e.Start(addr)
 }

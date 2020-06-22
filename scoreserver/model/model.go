@@ -84,7 +84,6 @@ type Submission struct {
 
 type Notification struct {
 	gorm.Model
-	UserId  *uint
 	Content string
 }
 

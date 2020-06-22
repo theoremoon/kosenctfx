@@ -28,22 +28,19 @@ type Challenge struct {
 }
 
 type ChallengeApp interface {
+	GetChallengeByID(challengeID uint) (*Challenge, error)
 	ListAllChallenges() ([]*Challenge, error)
 	ListOpenChallenges() ([]*Challenge, error)
+
+	AddChallenge(c *Challenge) (*model.Challenge, error)
+	OpenChallenge(chalelngeID uint) error
+	UpdateChallenge(challengeID uint, c *Challenge) (*model.Challenge, error)
+
 	SubmitFlag(user *model.User, flag string) (*model.Challenge, bool, bool, error)
 }
 
-func CalcChallengeScore(conf *model.Config, solveCount uint) uint {
-	max := float64(conf.MaxScore)
-	min := float64(conf.MinScore)
-
-	a := max - min
-	tx := (a - 1) / a
-	t := 0.5 * math.Log((1+tx)/(1-tx)) // tanh^{-1}(tx)
-
-	r := a / max
-	y := max * math.Tanh(float64(solveCount)/(float64(conf.CountToMin)/t))
-	return uint(r*(max-y) + min)
+func (app *app) GetChallengeByID(challengeID uint) (*Challenge, error) {
+	return nil, ErrorMessage("not implemented")
 }
 
 func (app *app) ListAllChallenges() ([]*Challenge, error) {
@@ -138,6 +135,18 @@ func (app *app) ListOpenChallenges() ([]*Challenge, error) {
 	}
 	return result, nil
 }
+
+func (app *app) AddChallenge(c *Challenge) (*model.Challenge, error) {
+	return nil, ErrorMessage("not implemented")
+}
+func (app *app) OpenChallenge(chalelngeID uint) error {
+	return ErrorMessage("not implemented")
+}
+
+func (app *app) UpdateChallenge(challengeID uint, c *Challenge) (*model.Challenge, error) {
+	return nil, ErrorMessage("not implemented")
+}
+
 func (app *app) SubmitFlag(user *model.User, flag string) (*model.Challenge, bool, bool, error) {
 	correct := false
 	valid := false
@@ -167,4 +176,17 @@ func (app *app) SubmitFlag(user *model.User, flag string) (*model.Challenge, boo
 		return nil, false, false, err
 	}
 	return chal, correct, valid, nil
+}
+
+func CalcChallengeScore(conf *model.Config, solveCount uint) uint {
+	max := float64(conf.MaxScore)
+	min := float64(conf.MinScore)
+
+	a := max - min
+	tx := (a - 1) / a
+	t := 0.5 * math.Log((1+tx)/(1-tx)) // tanh^{-1}(tx)
+
+	r := a / max
+	y := max * math.Tanh(float64(solveCount)/(float64(conf.CountToMin)/t))
+	return uint(r*(max-y) + min)
 }

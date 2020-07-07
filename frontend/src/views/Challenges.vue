@@ -17,15 +17,16 @@
       </div>
     </div>
 
-    <div class="flex flex-wrap">
+    <div class="flex flex-wrap items-stretch">
       <template v-for="c in challenges">
         <template v-if="!filter || c.name.includes(filter) || tagfilter(c.tags, filter)">
         <!-- in detail (focused) mode -->
         <div
-          class="mx-2 lg:w-1/3 challenge"
+          class="mx-2 lg:w-1/4 challenge"
+          :class="{'challenge-solved':c.solvedby.includes(myteam)}"
           :key="c.name"
           @click="focus = null"
-          v-if="focus == c.name"
+          v-if="true"
         >
           <div class="challenge-name">
             <span class="challenge-name-bg font-bold">
@@ -164,7 +165,7 @@ export default {
         },
         {
           name: "padrsa5",
-          description: "I added padding to the RSA.",
+          description: "I added padding to the RSA. <br> some long text will be here oops omg<br> gomigomigomigojig",
           score: 500,
           solvedby: ["zer0pts", "Harekaze", "soooooooooolong team name"],
           tags: ["crypto"],
@@ -251,6 +252,20 @@ export default {
   border: 2px solid $fg-color;
   border-top: none;
 }
+.challenge-solved {
+  .challenge-info {
+    border-color: $fg-inactive-color;
+  }
+  .challenge-name {
+    .challenge-name-bg {
+    color:  $fg-inactive-color;
+    }
+    &:before {
+      border-color: $fg-inactive-color;
+    }
+  }
+}
+
 .solvedby {
   overflow-y: auto;
   .solvedby-list {

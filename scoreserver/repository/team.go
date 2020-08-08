@@ -7,7 +7,7 @@ import (
 type TeamRepository interface {
 	RegisterTeam(t *model.Team) error
 	ListAllTeams() ([]*model.Team, error)
-	GetTeamById(teamId uint) (*model.Team, error)
+	GetTeamByID(teamId uint) (*model.Team, error)
 	GetTeamByName(teamname string) (*model.Team, error)
 	GetTeamByToken(token string) (*model.Team, error)
 	UpdateTeamToken(t *model.Team, token string) error
@@ -28,9 +28,9 @@ func (r *repository) ListAllTeams() ([]*model.Team, error) {
 	return teams, nil
 }
 
-func (r *repository) GetTeamById(teamId uint) (*model.Team, error) {
+func (r *repository) GetTeamByID(teamID uint) (*model.Team, error) {
 	var t model.Team
-	if err := r.db.Where("id = ?", teamId).First(&t).Error; err != nil {
+	if err := r.db.Where("id = ?", teamID).First(&t).Error; err != nil {
 		return nil, err
 	}
 	return &t, nil

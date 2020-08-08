@@ -13,7 +13,6 @@ type User struct {
 
 type UserApp interface {
 	LoginUser(username, password string) (*model.LoginToken, error)
-	LogoutUser(userId uint) error
 	GetLoginUser(token string) (*model.User, error)
 	GetUserByID(userID uint) (*User, error)
 
@@ -23,6 +22,9 @@ type UserApp interface {
 	PasswordResetRequest(email string) error
 	PasswordReset(token, newpassword string) error
 	PasswordUpdate(user *model.User, newpassword string) error
+
+	GetAdminUser() (*model.User, error)
+	CreateAdminUser(email, password string) (*model.User, error)
 }
 
 func hashPassword(password string) string {
@@ -33,6 +35,10 @@ func hashPassword(password string) string {
 	}
 	return string(passwordHash)
 }
+func checkPassword(password string, hashedPassword []byte) bool {
+	hpassword := hashPassword(password)
+	return bcrypt.CompareHashAndPassword(hashedPassword, []byte(hpassword)) == nil
+}
 
 func (app *app) LoginUser(username, password string) (*model.LoginToken, error) {
 	u, err := app.repo.GetUserByUsername(username)
@@ -41,8 +47,7 @@ func (app *app) LoginUser(username, password string) (*model.LoginToken, error) 
 	} else if err != nil {
 		return nil, err
 	}
-	passwordHash := hashPassword(password)
-	if u.PasswordHash != passwordHash {
+	if checkPassword(password, []byte(u.PasswordHash)) {
 		return nil, ErrorMessage("password mismatch")
 	}
 
@@ -55,13 +60,6 @@ func (app *app) LoginUser(username, password string) (*model.LoginToken, error) 
 		return nil, err
 	}
 	return &token, nil
-}
-
-func (app *app) LogoutUser(userId uint) error {
-	if err := app.repo.RevokeUserLoginToken(userId); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (app *app) GetLoginUser(token string) (*model.User, error) {
@@ -145,6 +143,32 @@ func (app *app) PasswordReset(token, newpassword string) error {
 
 func (app *app) PasswordUpdate(user *model.User, newpassword string) error {
 	return ErrorMessage("not implemented")
+}
+
+func (app *app) GetAdminUser() (*model.User, error) {
+	user, err := app.repo.GetAdminUser()
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (app *app) CreateAdminUser(email, password string) (*model.User, error) {
+	t, err := app.RegisterAdminTeam("admin")
+	if err != nil {
+		return nil, err
+	}
+	u := model.User{
+		Username:     "admin",
+		PasswordHash: hashPassword(password),
+		Email:        email,
+		TeamId:       t.ID,
+		IsAdmin:      true,
+	}
+	if err := app.repo.Register(&u); err != nil {
+		return nil, err
+	}
+	return &u, nil
 }
 
 func (app *app) validateUsername(username string) error {

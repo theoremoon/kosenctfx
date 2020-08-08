@@ -1,3 +1,6 @@
+help:
+	:
+
 up:
 	(cd dev; docker-compose up)
 down:
@@ -8,3 +11,12 @@ setchallenge:
 
 set-challenge:
 	(cd bin; DBDSN='kosenctfxuser:kosenctfxpassword@tcp(localhost:13306)/kosenctfx' ./setchallenge -path="../example/challenges" -transfersh "http://transfer:password@localhost:9999/")
+
+build:
+	(cd scoreserver; go build)
+
+run: build
+	(cd scoreserver; DBDSN='kosenctfxuser:kosenctfxpassword@tcp(localhost:13306)/kosenctfx' FRONT='http://front.web.localhost:8080' ./scoreserver)
+
+sql:
+	(cd dev; docker-compose exec db mysql -u kosenctfxuser -pkosenctfxpassword kosenctfx)

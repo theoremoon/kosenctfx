@@ -12,7 +12,6 @@ type App interface {
 	TeamApp
 	ChallengeApp
 	CTFApp
-	ClarificationApp
 	NotificationApp
 }
 

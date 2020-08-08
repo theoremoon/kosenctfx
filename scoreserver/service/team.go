@@ -10,7 +10,8 @@ type Team struct {
 
 type TeamApp interface {
 	RegisterTeam(teamname string) (*model.Team, error)
-	GetTeamByID(teamID uint) (*Team, error)
+	RegisterAdminTeam(teamname string) (*model.Team, error)
+	GetTeamByID(teamID uint) (*model.Team, error)
 	GetUserTeam(userID uint) (*model.Team, error)
 	UpdateTeamname(teamID uint, newTeamname string) error
 }
@@ -30,8 +31,28 @@ func (app *app) RegisterTeam(teamname string) (*model.Team, error) {
 	return &t, nil
 }
 
-func (app *app) GetTeamByID(teamID uint) (*Team, error) {
-	return nil, ErrorMessage("not implemented")
+func (app *app) RegisterAdminTeam(teamname string) (*model.Team, error) {
+	if err := app.validateTeamname(teamname); err != nil {
+		return nil, err
+	}
+
+	t := model.Team{
+		Teamname: teamname,
+		Token:    newToken(),
+		IsAdmin:  true,
+	}
+	if err := app.repo.RegisterTeam(&t); err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
+
+func (app *app) GetTeamByID(teamID uint) (*model.Team, error) {
+	team, err := app.repo.GetTeamByID(teamID)
+	if err != nil {
+		return nil, err
+	}
+	return team, nil
 }
 
 func (app *app) GetUserTeam(userID uint) (*model.Team, error) {

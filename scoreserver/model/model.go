@@ -3,11 +3,23 @@ package model
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 )
 
+type Model struct {
+	ID        uint `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+}
+
+func (model *Model) BeforeCreate(scope *gorm.Scope) error {
+	return scope.SetColumn("ID", uuid.New().ID())
+}
+
 type User struct {
-	gorm.Model
+	Model
 
 	Username     string `gorm:"unique"`
 	PasswordHash string
@@ -19,7 +31,7 @@ type User struct {
 }
 
 type LoginToken struct {
-	gorm.Model
+	Model
 
 	UserId    uint
 	Token     string `gorm:"unique"`
@@ -27,7 +39,7 @@ type LoginToken struct {
 }
 
 type PasswordResetToken struct {
-	gorm.Model
+	Model
 
 	UserId    uint
 	Token     string `gorm:"unique"`
@@ -35,7 +47,7 @@ type PasswordResetToken struct {
 }
 
 type Team struct {
-	gorm.Model
+	Model
 
 	Teamname string `gorm:"unique"`
 	Token    string `gorm:"unique"`
@@ -44,7 +56,7 @@ type Team struct {
 }
 
 type Challenge struct {
-	gorm.Model
+	Model
 
 	Name        string `gorm:"unique"`
 	Flag        string `gorm:"unique"`
@@ -58,21 +70,21 @@ type Challenge struct {
 }
 
 type Tag struct {
-	gorm.Model
+	Model
 
 	ChallengeId uint
 	Tag         string
 }
 
 type Attachment struct {
-	gorm.Model
+	Model
 
 	ChallengeId uint
 	URL         string
 }
 
 type Submission struct {
-	gorm.Model
+	Model
 
 	ChallengeId *uint
 	UserId      uint
@@ -83,21 +95,14 @@ type Submission struct {
 }
 
 type Notification struct {
-	gorm.Model
+	Model
+
+	Title   string
 	Content string
 }
 
-type Clarification struct {
-	gorm.Model
-	Content      string
-	UserId       uint
-	ResponseType uint
-	Completed    bool
-	IsPublic     bool
-}
-
 type Config struct {
-	gorm.Model
+	Model
 
 	CTFName string
 	StartAt time.Time

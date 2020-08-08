@@ -76,13 +76,35 @@ func (s *server) loginHandler() echo.HandlerFunc {
 }
 
 func (s *server) logoutHandler() echo.HandlerFunc {
-	return func(cc echo.Context) error {
-		c := cc.(*loginContext)
-		if err := s.app.LogoutUser(c.User.ID); err != nil {
-			return errorHandle(c, err)
-		}
+	return func(c echo.Context) error {
 		c.SetCookie(s.removeTokenCookie())
 		return messageHandle(c, LogoutMessage)
+	}
+}
+
+func (s *server) infoHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ret := make(map[string]interface{})
+		user, _ := s.getLoginUser(c)
+		if user != nil {
+			team, err := s.app.GetTeamByID(user.TeamId)
+			if err != nil {
+				return errorHandle(c, err)
+			}
+			ret["username"] = user.Username
+			ret["teamname"] = team.Teamname
+			ret["userid"] = user.ID
+			ret["teamid"] = team.ID
+		}
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return errorHandle(c, err)
+		}
+		ret["ctf_start"] = conf.StartAt.Unix()
+		ret["ctf_end"] = conf.EndAt.Unix()
+		ret["ctf_name"] = conf.CTFName
+
+		return c.JSON(http.StatusOK, ret)
 	}
 }
 
@@ -174,16 +196,6 @@ func (s *server) rankingHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) clarificationsHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		clars, err := s.app.ListOpenClarifications()
-		if err != nil {
-			return errorHandle(c, err)
-		}
-		return c.JSON(http.StatusOK, clars)
-	}
-}
-
 func (s *server) notificationsHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		notifications, err := s.app.ListNotifications()
@@ -205,7 +217,20 @@ func (s *server) teamHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, err)
 		}
-		return c.JSON(http.StatusOK, team)
+
+		// TODO: チームで解いた問題を追加
+		// ログインしていて自チームの場合Tokenもつく
+		user, _ := s.getLoginUser(c)
+		if user != nil && user.TeamId == uint(teamID) {
+			return c.JSON(http.StatusOK, map[string]interface{}{
+				"teamname": team.Teamname,
+				"token":    team.Token,
+			})
+		} else {
+			return c.JSON(http.StatusOK, map[string]interface{}{
+				"teamname": team.Teamname,
+			})
+		}
 	}
 }
 
@@ -220,32 +245,8 @@ func (s *server) userHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, err)
 		}
+		// TODO: ユーザで解いた問題を追加
 		return c.JSON(http.StatusOK, user)
-	}
-}
-
-func (s *server) doClarificationHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		lc := c.(*loginContext)
-		req := new(struct {
-			Content string
-		})
-		if err := c.Bind(req); err != nil {
-			return errorHandle(c, err)
-		}
-		clar, err := s.app.NewClarification(lc.User, req.Content)
-		if err != nil {
-			return errorHandle(c, err)
-		}
-
-		// FIXME
-		go s.adminWebhook.Post(fmt.Sprintf(
-			"New clarification is created: %s/admin/clarifications/%d\n```\n%s```",
-			c.Request().Host,
-			clar.ID,
-			clar.Content,
-		))
-		return messageHandle(c, ClarificationSentMesssage)
 	}
 }
 
@@ -263,7 +264,7 @@ func (s *server) submitHandler() echo.HandlerFunc {
 			return errorHandle(c, err)
 		}
 
-		team, err := s.app.GetUserTeam(lc.User.ID)
+		team, err := s.app.GetTeamByID(lc.User.TeamId)
 		if err != nil {
 			log.Println(err)
 			team = &model.Team{
@@ -302,29 +303,6 @@ func (s *server) submitHandler() echo.HandlerFunc {
 func (s *server) initializeHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
-	}
-}
-
-func (s *server) clarificationUpdateHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		req := new(struct {
-			ID           uint
-			ResponseType service.ClarificationResponseType
-			IsCompleted  bool
-			IsPublic     bool
-		})
-		if err := c.Bind(req); err != nil {
-			return errorHandle(c, err)
-		}
-		if err := s.app.UpdateClarification(req.ID, req.ResponseType, req.IsCompleted, req.IsPublic); err != nil {
-			return errorHandle(c, err)
-		}
-
-		if req.ResponseType == service.ClarificationAnswerSupportIndivisually {
-			// TODO
-			panic("not implemented")
-		}
-		return c.JSON(http.StatusOK, ClarificationUpdateMessage)
 	}
 }
 
@@ -425,11 +403,5 @@ func (s *server) newNotificationHandler() echo.HandlerFunc {
 		}
 		s.systemWebhook.Post(fmt.Sprintf("Notification: ```\n%s\n```", notification.Content))
 		return c.JSON(http.StatusOK, AddNotificationMessage)
-	}
-}
-
-func (s *server) adminClarificationHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
 	}
 }

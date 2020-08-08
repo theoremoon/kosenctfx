@@ -23,9 +23,6 @@ var (
 	PasswordUpdateMessage         = "password is successfully reset"
 	TeamnameUpdateMessage         = "temaname is successfully updated"
 
-	ClarificationSentMesssage  = "new clar is posted"
-	ClarificationUpdateMessage = "clar is updated"
-
 	CTFAlreadyStartedMessage = "CTF has already started"
 	CTFNotStartedMessage     = "CTF has not started yet"
 	CTFNotRunningMessage     = "CTF not running"
@@ -45,14 +42,16 @@ type Server interface {
 type server struct {
 	app           service.App
 	SessionKey    string
+	FrontendURL   string
 	adminWebhook  webhook.Webhook
 	systemWebhook webhook.Webhook
 }
 
-func New(app service.App) Server {
+func New(app service.App, frontendURL string) Server {
 	return &server{
 		app:           app,
 		SessionKey:    "kosenctfx",
+		FrontendURL:   frontendURL,
 		adminWebhook:  webhook.Dummy("ADMIN"),
 		systemWebhook: webhook.Dummy("SYSTEM"),
 	}
@@ -61,10 +60,17 @@ func New(app service.App) Server {
 func (s *server) Start(addr string) error {
 	e := echo.New()
 	e.Use(middleware.Logger())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{s.FrontendURL},
+		AllowCredentials: true,
+		AllowMethods:     []string{http.MethodGet, http.MethodPost},
+	}))
+
 	e.POST("/register-with-team", s.registerWithTeamHandler(), s.notLoginMiddleware)
 	e.POST("/register-and-join-team", s.registerAndJoinTeamHandler(), s.notLoginMiddleware)
-	e.POST("/login", s.loginHandler(), s.notLoginMiddleware)
-	e.POST("/logoutHandler", s.logoutHandler(), s.loginMiddleware)
+	e.POST("/login", s.loginHandler())
+	e.POST("/logout", s.logoutHandler())
+	e.GET("/info", s.infoHandler())
 
 	e.POST("/passwordreset-request", s.passwordresetRequestHandler(), s.notLoginMiddleware)
 	e.POST("/passwordreset", s.passwordresetHandler(), s.notLoginMiddleware)
@@ -73,17 +79,13 @@ func (s *server) Start(addr string) error {
 
 	e.GET("/challenges", s.challengesHandler(), s.ctfStartedMiddleware)
 	e.GET("/ranking", s.rankingHandler(), s.ctfStartedMiddleware)
-	e.GET("/clarifications", s.clarificationsHandler(), s.ctfStartedMiddleware)
 	e.GET("/notifications", s.notificationsHandler())
 	e.GET("/team/:id", s.teamHandler())
 	e.GET("/user/:id", s.userHandler())
 
-	e.POST("/clarification", s.doClarificationHandler(), s.loginMiddleware, s.ctfRunningMiddleware)
 	e.POST("/submit", s.submitHandler(), s.loginMiddleware, s.ctfStartedMiddleware)
 
 	e.POST("/admin/init", s.initializeHandler(), s.adminMiddleware)
-	e.POST("/admin/clarification/update", s.clarificationUpdateHandler(), s.adminMiddleware)
-	e.GET("/admin/clarification/:id", s.adminClarificationHandler(), s.adminMiddleware)
 	e.POST("/admin/open-challenge", s.openChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/update-challenge", s.updateChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-challenge", s.newChallengeHandler(), s.adminMiddleware)

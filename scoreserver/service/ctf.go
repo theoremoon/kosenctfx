@@ -1,6 +1,10 @@
 package service
 
-import "time"
+import (
+	"time"
+
+	"github.com/theoremoon/kosenctfx/scoreserver/model"
+)
 
 type CTFStatus int
 
@@ -13,6 +17,7 @@ const (
 
 type CTFApp interface {
 	CurrentCTFStatus() (CTFStatus, error)
+	GetCTFConfig() (*model.Config, error)
 }
 
 func (app *app) CurrentCTFStatus() (CTFStatus, error) {
@@ -29,4 +34,12 @@ func (app *app) CurrentCTFStatus() (CTFStatus, error) {
 	} else {
 		return CTFEnded, nil
 	}
+}
+
+func (app *app) GetCTFConfig() (*model.Config, error) {
+	conf, err := app.repo.GetConfig()
+	if err != nil {
+		return nil, err
+	}
+	return conf, nil
 }

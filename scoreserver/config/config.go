@@ -8,6 +8,8 @@ import (
 type Config struct {
 	Dbdsn string
 	Addr  string
+	Front string
+	Email string
 }
 
 func getEnv(name string) (string, error) {
@@ -29,8 +31,23 @@ func Load() (*Config, error) {
 	if err != nil {
 		addr = ":5000"
 	}
+
+	front, err := getEnv("FRONT")
+	if err != nil {
+		return nil, err
+	}
+
+	mailaccount, err := getEnv("MAIL")
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: e-mailだけじゃなくてログイン情報とかサーバ情報もいる
+
 	return &Config{
 		Dbdsn: dbdsn,
 		Addr:  addr,
+		Front: front,
+		Email: mailaccount,
 	}, nil
 }

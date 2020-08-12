@@ -12,13 +12,10 @@ import (
 	"golang.org/x/xerrors"
 )
 
-type User struct {
-}
-
 type UserApp interface {
 	LoginUser(username, password string) (*model.LoginToken, error)
 	GetLoginUser(token string) (*model.User, error)
-	GetUserByID(userID uint) (*User, error)
+	GetUserByID(userID uint) (*model.User, error)
 
 	RegisterUserWithTeam(username, password, email, teamname string) error
 	RegisterUserAndJoinToTeam(username, password, email, teamToken string) error
@@ -76,8 +73,12 @@ func (app *app) GetLoginUser(token string) (*model.User, error) {
 	return user, nil
 }
 
-func (app *app) GetUserByID(userID uint) (*User, error) {
-	return nil, NewErrorMessage("not implemented")
+func (app *app) GetUserByID(userID uint) (*model.User, error) {
+	user, err := app.repo.GetUserByID(userID)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return user, nil
 }
 
 func (app *app) RegisterUserWithTeam(username, password, email, teamname string) error {
@@ -187,7 +188,13 @@ func (app *app) PasswordReset(token, newpassword string) error {
 }
 
 func (app *app) PasswordUpdate(user *model.User, newpassword string) error {
-	return NewErrorMessage("not implemented")
+	if newpassword == "" {
+		return NewErrorMessage("password is required")
+	}
+	if err := app.repo.UpdateUserPassword(user, hashPassword(newpassword)); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
 }
 
 func (app *app) GetAdminUser() (*model.User, error) {

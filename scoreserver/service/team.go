@@ -12,7 +12,6 @@ type TeamApp interface {
 	RegisterTeam(teamname string) (*model.Team, error)
 	RegisterAdminTeam(teamname string) (*model.Team, error)
 	GetTeamByID(teamID uint) (*model.Team, error)
-	GetUserTeam(userID uint) (*model.Team, error)
 	UpdateTeamname(teamID uint, newTeamname string) error
 }
 
@@ -53,10 +52,6 @@ func (app *app) GetTeamByID(teamID uint) (*model.Team, error) {
 		return nil, err
 	}
 	return team, nil
-}
-
-func (app *app) GetUserTeam(userID uint) (*model.Team, error) {
-	return nil, NewErrorMessage("not implemented")
 }
 
 func (app *app) UpdateTeamname(teamID uint, newTeamname string) error {

@@ -87,6 +87,7 @@ export default Vue.extend({
   methods: {
     logout() {
       API.post("/logout");
+      this.$router.push("/");
       this.$eventHub.$emit("login-check");
     },
     checkLogin() {
@@ -165,6 +166,17 @@ input[type="submit"] {
 input[type="submit"]:hover {
   background-color: $accent-color;
   cursor: pointer;
+}
+
+.inline-form {
+  display: flex;
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    display: inline-block;
+    width: 1;
+  }
 }
 </style>
 

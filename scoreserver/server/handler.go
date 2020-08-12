@@ -146,13 +146,13 @@ func (s *server) passwordUpdateHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		lc := c.(*loginContext)
 		req := new(struct {
-			NewPassword string
+			NewPassword string `json:"new_password"`
 		})
 		if err := c.Bind(req); err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		if err := s.app.PasswordUpdate(lc.User, req.NewPassword); err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		return messageHandle(c, PasswordUpdateMessage)
 	}
@@ -167,7 +167,7 @@ func (s *server) teamnameUpdateHandler() echo.HandlerFunc {
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, err)
 		}
-		team, err := s.app.GetUserTeam(lc.User.ID)
+		team, err := s.app.GetTeamByID(lc.User.TeamId)
 		if err != nil {
 			return errorHandle(c, err)
 		}
@@ -241,14 +241,25 @@ func (s *server) userHandler() echo.HandlerFunc {
 		userIDstr := c.Param("id")
 		userID, err := strconv.ParseUint(userIDstr, 10, 32)
 		if err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		user, err := s.app.GetUserByID(uint(userID))
 		if err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+
+		team, err := s.app.GetTeamByID(user.TeamId)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
 		// TODO: ユーザで解いた問題を追加
-		return c.JSON(http.StatusOK, user)
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"username": user.Username,
+			"teamname": team.Teamname,
+			"userid":   user.ID,
+			"teamid":   team.ID,
+		})
 	}
 }
 

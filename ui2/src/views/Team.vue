@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="mt-4">
     <pre>{{ token }}</pre>
   </div>
 </template>
@@ -15,10 +15,6 @@ export default Vue.extend({
     };
   },
   mounted() {
-    if (this.$store.username != null) {
-      this.$route.push("/");
-    }
-
     API.get("team/" + this.$route.params.id).then(r => {
       this.token = r.data.token;
     });

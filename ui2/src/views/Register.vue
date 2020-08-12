@@ -27,7 +27,7 @@
           <label for="teamname" class="block text-sm">
             teamname
           </label>
-          <input type="text" v-model="teamname" id="teamname" required />
+          <input type="text" v-model="teamname" id="teamname" />
           <input
             type="submit"
             value="Create New Team"
@@ -37,7 +37,7 @@
         </div>
         <div class="w-1/2 p-4">
           <label for="token" class="block text-sm">team token</label>
-          <input type="text" v-model="token" id="token" required />
+          <input type="text" v-model="token" id="token" />
           <input
             type="submit"
             value="Join to the Team"
@@ -86,7 +86,21 @@ export default Vue.extend({
           errorHandle(this, e);
         });
     },
-    joinTeam() {}
+    joinTeam() {
+      API.post("/register-and-join-team", {
+        token: this.token,
+        username: this.username,
+        email: this.email,
+        password: this.password
+      })
+        .then(r => {
+          message(this, r.data.message);
+          this.$router.push("/login");
+        })
+        .catch(e => {
+          errorHandle(this, e);
+        });
+    }
   }
 });
 </script>

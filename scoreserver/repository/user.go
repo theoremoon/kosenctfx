@@ -13,7 +13,7 @@ type UserRepository interface {
 	GetAdminUser() (*model.User, error)
 	GetUserByUsername(username string) (*model.User, error)
 	GetUserByEmail(username string) (*model.User, error)
-	GetUserById(userId uint) (*model.User, error)
+	GetUserByID(userID uint) (*model.User, error)
 	GetUserByLoginToken(token string) (*model.User, error)
 	SetUserLoginToken(token *model.LoginToken) error
 	NewPasswordResetToken(token *model.PasswordResetToken) error
@@ -57,9 +57,9 @@ func (r *repository) GetUserByEmail(email string) (*model.User, error) {
 	return &u, nil
 }
 
-func (r *repository) GetUserById(userId uint) (*model.User, error) {
+func (r *repository) GetUserByID(userID uint) (*model.User, error) {
 	var u model.User
-	if err := r.db.Where("id = ?", userId).First(&u).Error; err != nil {
+	if err := r.db.Where("id = ?", userID).First(&u).Error; err != nil {
 		return nil, err
 	}
 	return &u, nil

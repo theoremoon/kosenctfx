@@ -4,6 +4,7 @@ import Home from "../views/Home.vue";
 import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
 import Team from "../views/Team.vue";
+import User from "../views/User.vue";
 import ResetRequest from "../views/ResetRequest.vue";
 import Reset from "../views/Reset.vue";
 
@@ -29,6 +30,12 @@ const routes = [
     path: "/team/:id",
     name: "Team",
     component: Team
+  },
+
+  {
+    path: "/user/:id",
+    name: "User",
+    component: User
   },
   {
     path: "/reset-request",

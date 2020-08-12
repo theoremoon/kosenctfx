@@ -6,10 +6,12 @@ import (
 )
 
 type Config struct {
-	Dbdsn string
-	Addr  string
-	Front string
-	Email string
+	Dbdsn        string
+	Addr         string
+	Front        string
+	Email        string
+	MailServer   string
+	MailPassword string
 }
 
 func getEnv(name string) (string, error) {
@@ -42,12 +44,22 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	// TODO: e-mailだけじゃなくてログイン情報とかサーバ情報もいる
+	mailserver, err := getEnv("MAIL_SERVER")
+	if err != nil {
+		return nil, err
+	}
+
+	mailpassword, err := getEnv("MAIL_PASSWORD")
+	if err != nil {
+		return nil, err
+	}
 
 	return &Config{
-		Dbdsn: dbdsn,
-		Addr:  addr,
-		Front: front,
-		Email: mailaccount,
+		Dbdsn:        dbdsn,
+		Addr:         addr,
+		Front:        front,
+		Email:        mailaccount,
+		MailServer:   mailserver,
+		MailPassword: mailpassword,
 	}, nil
 }

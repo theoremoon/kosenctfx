@@ -6,19 +6,19 @@
           <label class="block text-sm" for="username">
             username
           </label>
-          <input type="text" v-model="username" id="username" />
+          <input type="text" v-model="username" id="username" required />
         </div>
         <div class="mb-4">
           <label class="block text-sm" for="email">
             email
           </label>
-          <input type="email" v-model="email" id="email" />
+          <input type="email" v-model="email" id="email" required />
         </div>
         <div class="mb-4">
           <label class="block text-sm" for="password">
             password
           </label>
-          <input type="password" v-model="password" id="password" />
+          <input type="password" v-model="password" id="password" required />
         </div>
       </div>
 
@@ -27,7 +27,7 @@
           <label for="teamname" class="block text-sm">
             teamname
           </label>
-          <input type="text" v-model="teamname" id="teamname" />
+          <input type="text" v-model="teamname" id="teamname" required />
           <input
             type="submit"
             value="Create New Team"
@@ -37,7 +37,7 @@
         </div>
         <div class="w-1/2 p-4">
           <label for="token" class="block text-sm">team token</label>
-          <input type="text" v-model="token" id="token" />
+          <input type="text" v-model="token" id="token" required />
           <input
             type="submit"
             value="Join to the Team"

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"github.com/theoremoon/kosenctfx/scoreserver/webhook"
+	"golang.org/x/xerrors"
 )
 
 var (
@@ -26,6 +28,8 @@ var (
 	CTFAlreadyStartedMessage = "CTF has already started"
 	CTFNotStartedMessage     = "CTF has not started yet"
 	CTFNotRunningMessage     = "CTF not running"
+
+	RegistrationClosed = "Registraction is closed now"
 
 	ChallengeOpenMessage   = "Open the challenge"
 	ChallengeAddMessage    = "Added the challenge"
@@ -66,8 +70,8 @@ func (s *server) Start(addr string) error {
 		AllowMethods:     []string{http.MethodGet, http.MethodPost},
 	}))
 
-	e.POST("/register-with-team", s.registerWithTeamHandler(), s.notLoginMiddleware)
-	e.POST("/register-and-join-team", s.registerAndJoinTeamHandler(), s.notLoginMiddleware)
+	e.POST("/register-with-team", s.registerWithTeamHandler(), s.notLoginMiddleware, s.registerableMiddleware)
+	e.POST("/register-and-join-team", s.registerAndJoinTeamHandler(), s.notLoginMiddleware, s.registerableMiddleware)
 	e.POST("/login", s.loginHandler())
 	e.POST("/logout", s.logoutHandler())
 	e.GET("/info", s.infoHandler())
@@ -95,11 +99,14 @@ func (s *server) Start(addr string) error {
 }
 
 func errorHandle(c echo.Context, err error) error {
-	if service.IsErrorMessage(err) {
+	var errMsg service.ErrorMessage
+	if xerrors.As(err, &errMsg) {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"message": err.Error(),
+			"message": errMsg.Error(),
 		})
 	}
+
+	log.Printf("%+v\n", err)
 	c.Logger().Error(err)
 	return c.NoContent(http.StatusInternalServerError)
 }

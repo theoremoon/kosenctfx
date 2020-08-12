@@ -56,23 +56,23 @@ func (app *app) GetTeamByID(teamID uint) (*model.Team, error) {
 }
 
 func (app *app) GetUserTeam(userID uint) (*model.Team, error) {
-	return nil, ErrorMessage("not implemented")
+	return nil, NewErrorMessage("not implemented")
 }
 
 func (app *app) UpdateTeamname(teamID uint, newTeamname string) error {
-	return ErrorMessage("not implemented")
+	return NewErrorMessage("not implemented")
 }
 
 func (app *app) validateTeamname(teamname string) error {
 	if teamname == "" {
-		return ErrorMessage("teamname is required")
+		return NewErrorMessage("teamname is required")
 	}
 	if len(teamname) >= 128 {
-		return ErrorMessage("teamname should be shorter than 128")
+		return NewErrorMessage("teamname should be shorter than 128")
 	}
 
 	if _, err := app.repo.GetTeamByName(teamname); err == nil {
-		return ErrorMessage("teamname already used")
+		return NewErrorMessage("teamname already used")
 	} else if err != nil && !gorm.IsRecordNotFoundError(err) {
 		return err
 	}

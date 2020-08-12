@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/theoremoon/kosenctfx/scoreserver/mailer"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 )
 
@@ -16,12 +17,14 @@ type App interface {
 }
 
 type app struct {
-	repo repository.Repository
+	repo   repository.Repository
+	mailer mailer.Mailer
 }
 
-func New(repo repository.Repository) App {
+func New(repo repository.Repository, mailer mailer.Mailer) App {
 	return &app{
-		repo: repo,
+		mailer: mailer,
+		repo:   repo,
 	}
 }
 
@@ -41,10 +44,10 @@ func (app *app) ValidateRunning(t time.Time) error {
 		return err
 	}
 	if !t.After(conf.StartAt) {
-		return ErrorMessage("CTF has not started yet")
+		return NewErrorMessage("CTF has not started yet")
 	}
 	if !t.Before(conf.EndAt) {
-		return ErrorMessage("CTF has alredy finished")
+		return NewErrorMessage("CTF has alredy finished")
 	}
 	return nil
 }

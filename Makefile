@@ -16,7 +16,7 @@ build:
 	(cd scoreserver; go build)
 
 run: build
-	(cd scoreserver; DBDSN='kosenctfxuser:kosenctfxpassword@tcp(localhost:13306)/kosenctfx' FRONT='http://front.web.localhost:8080' ./scoreserver)
+	(source ./envfile; cd scoreserver; ./scoreserver)
 
 sql:
 	(cd dev; docker-compose exec db mysql -u kosenctfxuser -pkosenctfxpassword kosenctfx)

@@ -40,7 +40,7 @@ type ChallengeApp interface {
 }
 
 func (app *app) GetChallengeByID(challengeID uint) (*Challenge, error) {
-	return nil, ErrorMessage("not implemented")
+	return nil, NewErrorMessage("not implemented")
 }
 
 func (app *app) ListAllChallenges() ([]*Challenge, error) {
@@ -137,14 +137,14 @@ func (app *app) ListOpenChallenges() ([]*Challenge, error) {
 }
 
 func (app *app) AddChallenge(c *Challenge) (*model.Challenge, error) {
-	return nil, ErrorMessage("not implemented")
+	return nil, NewErrorMessage("not implemented")
 }
 func (app *app) OpenChallenge(chalelngeID uint) error {
-	return ErrorMessage("not implemented")
+	return NewErrorMessage("not implemented")
 }
 
 func (app *app) UpdateChallenge(challengeID uint, c *Challenge) (*model.Challenge, error) {
-	return nil, ErrorMessage("not implemented")
+	return nil, NewErrorMessage("not implemented")
 }
 
 func (app *app) SubmitFlag(user *model.User, flag string) (*model.Challenge, bool, bool, error) {

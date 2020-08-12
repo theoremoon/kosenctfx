@@ -13,8 +13,6 @@ export function errorHandle(that, e) {
     message = e.response.data.message || "internal server error";
   }
 
-  console.log(message);
-
   that.$eventHub.$emit("message", {
     type: "error",
     text: message

@@ -2,12 +2,15 @@ package main
 
 import (
 	"log"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/config"
+	"github.com/theoremoon/kosenctfx/scoreserver/mailer"
+	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"github.com/theoremoon/kosenctfx/scoreserver/server"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
@@ -27,9 +30,14 @@ func run() error {
 
 	repo := repository.New(db)
 	repo.Migrate()
-	app := service.New(repo)
+	mailer, err := mailer.New(conf.MailServer, conf.Email, conf.MailPassword)
+	if err != nil {
+		return err
+	}
 
-	// admin ユーザを自動生成する
+	app := service.New(repo, mailer)
+
+	// admin ユーザを自動生成して適当なCTF情報を入れる
 	if _, err := app.GetAdminUser(); err != nil {
 		password := uuid.New().String()
 		if _, err := app.CreateAdminUser(conf.Email, password); err != nil {
@@ -40,6 +48,20 @@ func run() error {
 		log.Printf(" username: admin\n")
 		log.Printf(" email: %s\n", conf.Email)
 		log.Printf(" password: %s", password)
+
+		app.SetCTFConfig(&model.Config{
+			CTFName:       "KosenCTF X",
+			StartAt:       time.Now(),
+			EndAt:         time.Now(),
+			RegisterOpen:  true, // FIXME: for production, this value should be false
+			CTFOpen:       false,
+			LockCount:     5,
+			LockFrequency: 10,
+			LockDuration:  1200,
+			MinScore:      100,
+			MaxScore:      500,
+			CountToMin:    60,
+		})
 	}
 
 	srv := server.New(app, conf.Front)

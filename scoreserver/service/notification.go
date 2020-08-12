@@ -10,8 +10,8 @@ type NotificationApp interface {
 }
 
 func (app *app) ListNotifications() ([]*model.Notification, error) {
-	return nil, ErrorMessage("not implemented")
+	return nil, NewErrorMessage("not implemented")
 }
 func (app *app) AddNotification(content string) (*model.Notification, error) {
-	return nil, ErrorMessage("not implemented")
+	return nil, NewErrorMessage("not implemented")
 }

@@ -5,7 +5,7 @@
         <div class="flex text-lg mr-6">
           <img src="./assets/neko.png" class="brand" />
           <router-link to="/">
-            InterKosenCTF2020 {{ String(username) }}
+            InterKosenCTF2020
           </router-link>
         </div>
 
@@ -36,6 +36,9 @@
             </div>
             <div class="mr-4">
               <router-link to="/register">REGISTER</router-link>
+            </div>
+            <div class="mr-4">
+              <button @click="logout">LOGOUT</button>
             </div>
           </template>
         </div>
@@ -137,9 +140,10 @@ body {
   color: $fg-color;
   height: 100%;
 }
-
-a:hover {
-  color: $accent-color;
+a {
+  &:hover {
+    color: $accent-color;
+  }
 }
 
 input[type="text"],

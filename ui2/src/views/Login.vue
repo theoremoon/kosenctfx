@@ -1,21 +1,27 @@
 <template>
   <div class="flex justify-center items-center h-full">
-    <form class="w-1/2 flex items-center flex-col" @submit.prevent>
+    <form class="w-1/2 flex items-center flex-col" @submit.prevent="login">
       <div class="w-1/2">
         <div class="mb-4">
           <label class="block text-sm" for="username">
             username
           </label>
-          <input type="text" v-model="username" id="username" />
+          <input type="text" v-model="username" id="username" required />
         </div>
         <div class="mb-4">
           <label class="block text-sm" for="password">
             password
           </label>
-          <input type="password" v-model="password" id="password" />
+          <input type="password" v-model="password" id="password" required />
         </div>
 
-        <input type="submit" value="Login" class="float-right" @click="login" />
+        <input type="submit" value="Login" class="float-right" />
+      </div>
+      <div class="w-1/2">
+        <p style="text-align: right;">
+          forget your password?
+          <router-link to="/reset-request">reset from here</router-link>
+        </p>
       </div>
     </form>
   </div>

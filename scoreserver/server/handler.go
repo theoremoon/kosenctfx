@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"golang.org/x/xerrors"
+
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 
@@ -128,13 +130,13 @@ func (s *server) passwordresetHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
 			Token       string
-			NewPassword string
+			NewPassword string `json:"new_password"`
 		})
 		if err := c.Bind(req); err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		if err := s.app.PasswordReset(req.Token, req.NewPassword); err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		return messageHandle(c, PasswordUpdateMessage)
 	}

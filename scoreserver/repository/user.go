@@ -15,6 +15,7 @@ type UserRepository interface {
 	GetUserByEmail(username string) (*model.User, error)
 	GetUserByID(userID uint) (*model.User, error)
 	GetUserByLoginToken(token string) (*model.User, error)
+	GetTeamMembers(teamID uint) ([]*model.User, error)
 	SetUserLoginToken(token *model.LoginToken) error
 	NewPasswordResetToken(token *model.PasswordResetToken) error
 	GetUserByPasswordResetToken(token string) (*model.User, error)
@@ -76,6 +77,14 @@ func (r *repository) GetUserByLoginToken(token string) (*model.User, error) {
 		return nil, err
 	}
 	return &u, nil
+}
+
+func (r *repository) GetTeamMembers(teamID uint) ([]*model.User, error) {
+	var users []*model.User
+	if err := r.db.Where("team_id = ?", teamID).Order("created_at asc").Find(&users).Error; err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return users, nil
 }
 
 func (r *repository) SetUserLoginToken(token *model.LoginToken) error {

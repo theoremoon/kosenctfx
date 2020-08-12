@@ -12,10 +12,20 @@ import (
 	"golang.org/x/xerrors"
 )
 
+type User struct {
+	ID       uint   `json:"id"`
+	Username string `json:"username"`
+	TeamID   uint   `json:"team_id"`
+}
+
 type UserApp interface {
+	UserFilter(u *model.User) *User
+	UsersFilter(us []*model.User) []*User
+
 	LoginUser(username, password string) (*model.LoginToken, error)
 	GetLoginUser(token string) (*model.User, error)
 	GetUserByID(userID uint) (*model.User, error)
+	GetTeamMembers(teamID uint) ([]*model.User, error)
 
 	RegisterUserWithTeam(username, password, email, teamname string) error
 	RegisterUserAndJoinToTeam(username, password, email, teamToken string) error
@@ -39,6 +49,22 @@ func hashPassword(password string) string {
 func checkPassword(password string, hashedPassword []byte) bool {
 	hpassword := hashPassword(password)
 	return bcrypt.CompareHashAndPassword(hashedPassword, []byte(hpassword)) == nil
+}
+
+func (app *app) UserFilter(u *model.User) *User {
+	return &User{
+		ID:       u.ID,
+		Username: u.Username,
+		TeamID:   u.TeamId,
+	}
+}
+
+func (app *app) UsersFilter(us []*model.User) []*User {
+	us2 := make([]*User, len(us))
+	for i := 0; i < len(us); i++ {
+		us2[i] = app.UserFilter(us[i])
+	}
+	return us2
 }
 
 func (app *app) LoginUser(username, password string) (*model.LoginToken, error) {
@@ -79,6 +105,14 @@ func (app *app) GetUserByID(userID uint) (*model.User, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	return user, nil
+}
+
+func (app *app) GetTeamMembers(teamID uint) ([]*model.User, error) {
+	users, err := app.repo.GetTeamMembers(teamID)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return users, nil
 }
 
 func (app *app) RegisterUserWithTeam(username, password, email, teamname string) error {

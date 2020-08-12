@@ -229,26 +229,31 @@ func (s *server) teamHandler() echo.HandlerFunc {
 		teamIDstr := c.Param("id")
 		teamID, err := strconv.ParseUint(teamIDstr, 10, 32)
 		if err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		team, err := s.app.GetTeamByID(uint(teamID))
 		if err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		members, err := s.app.GetTeamMembers(team.ID)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		res := map[string]interface{}{
+			"teamname": team.Teamname,
+			"teamid":   team.ID,
+			"members":  s.app.UsersFilter(members),
 		}
 
 		// TODO: チームで解いた問題を追加
 		// ログインしていて自チームの場合Tokenもつく
 		user, _ := s.getLoginUser(c)
 		if user != nil && user.TeamId == uint(teamID) {
-			return c.JSON(http.StatusOK, map[string]interface{}{
-				"teamname": team.Teamname,
-				"token":    team.Token,
-			})
-		} else {
-			return c.JSON(http.StatusOK, map[string]interface{}{
-				"teamname": team.Teamname,
-			})
+			res["token"] = team.Token
 		}
+		return c.JSON(http.StatusOK, res)
 	}
 }
 

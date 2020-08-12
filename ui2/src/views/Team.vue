@@ -1,7 +1,13 @@
 <template>
   <div class="mt-4">
     <h1 class="text-lg">{{ teamname }}</h1>
-    <div v-if="token" class="inline-form">
+    <div class="px-4 py-2">
+      <div class="member" v-for="m in members" :key="m.id">
+        <router-link :to="'/user/' + m.id"> {{ m.username }}</router-link>
+      </div>
+    </div>
+
+    <div v-if="token" class="inline-form px-4">
       teamtoken: <input type="text" readonly v-model="token" />
       <input type="submit" value="Regenerate" @click="regenerate" />
     </div>
@@ -17,7 +23,8 @@ export default Vue.extend({
   data() {
     return {
       token: "",
-      teamname: ""
+      teamname: "",
+      members: []
     };
   },
   mounted() {
@@ -30,6 +37,7 @@ export default Vue.extend({
           this.token = r.data.token;
         }
         this.teamname = r.data.teamname;
+        this.members = r.data.members;
       });
     },
     regenerate() {
@@ -45,3 +53,14 @@ export default Vue.extend({
   }
 });
 </script>
+
+<style lang="scss" scoped>
+.member {
+  display: inline-block;
+  &:not(:last-child)::after {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    content: "/";
+  }
+}
+</style>

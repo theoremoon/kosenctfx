@@ -24,6 +24,7 @@ var (
 	PasswordResetEmailSentMessage = "password reset email has been sent"
 	PasswordUpdateMessage         = "password is successfully reset"
 	TeamnameUpdateMessage         = "temaname is successfully updated"
+	RenewTeamTokenMessage         = "teamtoken is updated"
 
 	CTFAlreadyStartedMessage = "CTF has already started"
 	CTFNotStartedMessage     = "CTF has not started yet"
@@ -76,6 +77,7 @@ func (s *server) Start(addr string) error {
 	e.POST("/logout", s.logoutHandler())
 	e.GET("/info", s.infoHandler())
 
+	e.POST("/renew-teamtoken", s.renewTeamTokenHanler(), s.loginMiddleware)
 	e.POST("/passwordreset-request", s.passwordresetRequestHandler(), s.notLoginMiddleware)
 	e.POST("/passwordreset", s.passwordresetHandler(), s.notLoginMiddleware)
 	e.POST("/password-update", s.passwordUpdateHandler(), s.loginMiddleware)

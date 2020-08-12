@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
+	"golang.org/x/xerrors"
 )
 
 type TeamRepository interface {
@@ -54,7 +55,7 @@ func (r *repository) GetTeamByToken(token string) (*model.Team, error) {
 
 func (r *repository) UpdateTeamToken(t *model.Team, token string) error {
 	if err := r.db.Model(t).Update("token", token).Error; err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }

@@ -110,6 +110,22 @@ func (s *server) infoHandler() echo.HandlerFunc {
 	}
 }
 
+func (s *server) renewTeamTokenHanler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		lc := c.(*loginContext)
+		t, err := s.app.GetTeamByID(lc.User.TeamId)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		if err := s.app.RenewTeamToken(t); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		return messageHandle(c, RenewTeamTokenMessage)
+	}
+}
+
 func (s *server) passwordresetRequestHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {

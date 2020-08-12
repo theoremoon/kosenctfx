@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
+	"golang.org/x/xerrors"
 )
 
 type Team struct {
@@ -13,6 +14,7 @@ type TeamApp interface {
 	RegisterAdminTeam(teamname string) (*model.Team, error)
 	GetTeamByID(teamID uint) (*model.Team, error)
 	UpdateTeamname(teamID uint, newTeamname string) error
+	RenewTeamToken(t *model.Team) error
 }
 
 func (app *app) RegisterTeam(teamname string) (*model.Team, error) {
@@ -70,6 +72,13 @@ func (app *app) validateTeamname(teamname string) error {
 		return NewErrorMessage("teamname already used")
 	} else if err != nil && !gorm.IsRecordNotFoundError(err) {
 		return err
+	}
+	return nil
+}
+
+func (app *app) RenewTeamToken(t *model.Team) error {
+	if err := app.repo.UpdateTeamToken(t, newToken()); err != nil {
+		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }

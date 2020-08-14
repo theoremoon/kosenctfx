@@ -1,8 +1,10 @@
 package repository
 
 import (
+	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
+	"golang.org/x/xerrors"
 )
 
 type Repository interface {
@@ -36,4 +38,14 @@ func (r *repository) Migrate() {
 		&model.Submission{},
 		&model.Config{},
 	)
+}
+
+func isDuplicatedError(err error) bool {
+	var mysqlErr *mysql.MySQLError
+	if xerrors.As(err, &mysqlErr) {
+		if mysqlErr.Number == 1062 {
+			return true
+		}
+	}
+	return false
 }

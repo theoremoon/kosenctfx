@@ -5,7 +5,6 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/config"
@@ -39,7 +38,8 @@ func run() error {
 
 	// admin ユーザを自動生成して適当なCTF情報を入れる
 	if _, err := app.GetAdminUser(); err != nil {
-		password := uuid.New().String()
+		// password := uuid.New().String()
+		password := "password"
 		if _, err := app.CreateAdminUser(conf.Email, password); err != nil {
 			return err
 		}

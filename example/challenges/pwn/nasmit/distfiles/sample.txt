@@ -1,0 +1,5 @@
+; Sample code
+  mov rax, 1
+  mov rbx, 2
+  add rax, rbx
+  exit rax

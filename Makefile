@@ -6,6 +6,13 @@ up:
 down:
 	(cd dev; docker-compose down)
 
+.PHONY: bucket
+bucket:
+	(cd bucket; docker-compose up)
+
+bucket-down:
+	(cd bucket; docker-compose down)
+
 setchallenge:
 	(cd scoreserver/cmd/setchallenge/; go build -a -tags netgo -installsuffix netgo -ldflags="-extldflags \"-static\"" -o ../../../bin/setchallenge)
 

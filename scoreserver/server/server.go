@@ -96,6 +96,7 @@ func (s *server) Start(addr string) error {
 	e.POST("/admin/update-challenge", s.updateChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-challenge", s.newChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-notification", s.newNotificationHandler(), s.adminMiddleware)
+	e.GET("/admin/list-challenges", s.listChallengesHandler(), s.adminMiddleware)
 
 	return e.Start(addr)
 }

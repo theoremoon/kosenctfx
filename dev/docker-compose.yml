@@ -17,9 +17,11 @@ services:
     ports:
       - 9000:8080
 
-  transfersh:
-    image: dutchcoders/transfer.sh
+  minio:
+    image: minio/minio
     ports:
-      - 9999:8080
-
-    command: '--http-auth-user transfer --http-auth-pass password --provider local --basedir /tmp/'
+      - "49000:9000"
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    command: ["server", "/data"]

@@ -1,0 +1,10 @@
+{
+    "name": "nasmit",
+    "description": "<pre>nc ${host} ${port}</pre>",
+    "flag": "KosenCTF{br1ng_ur_0wn_g4dg3t!}",
+    "author": "ptr-yudai",
+    "tags": ["pwn"],
+    "host": "pwn.kosenctf.com",
+    "port": 9001,
+    "is_survey": false
+}

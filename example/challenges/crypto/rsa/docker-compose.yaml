@@ -1,7 +1,0 @@
-version: '3'
-services:
-  rsa:
-    build: ./
-    restart: always
-    ports:
-      - 11000:11000

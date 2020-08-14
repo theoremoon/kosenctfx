@@ -343,17 +343,17 @@ func (s *server) initializeHandler() echo.HandlerFunc {
 func (s *server) openChallengeHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
-			ChallengeID uint `json:"challenge_id"`
+			Name string `json:"name"`
 		})
 		if err := c.Bind(req); err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		if err := s.app.OpenChallenge(req.ChallengeID); err != nil {
-			return errorHandle(c, err)
-		}
-		chal, err := s.app.GetChallengeByID(req.ChallengeID)
+		chal, err := s.app.GetRawChallengeByName(req.Name)
 		if err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		if err := s.app.OpenChallenge(chal.ID); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		s.systemWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
 		return c.JSON(http.StatusOK, ChallengeOpenMessage)
@@ -405,9 +405,9 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 			Attachments []service.Attachment
 		})
 		if err := c.Bind(req); err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		_, err := s.app.AddChallenge(&service.Challenge{
+		if err := s.app.AddChallenge(&service.Challenge{
 			Name:        req.Name,
 			Flag:        req.Flag,
 			Description: req.Description,
@@ -415,9 +415,8 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 			IsSurvey:    req.IsSurvey,
 			Tags:        req.Tags,
 			Attachments: req.Attachments,
-		})
-		if err != nil {
-			return errorHandle(c, err)
+		}); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		return c.JSON(http.StatusOK, ChallengeAddMessage)
 	}
@@ -437,5 +436,15 @@ func (s *server) newNotificationHandler() echo.HandlerFunc {
 		}
 		s.systemWebhook.Post(fmt.Sprintf("Notification: ```\n%s\n```", notification.Content))
 		return c.JSON(http.StatusOK, AddNotificationMessage)
+	}
+}
+
+func (s *server) listChallengesHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		challenges, err := s.app.ListAllChallenges()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		return c.JSON(http.StatusOK, challenges)
 	}
 }

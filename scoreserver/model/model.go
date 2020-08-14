@@ -65,8 +65,9 @@ type Challenge struct {
 	Host        *string
 	Port        *int
 
-	IsOpen   bool
-	IsSurvey bool
+	IsOpen    bool
+	IsRunning bool
+	IsSurvey  bool
 }
 
 type Tag struct {
@@ -80,6 +81,7 @@ type Attachment struct {
 	Model
 
 	ChallengeId uint
+	Name        string
 	URL         string
 }
 

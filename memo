@@ -1,0 +1,26 @@
++ challenge register
+ - スコアサーバにデータ登録
+ - ファイルサーバにファイルアップード
+ - Docker RegistryにChallenge ImageとSolver Imageを追加する
+ - 問題managerに問題名とChallenge Image / Solver Imageの対応を追加する
+
++ challenge start
+ - 問題managerでChallenge Imageを起動する
+ - 問題managerでSolver Imageを定期稼働する
+
++ challenge open
+ - スコアサーバに司令を送る
+  + スコアサーバはAvailability Checkの結果をDiscordに書き込むようになる
+  + スコアサーバは問題OpenをNotificationに書く
+ - InfrastractureでPortをOpenする
+
++ challenge close
+ - スコアサーバに司令を送る
+ - InfrastractureでPortをCloseする
+
++ challenge stop
+ - 問題managerでChallenge Imageを停止する
+ - 問題managerでSolver Imageの定期稼働を停止する
+
++ challenge update
+ - TODO

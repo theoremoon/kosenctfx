@@ -1,0 +1,29 @@
+---
+- hosts: all
+  tasks:
+    - name: Install Challengemanager
+      copy:
+        src: ../../bin/challengemanager
+        dest: /usr/local/bin/challengemanager
+        owner: root
+        group: root
+        mode: 0755
+      become: yes
+
+    - name: Set unit file
+      template:
+        src: ./challengemanager.service
+        dest: /etc/systemd/system/challengemanager.service
+        owner: root
+        group: root
+        mode: 0644
+      become: yes
+
+    - name: Start Daemon
+      systemd:
+        name: challengemanager
+        state: restarted
+        daemon_reload: yes
+        enabled: yes
+      become: yes
+

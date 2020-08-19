@@ -1,8 +1,0 @@
-{
-  "name": "babyrsa",
-  "description": "to keep a secret as a secret, I decided to encrypt it.",
-  "flag": "KosenCTF{baby_babiest_rsa}",
-  "author": "theoremoon",
-  "tags": ["crypto"],
-  "is_survey": false
-}

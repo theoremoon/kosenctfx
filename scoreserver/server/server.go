@@ -46,16 +46,18 @@ type Server interface {
 }
 type server struct {
 	app           service.App
+	Token         string
 	SessionKey    string
 	FrontendURL   string
 	adminWebhook  webhook.Webhook
 	systemWebhook webhook.Webhook
 }
 
-func New(app service.App, frontendURL string) Server {
+func New(app service.App, frontendURL, token string) Server {
 	return &server{
 		app:           app,
 		SessionKey:    "kosenctfx",
+		Token:         token,
 		FrontendURL:   frontendURL,
 		adminWebhook:  webhook.Dummy("ADMIN"),
 		systemWebhook: webhook.Dummy("SYSTEM"),
@@ -97,6 +99,8 @@ func (s *server) Start(addr string) error {
 	e.POST("/admin/new-challenge", s.newChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-notification", s.newNotificationHandler(), s.adminMiddleware)
 	e.GET("/admin/list-challenges", s.listChallengesHandler(), s.adminMiddleware)
+	e.GET("/admin/list-challenges", s.listChallengesHandler(), s.adminMiddleware)
+	e.POST("/admin/set-challenge-status", s.setChallengeStatusHandler(), s.adminMiddleware)
 
 	return e.Start(addr)
 }

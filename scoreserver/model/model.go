@@ -106,6 +106,8 @@ type Notification struct {
 type Config struct {
 	Model
 
+	Token string
+
 	CTFName string
 	StartAt time.Time
 	EndAt   time.Time

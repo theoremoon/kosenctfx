@@ -198,7 +198,7 @@ func (s *server) teamnameUpdateHandler() echo.HandlerFunc {
 func (s *server) challengesHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		challenges, err := s.app.ListOpenChallenges()
-		for i, _ := range challenges {
+		for i := range challenges {
 			challenges[i].Flag = ""
 		}
 		if err != nil {
@@ -375,7 +375,7 @@ func (s *server) updateChallengeHandler() echo.HandlerFunc {
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, err)
 		}
-		_, err := s.app.UpdateChallenge(
+		err := s.app.UpdateChallenge(
 			req.ID,
 			&service.Challenge{
 				Name:        req.Name,
@@ -407,18 +407,40 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		if err := s.app.AddChallenge(&service.Challenge{
-			Name:        req.Name,
-			Flag:        req.Flag,
-			Description: req.Description,
-			Author:      req.Author,
-			IsSurvey:    req.IsSurvey,
-			Tags:        req.Tags,
-			Attachments: req.Attachments,
-		}); err != nil {
+
+		if chal, err := s.app.GetRawChallengeByName(req.Name); err == nil {
+			// UPDATE
+			if err := s.app.UpdateChallenge(chal.ID, &service.Challenge{
+				Name:        req.Name,
+				Flag:        req.Flag,
+				Description: req.Description,
+				Author:      req.Author,
+				IsSurvey:    req.IsSurvey,
+				Tags:        req.Tags,
+				Attachments: req.Attachments,
+			}); err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+		} else {
+			// ADD
+			if err := s.app.AddChallenge(&service.Challenge{
+				Name:        req.Name,
+				Flag:        req.Flag,
+				Description: req.Description,
+				Author:      req.Author,
+				IsSurvey:    req.IsSurvey,
+				Tags:        req.Tags,
+				Attachments: req.Attachments,
+			}); err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+		}
+
+		chal, err := s.app.GetChallengeByName(req.Name)
+		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		return c.JSON(http.StatusOK, ChallengeAddMessage)
+		return c.JSON(http.StatusOK, chal)
 	}
 }
 
@@ -446,5 +468,20 @@ func (s *server) listChallengesHandler() echo.HandlerFunc {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		return c.JSON(http.StatusOK, challenges)
+	}
+}
+
+func (s *server) setChallengeStatusHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		req := new(struct {
+			Name   string `json:"name"`
+			Result bool   `json:"result"`
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		//TODO
+		log.Printf("[+] challenge-status: %v %v\n", req.Result, req.Name)
+		return c.NoContent(http.StatusOK)
 	}
 }

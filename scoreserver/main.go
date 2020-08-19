@@ -6,6 +6,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
+	"golang.org/x/xerrors"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/config"
 	"github.com/theoremoon/kosenctfx/scoreserver/mailer"
@@ -44,13 +45,18 @@ func run() error {
 			return err
 		}
 
+		// token := uuid.New().String()
+		token := "token"
+
 		log.Printf("---[ADMIN]---\n")
 		log.Printf(" username: admin\n")
 		log.Printf(" email: %s\n", conf.Email)
 		log.Printf(" password: %s", password)
+		log.Printf(" token: %s", token)
 
 		app.SetCTFConfig(&model.Config{
 			CTFName:       "KosenCTF X",
+			Token:         token,
 			StartAt:       time.Now(),
 			EndAt:         time.Now(),
 			RegisterOpen:  true, // FIXME: for production, this value should be false
@@ -64,7 +70,12 @@ func run() error {
 		})
 	}
 
-	srv := server.New(app, conf.Front)
+	ctfConf, err := app.GetCTFConfig()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	srv := server.New(app, conf.Front, ctfConf.Token)
 	return srv.Start(conf.Addr)
 }
 

@@ -11,8 +11,8 @@ import (
 )
 
 type Attachment struct {
-	Name string
-	URL  string
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }
 
 type Challenge struct {
@@ -40,7 +40,7 @@ type ChallengeApp interface {
 
 	AddChallenge(c *Challenge) error
 	OpenChallenge(challlengeID uint) error
-	UpdateChallenge(challengeID uint, c *Challenge) (*model.Challenge, error)
+	UpdateChallenge(challengeID uint, c *Challenge) error
 
 	SubmitFlag(user *model.User, flag string) (*model.Challenge, bool, bool, error)
 }
@@ -50,7 +50,48 @@ func (app *app) GetChallengeByID(challengeID uint) (*Challenge, error) {
 }
 
 func (app *app) GetChallengeByName(name string) (*Challenge, error) {
-	return nil, NewErrorMessage("not implemented")
+	c, err := app.repo.GetChallengeByName(name)
+	if err != nil {
+		if xerrors.As(err, &repository.NotFoundError{}) {
+			return nil, NewErrorMessage("No such challenge")
+		}
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	chal := Challenge{
+		ID:          c.ID,
+		Flag:        c.Flag,
+		Description: c.Description,
+		Author:      c.Author,
+		Score:       0,          //TODO
+		SolvedBy:    []string{}, // TODO
+		IsOpen:      c.IsOpen,
+		IsRunning:   false, // TODO
+		IsSurvey:    c.IsSurvey,
+	}
+
+	tags, err := app.repo.FindTagsByChallengeID(c.ID)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	chal.Tags = make([]string, len(tags))
+	for i := range tags {
+		chal.Tags[i] = tags[i].Tag
+	}
+
+	attachments, err := app.repo.FindAttachmentsByChallengeID(c.ID)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	chal.Attachments = make([]Attachment, len(attachments))
+	for i := range attachments {
+		chal.Attachments[i] = Attachment{
+			Name: attachments[i].Name,
+			URL:  attachments[i].URL,
+		}
+	}
+
+	// TODO
+	return &chal, nil
 }
 
 func (app *app) GetRawChallengeByName(name string) (*model.Challenge, error) {
@@ -204,8 +245,45 @@ func (app *app) OpenChallenge(challengeID uint) error {
 	return nil
 }
 
-func (app *app) UpdateChallenge(challengeID uint, c *Challenge) (*model.Challenge, error) {
-	return nil, NewErrorMessage("not implemented")
+func (app *app) UpdateChallenge(challengeID uint, c *Challenge) error {
+	chal := model.Challenge{
+		Name:        c.Name,
+		Flag:        c.Flag,
+		Description: c.Description,
+		Author:      c.Author,
+		IsSurvey:    c.IsSurvey,
+	}
+	chal.ID = challengeID
+
+	err := app.repo.UpdateChallenge(&chal)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	if err := app.repo.DeleteTagByChallengeId(challengeID); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	if err := app.repo.DeleteAttachmentByChallengeId(challengeID); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	for _, t := range c.Tags {
+		// do not care about error of this
+		app.repo.AddChallengeTag(&model.Tag{
+			ChallengeId: chal.ID,
+			Tag:         t,
+		})
+	}
+
+	for _, a := range c.Attachments {
+		// do not care about error of this
+		app.repo.AddChallengeAttachment(&model.Attachment{
+			ChallengeId: chal.ID,
+			Name:        a.Name,
+			URL:         a.URL,
+		})
+	}
+	return nil
 }
 
 func (app *app) SubmitFlag(user *model.User, flag string) (*model.Challenge, bool, bool, error) {

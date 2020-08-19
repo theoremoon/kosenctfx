@@ -13,6 +13,8 @@ type ChallengeRepository interface {
 	ListAllChallenges() ([]*model.Challenge, error)
 	ListAllTags() ([]*model.Tag, error)
 	ListAllAttachments() ([]*model.Attachment, error)
+	FindTagsByChallengeID(id uint) ([]*model.Tag, error)
+	FindAttachmentsByChallengeID(id uint) ([]*model.Attachment, error)
 	GetChallengeByName(name string) (*model.Challenge, error)
 	GetChallengeByFlag(flag string) (*model.Challenge, error)
 
@@ -36,7 +38,7 @@ func (r *repository) AddChallenge(c *model.Challenge) error {
 
 func (r *repository) UpdateChallenge(c *model.Challenge) error {
 	if err := r.db.Save(c).Error; err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }
@@ -61,6 +63,21 @@ func (r *repository) ListAllAttachments() ([]*model.Attachment, error) {
 	var attachments []*model.Attachment
 	if err := r.db.Find(&attachments).Error; err != nil {
 		return nil, err
+	}
+	return attachments, nil
+}
+func (r *repository) FindTagsByChallengeID(id uint) ([]*model.Tag, error) {
+	var tags []*model.Tag
+	if err := r.db.Where("challenge_id = ?", id).Find(&tags).Error; err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return tags, nil
+
+}
+func (r *repository) FindAttachmentsByChallengeID(id uint) ([]*model.Attachment, error) {
+	var attachments []*model.Attachment
+	if err := r.db.Where("challenge_id = ?", id).Find(&attachments).Error; err != nil {
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	return attachments, nil
 }
@@ -99,13 +116,13 @@ func (r *repository) AddChallengeTag(t *model.Tag) error {
 
 func (r *repository) DeleteAttachmentByChallengeId(challengeId uint) error {
 	if err := r.db.Where("challenge_id = ?", challengeId).Delete(&model.Attachment{}).Error; err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }
 func (r *repository) DeleteTagByChallengeId(challengeId uint) error {
 	if err := r.db.Where("challenge_id = ?", challengeId).Delete(&model.Tag{}).Error; err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }

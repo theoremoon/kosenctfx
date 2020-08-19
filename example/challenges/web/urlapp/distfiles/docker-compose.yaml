@@ -1,0 +1,13 @@
+version: '3'
+services:
+  redis:
+    image: redis:5
+    command: "redis-server /redis.conf"
+    volumes:
+      - "${PWD}/challenge/redis.conf:/redis.conf"
+    ports:
+      - 6379:6379
+  app:
+    build: .
+    ports:
+      - 8004:4567

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>shortcut</title>
+        <style>
+            html, body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                background-color: skyblue;
+            }
+            #container {
+                width: 968px;
+                margin: 0 auto;
+                margin-top: 200px;
+            }
+            input[type=text] {
+                display: block;
+                width: 100%;
+
+                background-color: #fff;
+                border: 2px solid #333;
+                    text-align: center;
+                font-size: 24px;
+            }
+            input[type=submit] {
+                background-color: #fff;
+                border: 2px solid #333;
+                font-size: 20px;
+                float: right;
+            }
+            h1 {
+                font-family: sans-serif;
+                color: #777;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="container">
+            <h1>do you prefer short or long? make your url shrink or expand ;p</h1>
+            <form action="" method="POST">
+                <p>
+                    <input type="text" name="url" placeholder="url here">
+                </p>
+                <p>
+                    <input type="submit" value="shorten url">
+                </p>
+            </form>
+        </div>
+    </body>
+</html>

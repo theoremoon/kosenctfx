@@ -13,21 +13,18 @@ from minio import Minio
 import hashlib
 from string import Template
 import tableprint
+import yaml
+import random
+import string
+from base64 import b64decode
+from hashlib import md5
+import subprocess
 
 BASEDIR_DEFAULT = os.getcwd()
 CONFFILE_DEFAULT = Path(os.getcwd()) / "config.ini"
 
-def login(server, username, password):
-  """
-  スコアサーバにログインしてSessionを取得し、 cookie.pickleとして保存する
-  """
-  r = requests.post(server + "/login", data=json.dumps({
-    "username": username,
-    "password": password,
-  }), headers={"Content-Type": "application/json"})
-  r.raise_for_status()
-
-  return r.cookies
+def randname():
+  return "".join(random.choices(string.ascii_letters, k=8))
 
 
 def iterate_challenges(basedir):
@@ -38,31 +35,21 @@ def iterate_challenges(basedir):
   for taskdir in basepath.glob("**/task.json"):
     yield taskdir.parent
 
-
 class API():
-  def __init__(self, url, username, password):
+  """
+  Challenge Manager用のAPI
+  """
+  def __init__(self, url, token):
     self.url = url
-    self.username = username
-    self.password = password
-    self.cookies = login(url, username, password)
+    self.token = token
 
   def post(self, endpoint, data):
-    while True:
-      r = requests.post(self.url + endpoint, data=json.dumps(data), headers={"Content-Type": "application/json"}, cookies=self.cookies)
-      if r.status_code == 401:
-        self.cookies = login(self.url, self.username, self.password)
-        continue
-
-      return r
+    r = requests.post(self.url + endpoint, data=json.dumps(data), headers={"Content-Type": "application/json", "Authorization": "Bearer {}".format(self.token)})
+    return r
 
   def get(self, endpoint):
-    while True:
-      r = requests.get(self.url + endpoint, cookies=self.cookies)
-      if r.status_code == 401:
-        self.cookies = login(self.url, self.username, self.password)
-        continue
-
-      return r
+    r = requests.get(self.url + endpoint, headers={"Authorization": "Bearer {}".format(self.token)})
+    return r
 
 
 class CommandClass():
@@ -72,16 +59,36 @@ class CommandClass():
     self._conf.read(configfile)
     self._api = API(
       self._conf["scoreserver"]["url"],
-      self._conf["scoreserver"]["username"],
-      self._conf["scoreserver"]["password"],
+      self._conf["scoreserver"]["token"],
+    )
+    self._manager = API(
+      self._conf["manager"]["url"],
+      self._conf["manager"]["token"],
+    )
+    self._do = API(
+      self._conf["digitalocean"]["url"],
+      self._conf["digitalocean"]["token"],
     )
 
     # uploaderの設定。Minioを使ってS3 compatibleなendpointを利用できる
     bucket = self._conf["bucket"]
     self._minio = Minio(bucket["endpoint"], access_key=bucket["access_key"], secret_key=bucket["secret_key"], secure=False if "insecure"  in bucket else True)
 
+
+  def init(self):
+    r = self._manager.post("/init", {
+      "server_url": self._conf["scoreserver"]["url"],
+      "server_token": self._conf["scoreserver"]["token"],
+    })
+    print("[+] challenge manager initialized")
+
     # バケットがなければ作り、ついでにポリシーを制定する
+    # よく考えるとこのツールでbucketを作ってるのはおかしいんだよな……
+    # おかしくはなくて、bucket名の指定とAPI keyを渡しているのは正しい（？）
+    # どうせwrite keyは必要だからね……
+    # どちらかといえばDigital Ocean側の鍵を持っているのがおかしい
     # Read可能 / List不可能 / Write不可能
+    bucket = self._conf["bucket"]
     if not self._minio.bucket_exists(bucket["name"]):
       self._minio.make_bucket(bucket["name"], bucket["region"])
       self._minio.set_bucket_policy(bucket["name"], json.dumps({
@@ -96,6 +103,7 @@ class CommandClass():
           }
         ]
       }))
+    print("[+] bucket initialized")
 
   def list(self):
     """
@@ -160,11 +168,43 @@ class CommandClass():
       })
       print("[ ] {}: {}".format(taskinfo["name"], r.text))
 
-  def start(self, name):
+  def start(self, ids):
     """
-    - 問題を起動する。nameは文字列またはリスト
+    - 問題を起動する。idsは数値またはリスト
     """
-    pass
+    if isinstance(ids, int):
+      ids = [ids]
+    else:
+      ids = ids
+
+    for id in ids:
+      r = self._manager.post("/start", {
+        "id": id
+      })
+      if 200 <= r.status_code < 400:
+        print("[+] started: {}".format(id))
+      else:
+        print("[-] failed to start: {}".format(id))
+        print(r.text)
+
+  def stop(self, ids):
+    """
+    - 問題を停止する。idsは数値またはリスト
+    """
+    if isinstance(ids, int):
+      ids = [ids]
+    else:
+      ids = ids
+
+    for id in ids:
+      r = self._manager.post("/stop", {
+        "id": id
+      })
+      if 200 <= r.status_code < 400:
+        print("[+] stopped: {}".format(id))
+      else:
+        print("[-] failed to stop: {}".format(id))
+        print(r.text)
 
 
   def register(self):
@@ -179,6 +219,8 @@ class CommandClass():
       with open(chal / "task.json", "r") as f:
         taskinfo = json.load(f)
 
+      if "port" in taskinfo:
+        taskinfo["port"] = str(taskinfo["port"])
       # hostとかportとかをdescriptionに埋め込んでいる場合
       taskinfo["description"] = Template(taskinfo["description"]).substitute(taskinfo)
       taskinfo["attachments"] = []
@@ -227,11 +269,7 @@ class CommandClass():
               "url": url,
             })
 
-      compose = chal / "docker-compose.yml"
-      if compose.is_file():
-        # TODO: yamlをいい感じにしてbuildしてpush
-        pass
-
+      # scoreserverに送る
       r = self._api.post("/admin/new-challenge", data={
         "name": taskinfo["name"],
         "flag": taskinfo["flag"],
@@ -242,9 +280,73 @@ class CommandClass():
         "attachments": taskinfo["attachments"],
       })
       if 200 <= r.status_code < 400:
-          print("[+] registered: {}".format(taskinfo["name"]))
+          print("[+] registered to scoreserver: {}".format(taskinfo["name"]))
       else:
           print("[-] {}".format(r.text))
+      challengeinfo = r.json()
+
+      compose_file = chal / "docker-compose.yml"
+      if compose_file.is_file():
+        def do_compose_iikanji(compose_path, name):
+          """
+          既存のdocker-compose.ymlを読み込んで、imageセクションを追加してbuild / pushし、新しくなったdocker-compose.ymlの内容を返す
+          """
+          dir = compose_path.parent
+
+          # 既存のdocker-compose.ymlを読み込んで imageを追加する
+          with open(compose_path) as f:
+            compose = yaml.safe_load(f)
+          for service in compose["services"].keys():
+            if "image" in service:
+              print("[+] unsupported!!!")
+              quit()
+
+            # imageタグをセットする
+            compose["services"][service]["image"] = "{}/{}/{}_{}:latest".format(self._conf["registry"]["server"], self._conf["registry"]["name"], md5(taskinfo["name"].encode()).hexdigest(), service)
+
+            # buildは削除する
+            if "build" in service:
+              compose["services"][service].pop("build")
+
+          # 新しいcompose.ymlを作る
+          new_compose_path = dir / "docker-compose_{}.yml".format(randname())
+          new_compose = yaml.dump(compose, default_flow_style=False)
+          with open(new_compose_path, "w") as f:
+            f.write(new_compose)
+
+          # 新しく作ったdocker-compose.ymlを使ってイメージをビルド、pushする
+          subprocess.run(["docker-compose", "-f", new_compose_path.name, "build"], cwd=dir, check=True)
+          subprocess.run(["docker", "login", self._conf["registry"]["server"], "-u", self._conf["registry"]["username"], "-p", self._conf["registry"]["password"]], check=True)
+          subprocess.run(["docker-compose", "-f", new_compose_path.name, "push"], cwd=dir, check=True)
+
+          # 新しく作ったdocker-compose.ymlはもういらないので消す
+          os.remove(new_compose_path)
+
+          # 新しいdocker-composeの内容だけを返す
+          return new_compose
+
+        new_compose = do_compose_iikanji(compose_file, taskinfo["name"])
+        solve_compose_path = chal / "solution" / "docker-compose.yml"
+        if solve_compose_path.is_file():
+          solve_compose = do_compose_iikanji(solve_compose_path, taskinfo["name"] + "_solution")
+        else:
+          solve_compose = ""
+
+        # challenge managerに登録する
+        r = self._manager.post("/register", {
+          "id": challengeinfo["id"],
+          "compose": new_compose,
+          "solve_compose": solve_compose,
+          "flag": taskinfo["flag"],
+          "host": taskinfo["host"],
+          "port": taskinfo["port"],
+        })
+        if 200 <= r.status_code < 400:
+            print("[+] registered to manager: {}".format(taskinfo["name"]))
+        else:
+            print("[-] {}".format(r.text))
+            quit()
+
 
 
 def main():

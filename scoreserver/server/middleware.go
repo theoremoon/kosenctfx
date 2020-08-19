@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
@@ -22,6 +23,18 @@ func (s *server) loginMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 
 func (s *server) adminMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// tokenによる認証
+		auth := c.Request().Header.Get(echo.HeaderAuthorization)
+		if strings.Contains(auth, s.Token) {
+			user, err := s.app.GetAdminUser()
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+
+			return h(&loginContext{c, user})
+		}
+
+		// admin loginによる認証
 		user, err := s.getLoginUser(c)
 		if err != nil {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{

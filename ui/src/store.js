@@ -10,7 +10,8 @@ const store = {
           teamid: null,
           ctfStart: null,
           ctfEnd: null,
-          ctfName: null
+          ctfName: null,
+          challenges: []
         };
       }
     });

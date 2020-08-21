@@ -74,6 +74,7 @@ class CommandClass():
     bucket = self._conf["bucket"]
     self._minio = Minio(bucket["endpoint"], access_key=bucket["access_key"], secret_key=bucket["secret_key"], secure=False if "insecure"  in bucket else True)
 
+  # TODO: init(reconfig) scoreserver
 
   def init(self):
     r = self._manager.post("/init", {
@@ -105,6 +106,14 @@ class CommandClass():
       }))
     print("[+] bucket initialized")
 
+  def _local_challenges(self):
+    chals = {}
+    for chal in iterate_challenges(self._basedir):
+      with open(chal / "task.json", "r") as f:
+        taskinfo = json.load(f)
+      chals[taskinfo["name"]] = taskinfo
+    return chals
+
   def list(self):
     """
     問題一覧とそのステータスを表示する
@@ -113,15 +122,9 @@ class CommandClass():
 
     r = self._api.get("/admin/list-challenges")
     remote = r.json()
-
-    local = []
-    for chal in iterate_challenges(self._basedir):
-      with open(chal / "task.json", "r") as f:
-        taskinfo = json.load(f)
-      local.append(taskinfo)
-
     remote = {c["name"]:c for c in remote}
-    local = {c["name"]:c for c in local}
+
+    local = self._local_challenges()
     chals = []
     for name in remote.keys() | local.keys():
       lc = local.get(name)
@@ -148,25 +151,34 @@ class CommandClass():
     ])
 
 
-  def open(self, name):
+  def open(self, ids):
     """
-    - 問題を公開する。nameは文字列またはリスト
+    - 問題を公開する。idsは数値またはリスト
     """
+    if isinstance(ids, int):
+      ids = [ids]
+    else:
+      ids = ids
 
-    for chal in iterate_challenges(self._basedir):
-      with open(chal / "task.json", "r") as f:
-        taskinfo = json.load(f)
-      if taskinfo["name"] != name or taskinfo["name"] not in name:
-        continue
+    r = self._api.get("/admin/list-challenges")
+    remote = r.json()
+    for id in ids:
+      for c in remote:
+        if c["id"] != id:
+          continue
 
-      if "host" in taskinfo:
-        #TODO: Firewallを開ける
-        pass
+        name = c["name"]
+        # TODO open firewall with taskinfo
 
-      r = self._api.post("/admin/open-challenge", {
-        "name": taskinfo["name"],
-      })
-      print("[ ] {}: {}".format(taskinfo["name"], r.text))
+        # open する
+        r = self._api.post("/admin/open-challenge", {
+          "name": name,
+        })
+        r.raise_for_status()
+        print("[+] opened: {}".format(name))
+        break
+      else:
+        print("[-] no such challenge: {}".format(id))
 
   def start(self, ids):
     """
@@ -306,7 +318,7 @@ class CommandClass():
 
             # buildは削除する
             if "build" in service:
-              compose["services"][service].pop("build")
+              del compose["services"][service]["build"]
 
           # 新しいcompose.ymlを作る
           new_compose_path = dir / "docker-compose_{}.yml".format(randname())

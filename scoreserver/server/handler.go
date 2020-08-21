@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"golang.org/x/xerrors"
 
@@ -106,6 +107,34 @@ func (s *server) infoHandler() echo.HandlerFunc {
 		ret["ctf_end"] = conf.EndAt.Unix()
 		ret["ctf_name"] = conf.CTFName
 
+		return c.JSON(http.StatusOK, ret)
+	}
+}
+
+/// ログインしているかどうか、CTF開催中かどうかで挙動が変わる
+/// ログインしていない -> notificationとrankingを返す
+/// ログインしている   -> 問題情報も返す
+/// CTF開催中          -> ranking / 問題情報は redisにcacheしておいて、expiredになったら計算してcacheし直す
+/// CTF開催中でない    -> 毎回計算する
+func (s *server) infoUpdateHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		u, _ := s.getLoginUser(c)
+		ret := make(map[string]interface{})
+
+		// TODO notification / ranking
+
+		// 問題情報を返す
+		// TODO REDIS
+		if u != nil {
+			challenges, err := s.app.ListOpenChallenges()
+			for i := range challenges {
+				challenges[i].Flag = ""
+			}
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+			ret["challenges"] = challenges
+		}
 		return c.JSON(http.StatusOK, ret)
 	}
 }
@@ -288,14 +317,21 @@ func (s *server) submitHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		lc := c.(*loginContext)
 		req := new(struct {
-			Flag string
+			Flag string `json:"flag"`
 		})
 		if err := c.Bind(req); err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		challenge, correct, valid, err := s.app.SubmitFlag(lc.User, req.Flag)
+
+		ctfStatus, err := s.app.CurrentCTFStatus()
 		if err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		flag := strings.Trim(req.Flag, " ")
+		challenge, correct, valid, err := s.app.SubmitFlag(lc.User, flag, ctfStatus == service.CTFRunning)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 
 		team, err := s.app.GetTeamByID(lc.User.TeamId)
@@ -355,6 +391,7 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 		if err := s.app.OpenChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+		// TODO add notification?
 		s.systemWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
 		return c.JSON(http.StatusOK, ChallengeOpenMessage)
 	}

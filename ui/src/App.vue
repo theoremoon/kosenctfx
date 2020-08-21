@@ -10,7 +10,9 @@
         </div>
 
         <div class="flex flex-grow">
-          <div class="mr-4"><router-link to="/">CHALLENGES</router-link></div>
+          <div class="mr-4">
+            <router-link to="/challenges">CHALLENGES</router-link>
+          </div>
           <div class="mr-4"><router-link to="/">RANKING</router-link></div>
         </div>
 
@@ -64,6 +66,7 @@
 <script>
 import Vue from "vue";
 import API from "./api";
+import { errorHandle } from "./message";
 
 export default Vue.extend({
   data() {
@@ -83,12 +86,28 @@ export default Vue.extend({
         this.deleteMessage(id);
       }, 3000);
     });
+
+    // 60秒ごとに情報更新
+    this.infoUpdate();
+    setInterval(() => {
+      this.infoUpdate();
+    }, 60 * 1000);
   },
   methods: {
     logout() {
       API.post("/logout");
       this.$router.push("/");
       this.$eventHub.$emit("login-check");
+    },
+    infoUpdate() {
+      API.get("/info-update")
+        .then(r => {
+          console.log(r.data);
+          for (const [key, value] of Object.entries(r.data)) {
+            Vue.set(this.$store, key, value);
+          }
+        })
+        .catch(e => errorHandle(this, e));
     },
     checkLogin() {
       API.get("/info")
@@ -155,9 +174,11 @@ input[type="password"] {
   border-bottom: 1px solid $accent-color;
   display: inline-block;
   width: 100%;
+  margin: 0.25rem;
+  padding: 0.25rem 0;
 }
 input[type="submit"] {
-  margin: 0.25rem;
+  margin: 0.25rem 0;
   padding: 0.25rem 0.5rem;
   background-color: transparent;
   border: 1px solid $accent-color;
@@ -175,7 +196,12 @@ input[type="submit"]:hover {
   input[type="email"],
   input[type="password"] {
     display: inline-block;
-    width: 1;
+    flex: 1;
+  }
+
+  label {
+    padding: 0.25rem 0;
+    margin: 0.25rem 0;
   }
 }
 </style>

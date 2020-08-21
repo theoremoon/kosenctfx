@@ -25,7 +25,7 @@ const (
 )
 
 func pathes(id uint) (string, string) {
-	return filepath.Join(WORKDIR, fmt.Sprintf("docker_compose_%d.yml", id)), filepath.Join(WORKDIR, fmt.Sprintf("docker_compose_%d_solve.yml", id))
+	return filepath.Join(WORKDIR, fmt.Sprintf("docker-compose_%d.yml", id)), filepath.Join(WORKDIR, fmt.Sprintf("docker-compose_%d_solve.yml", id))
 }
 
 type Challenge struct {
@@ -59,14 +59,15 @@ func (c *checker) SendResult(id uint, result bool) {
 	})
 	req, err := http.NewRequest(http.MethodPost, c.ServerURL+"/admin/set-challenge-status", bytes.NewBuffer(j))
 	if err != nil {
-		log.Printf("ERROR %v\n", xerrors.As(err, &repository.NotFoundError{}))
+		log.Printf("%s\n", c.ServerURL+"/admin/set-challenge-status")
+		log.Printf("ERROR %v\n", xerrors.Errorf(": %w", err))
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.Token)
 	_, err = http.DefaultClient.Do(req)
 	if err != nil {
-		log.Printf("ERROR %v\n", xerrors.As(err, &repository.NotFoundError{}))
+		log.Printf("ERROR %v\n", xerrors.Errorf(": %w", err))
 		return
 	}
 }
@@ -88,7 +89,7 @@ func (c *checker) Check(duration time.Duration) {
 				cmd := exec.Command(
 					"docker-compose",
 					"-H", c.DockerHost,
-					"--compose-file",
+					"-f",
 					chal.SolveComposePath,
 					"run",
 					"--rm",

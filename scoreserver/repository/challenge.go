@@ -96,7 +96,10 @@ func (r *repository) GetChallengeByName(name string) (*model.Challenge, error) {
 func (r *repository) GetChallengeByFlag(flag string) (*model.Challenge, error) {
 	var c model.Challenge
 	if err := r.db.Where("flag = ?", flag).First(&c).Error; err != nil {
-		return nil, err
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, xerrors.Errorf(": %w", NotFound("challenge"))
+		}
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	return &c, nil
 }

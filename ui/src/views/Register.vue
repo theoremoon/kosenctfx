@@ -3,17 +3,19 @@
     <form class="w-1/2 flex items-center flex-col" @submit.prevent>
       <div class="w-1/2">
         <div class="mb-4">
-          <label class="block text-sm" for="username">
-            username
-          </label>
-          <input type="text" v-model="username" id="username" required />
-        </div>
-        <div class="mb-4">
           <label class="block text-sm" for="email">
             email
           </label>
           <input type="email" v-model="email" id="email" required />
         </div>
+
+        <div class="mb-4">
+          <label class="block text-sm" for="username">
+            username
+          </label>
+          <input type="text" v-model="username" id="username" required />
+        </div>
+
         <div class="mb-4">
           <label class="block text-sm" for="password">
             password

@@ -7,6 +7,7 @@ import Team from "../views/Team.vue";
 import User from "../views/User.vue";
 import ResetRequest from "../views/ResetRequest.vue";
 import Reset from "../views/Reset.vue";
+import Challenges from "../views/Challenges.vue";
 
 Vue.use(VueRouter);
 
@@ -46,6 +47,11 @@ const routes = [
     path: "/reset",
     name: "Reset",
     component: Reset
+  },
+  {
+    path: "/challenges",
+    name: "Challenges",
+    component: Challenges
   }
 ];
 

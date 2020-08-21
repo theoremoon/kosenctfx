@@ -8,7 +8,7 @@
     </div>
 
     <div v-if="token" class="inline-form px-4">
-      teamtoken: <input type="text" readonly v-model="token" />
+      <label>teamtoken:</label> <input type="text" readonly v-model="token" />
       <input type="submit" value="Regenerate" @click="regenerate" />
     </div>
   </div>

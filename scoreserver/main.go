@@ -46,7 +46,7 @@ func run() error {
 		}
 
 		// token := uuid.New().String()
-		token := "token"
+		token := password
 
 		log.Printf("---[ADMIN]---\n")
 		log.Printf(" username: admin\n")

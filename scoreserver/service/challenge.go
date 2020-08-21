@@ -4,7 +4,6 @@ import (
 	"math"
 	"path/filepath"
 
-	"github.com/jinzhu/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"golang.org/x/xerrors"
@@ -42,7 +41,7 @@ type ChallengeApp interface {
 	OpenChallenge(challlengeID uint) error
 	UpdateChallenge(challengeID uint, c *Challenge) error
 
-	SubmitFlag(user *model.User, flag string) (*model.Challenge, bool, bool, error)
+	SubmitFlag(user *model.User, flag string, ctfRunning bool) (*model.Challenge, bool, bool, error)
 }
 
 func (app *app) GetChallengeByID(challengeID uint) (*Challenge, error) {
@@ -286,35 +285,47 @@ func (app *app) UpdateChallenge(challengeID uint, c *Challenge) error {
 	return nil
 }
 
-func (app *app) SubmitFlag(user *model.User, flag string) (*model.Challenge, bool, bool, error) {
-	correct := false
-	valid := false
+/// 返り値は 解いたchallenge（is_correctがfalseならnil)、 is_correct, is_valid, error
+func (app *app) SubmitFlag(user *model.User, flag string, ctfRunning bool) (*model.Challenge, bool, bool, error) {
 	chal, err := app.repo.GetChallengeByFlag(flag)
-	if err != nil && !gorm.IsRecordNotFoundError(err) {
-		return nil, false, false, err
-	} else if err != nil {
-		correct = true
+	if err != nil && !xerrors.As(err, &repository.NotFoundError{}) {
+		return nil, false, false, xerrors.Errorf(": %w", err)
 	}
-	if correct {
-		_, err = app.repo.FindValidSubmission(user.TeamId, chal.ID)
-		if err != nil && !gorm.IsRecordNotFoundError(err) {
-			return nil, false, false, err
+
+	s := &model.Submission{
+		UserId:    user.ID,
+		TeamId:    user.TeamId,
+		IsCorrect: false, //とりあえずfalseを入れておいてあとからtrueで上書きする
+		IsValid:   false, // 同上
+		Flag:      flag,
+	}
+	if chal == nil {
+		// wrong
+		if err := app.repo.InsertSubmission(s); err != nil {
+			return nil, false, false, xerrors.Errorf(": %w", err)
 		}
-		if gorm.IsRecordNotFoundError(err) {
-			valid = true
+		return nil, false, false, nil
+	} else {
+		// correct
+		s.ChallengeId = &chal.ID
+		s.IsCorrect = true
+
+		if ctfRunning {
+			// ctfRunningがtrueなときは初回の提出だけvalidになる。ここトランザクションかけておく
+			_, valid, err := app.repo.InsertSubmissionTx(s)
+			if err != nil {
+				return nil, false, false, xerrors.Errorf(": %w", err)
+			}
+			return chal, true, valid, nil
+		} else {
+			// elseの場合は参考記録なのでvalidにしない
+			if err := app.repo.InsertSubmission(s); err != nil {
+				return nil, false, false, xerrors.Errorf(": %w", err)
+			}
+			return chal, true, false, nil
 		}
+
 	}
-	if err := app.repo.InsertSubmission(&model.Submission{
-		ChallengeId: &chal.ID,
-		UserId:      user.ID,
-		TeamId:      user.TeamId,
-		IsCorrect:   correct,
-		IsValid:     valid,
-		Flag:        flag,
-	}); err != nil {
-		return nil, false, false, err
-	}
-	return chal, correct, valid, nil
 }
 
 func CalcChallengeScore(conf *model.Config, solveCount uint) uint {

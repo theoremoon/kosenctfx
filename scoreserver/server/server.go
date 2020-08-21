@@ -78,6 +78,7 @@ func (s *server) Start(addr string) error {
 	e.POST("/login", s.loginHandler())
 	e.POST("/logout", s.logoutHandler())
 	e.GET("/info", s.infoHandler())
+	e.GET("/info-update", s.infoUpdateHandler())
 
 	e.POST("/renew-teamtoken", s.renewTeamTokenHanler(), s.loginMiddleware)
 	e.POST("/passwordreset-request", s.passwordresetRequestHandler(), s.notLoginMiddleware)

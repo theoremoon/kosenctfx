@@ -2,8 +2,8 @@ ctf:
   name: KosenCTF
   start: "2020-01-01 01:23:45 +0900"
   end: "2020-12-31 23:59:59 +0900"
-  register_open: true
-  ctf_open: false
+  register_open: false
+  ctf_open: true
   lock_count_seconds: 60
   lock_freq: 5
   lock_seconds: 300

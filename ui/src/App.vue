@@ -92,6 +92,10 @@ export default Vue.extend({
     setInterval(() => {
       this.infoUpdate();
     }, 60 * 1000);
+
+    this.$eventHub.$on("update-request", () => {
+      this.infoUpdate();
+    });
   },
   methods: {
     logout() {

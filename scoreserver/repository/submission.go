@@ -40,14 +40,16 @@ func (r *repository) InsertSubmission(s *model.Submission) error {
 /// トランザクションロックを掛けながら Submission を行う
 /// 返り値のboolはtrueならvalid, falseならvaildではないということになる
 func (r *repository) InsertSubmissionTx(s *model.Submission) (*model.Submission, bool, error) {
-	valid := true
+	valid := false
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		var submission model.Submission
-		if err := tx.Where("user_id = ? AND challenge_id = ? AND is_valid = ?", s.UserId, s.ChallengeId, true).First(&submission).Error; err != nil {
-			if !gorm.IsRecordNotFoundError(err) {
+		if err := tx.Where("team_id = ? AND challenge_id = ? AND is_valid = ?", s.TeamId, s.ChallengeId, true).First(&submission).Error; err != nil {
+			if gorm.IsRecordNotFoundError(err) {
+				// 既存の提出がなければ valid
+				valid = true
+			} else {
 				return xerrors.Errorf(": %w", err)
 			}
-			valid = false
 		}
 		s.IsValid = valid
 		if err := tx.Create(s).Error; err != nil {

@@ -366,7 +366,7 @@ func (s *server) submitHandler() echo.HandlerFunc {
 				team.Teamname,
 				req.Flag,
 			))
-			return messageHandle(c, "wrong flag")
+			return errorHandle(c, service.NewErrorMessage("wrong flag"))
 		}
 	}
 }

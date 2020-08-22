@@ -30,7 +30,8 @@ var (
 	CTFNotStartedMessage     = "CTF has not started yet"
 	CTFNotRunningMessage     = "CTF not running"
 
-	RegistrationClosed = "Registraction is closed now"
+	CTFClosedMessage          = "Competition is closed now"
+	RegistrationClosedMessage = "Registraction is closed now"
 
 	ChallengeOpenMessage   = "Open the challenge"
 	ChallengeAddMessage    = "Added the challenge"
@@ -86,13 +87,13 @@ func (s *server) Start(addr string) error {
 	e.POST("/password-update", s.passwordUpdateHandler(), s.loginMiddleware)
 	e.POST("/teamname-update", s.teamnameUpdateHandler(), s.loginMiddleware, s.ctfNotStartedMiddleware)
 
-	e.GET("/challenges", s.challengesHandler(), s.ctfStartedMiddleware)
+	e.GET("/challenges", s.challengesHandler(), s.ctfStartedMiddleware, s.ctfPlayableMiddleware)
 	e.GET("/ranking", s.rankingHandler(), s.ctfStartedMiddleware)
 	e.GET("/notifications", s.notificationsHandler())
 	e.GET("/team/:id", s.teamHandler())
 	e.GET("/user/:id", s.userHandler())
 
-	e.POST("/submit", s.submitHandler(), s.loginMiddleware, s.ctfStartedMiddleware)
+	e.POST("/submit", s.submitHandler(), s.loginMiddleware, s.ctfStartedMiddleware, s.ctfPlayableMiddleware)
 
 	e.POST("/admin/ctf-config", s.ctfConfigHandler(), s.adminMiddleware)
 	e.POST("/admin/open-challenge", s.openChallengeHandler(), s.adminMiddleware)

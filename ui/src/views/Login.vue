@@ -1,6 +1,9 @@
 <template>
   <div class="flex justify-center items-center h-full">
-    <form class="w-1/2 flex items-center flex-col" @submit.prevent="login">
+    <form
+      class="xl:w-1/2 w-full flex items-center flex-col"
+      @submit.prevent="login"
+    >
       <div class="w-1/2">
         <div class="mb-4">
           <label class="block text-sm" for="username">

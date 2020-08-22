@@ -115,11 +115,16 @@ export default Vue.extend({
   },
   methods: {
     submit() {
+      if (this.flag == "") {
+        return;
+      }
+
       API.post("/submit", {
         flag: this.flag
       })
         .then(r => {
           message(this, r.data.message);
+          this.$eventHub.$emit("update-request");
         })
         .catch(e => {
           errorHandle(this, e);
@@ -213,6 +218,10 @@ export default Vue.extend({
   }
 }
 
+.challenge-solved {
+  border: $accent-color 4px solid;
+}
+
 .challenges {
   .challenge {
     background: $fg-color;
@@ -220,9 +229,7 @@ export default Vue.extend({
       cursor: pointer;
       background: rgba($fg-color, 0.7);
     }
-    & + .challenge-solved {
-      border: $accent-color 4px solid;
-    }
+
     border-radius: 0.25rem;
 
     padding: 0.25rem 0.5rem;

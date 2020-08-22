@@ -119,7 +119,23 @@ func (s *server) registerableMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 
 		if !conf.RegisterOpen {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
-				"message": RegistrationClosed,
+				"message": RegistrationClosedMessage,
+			})
+		}
+		return h(c)
+	}
+}
+
+func (s *server) ctfPlayableMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		if !conf.CTFOpen {
+			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+				"message": CTFClosedMessage,
 			})
 		}
 		return h(c)

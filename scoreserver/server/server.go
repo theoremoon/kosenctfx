@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-redis/redis"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
@@ -50,16 +51,18 @@ type server struct {
 	Token         string
 	SessionKey    string
 	FrontendURL   string
+	redis         *redis.Client
 	adminWebhook  webhook.Webhook
 	systemWebhook webhook.Webhook
 }
 
-func New(app service.App, frontendURL, token string) Server {
+func New(app service.App, redis *redis.Client, frontendURL, token string) Server {
 	return &server{
 		app:           app,
 		SessionKey:    "kosenctfx",
 		Token:         token,
 		FrontendURL:   frontendURL,
+		redis:         redis,
 		adminWebhook:  webhook.Dummy("ADMIN"),
 		systemWebhook: webhook.Dummy("SYSTEM"),
 	}

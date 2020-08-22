@@ -8,6 +8,7 @@ import (
 type Config struct {
 	Dbdsn        string
 	Addr         string
+	RedisAddr    string
 	Front        string
 	Email        string
 	MailServer   string
@@ -34,6 +35,11 @@ func Load() (*Config, error) {
 		addr = ":5000"
 	}
 
+	redisAddr, err := getEnv("REDIS")
+	if err != nil {
+		redisAddr = ":6379"
+	}
+
 	front, err := getEnv("FRONT")
 	if err != nil {
 		return nil, err
@@ -57,6 +63,7 @@ func Load() (*Config, error) {
 	return &Config{
 		Dbdsn:        dbdsn,
 		Addr:         addr,
+		RedisAddr:    redisAddr,
 		Front:        front,
 		Email:        mailaccount,
 		MailServer:   mailserver,

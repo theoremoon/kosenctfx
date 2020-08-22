@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/xerrors"
@@ -27,6 +28,10 @@ func run() error {
 	}
 	defer db.Close()
 	db.BlockGlobalUpdate(true)
+
+	redis := redis.NewClient(&redis.Options{
+		Addr: conf.RedisAddr,
+	})
 
 	repo := repository.New(db)
 	repo.Migrate()
@@ -75,7 +80,7 @@ func run() error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	srv := server.New(app, conf.Front, ctfConf.Token)
+	srv := server.New(app, redis, conf.Front, ctfConf.Token)
 	return srv.Start(conf.Addr)
 }
 

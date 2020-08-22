@@ -26,10 +26,12 @@ func (app *app) CurrentCTFStatus() (CTFStatus, error) {
 	now := time.Now()
 	conf, err := app.repo.GetConfig()
 	if err != nil {
-		return InvalidCTFSTatus, err
+		return InvalidCTFSTatus, xerrors.Errorf(": %w", err)
 	}
 
-	if now.Before(conf.StartAt) {
+	if !conf.CTFOpen {
+		return CTFNotStarted, nil
+	} else if now.Before(conf.StartAt) {
 		return CTFNotStarted, nil
 	} else if now.After(conf.StartAt) && now.Before(conf.EndAt) {
 		return CTFRunning, nil

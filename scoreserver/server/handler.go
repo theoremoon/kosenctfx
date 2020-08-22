@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,10 +11,15 @@ import (
 
 	"golang.org/x/xerrors"
 
+	"github.com/go-redis/redis"
+	"github.com/labstack/echo/v4"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
+)
 
-	"github.com/labstack/echo/v4"
+const (
+	cacheDuration     = 1 * time.Minute
+	challengesJSONKey = "challengesJSONKey"
 )
 
 func (s *server) registerWithTeamHandler() echo.HandlerFunc {
@@ -120,21 +126,57 @@ func (s *server) infoHandler() echo.HandlerFunc {
 func (s *server) infoUpdateHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		u, _ := s.getLoginUser(c)
+		status, err := s.app.CurrentCTFStatus()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		if status == service.CTFNotStarted {
+			return messageHandle(c, CTFNotStartedMessage)
+		}
+
 		ret := make(map[string]interface{})
 
 		// TODO notification / ranking
 
 		// 問題情報を返す
-		// TODO REDIS
 		if u != nil {
-			challenges, err := s.app.ListOpenChallenges()
-			for i := range challenges {
-				challenges[i].Flag = ""
+			// cache を使う
+			if status == service.CTFRunning {
+				s, err := s.getChallengesJSON()
+				if err != nil {
+					return errorHandle(c, xerrors.Errorf(": %w", err))
+				}
+
+				if s != "" {
+					var j []interface{}
+					if err := json.Unmarshal([]byte(s), &j); err != nil {
+						return errorHandle(c, xerrors.Errorf(": %w", err))
+					}
+					ret["challenges"] = j
+				}
 			}
-			if err != nil {
-				return errorHandle(c, xerrors.Errorf(": %w", err))
+
+			if _, exists := ret["challenges"]; !exists {
+				challenges, err := s.app.ListOpenChallenges()
+				for i := range challenges {
+					challenges[i].Flag = ""
+				}
+				if err != nil {
+					return errorHandle(c, xerrors.Errorf(": %w", err))
+				}
+				ret["challenges"] = challenges
+
+				// cache を使う
+				if status == service.CTFRunning {
+					jbytes, err := json.Marshal(challenges)
+					if err != nil {
+						return errorHandle(c, xerrors.Errorf(": %w", err))
+					}
+					if err := s.setChallngesJSON(string(jbytes)); err != nil {
+						return errorHandle(c, xerrors.Errorf(": %w", err))
+					}
+				}
 			}
-			ret["challenges"] = challenges
 		}
 		return c.JSON(http.StatusOK, ret)
 	}
@@ -552,4 +594,22 @@ func (s *server) setChallengeStatusHandler() echo.HandlerFunc {
 		log.Printf("[+] challenge-status: %v %v\n", req.Result, req.Name)
 		return c.NoContent(http.StatusOK)
 	}
+}
+
+func (s *server) getChallengesJSON() (string, error) {
+	r, err := s.redis.Get(challengesJSONKey).Result()
+	if err == redis.Nil {
+		return "", nil
+	} else if err != nil {
+		return "", xerrors.Errorf(": %w", err)
+	}
+	return r, nil
+}
+
+func (s *server) setChallngesJSON(value string) error {
+	err := s.redis.Set(challengesJSONKey, value, cacheDuration).Err()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
 }

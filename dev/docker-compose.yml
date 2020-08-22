@@ -12,6 +12,11 @@ services:
 
     command: mysqld --general-log=1 --general-log-file=/var/lib/mysql/general-query.log
 
+  redis:
+    image: redis:5.0.7-alpine
+    ports:
+      - "6379:6379"
+
   adminer:
     image: adminer
     ports:

@@ -119,7 +119,5 @@ type Config struct {
 	LockFrequency int
 	LockDuration  int
 
-	MinScore   uint
-	MaxScore   uint
-	CountToMin uint
+	ScoreExpr string `gorm:"size:10000"`
 }

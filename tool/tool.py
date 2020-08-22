@@ -19,6 +19,7 @@ import string
 from base64 import b64decode
 from hashlib import md5
 import subprocess
+from datetime import datetime
 
 BASEDIR_DEFAULT = os.getcwd()
 CONFFILE_DEFAULT = Path(os.getcwd()) / "config.ini"
@@ -105,6 +106,39 @@ class CommandClass():
         ]
       }))
     print("[+] bucket initialized")
+
+  def config(self, path):
+    """
+    CTFの設定を反映する
+    """
+    with open(path) as f:
+      conf = yaml.safe_load(f)
+
+    print({
+      "name": conf["ctf"]["name"],
+      "start": int(datetime.strptime(conf["ctf"]["start"], "%Y-%m-%d %H:%M:%S %z").timestamp()),
+      "end": int(datetime.strptime(conf["ctf"]["end"], "%Y-%m-%d %H:%M:%S %z").timestamp()),
+      "register_open": conf["ctf"]["register_open"],
+      "ctf_open": conf["ctf"]["ctf_open"],
+      "lock_count": conf["ctf"]["lock_count_seconds"],
+      "lock_frequency": conf["ctf"]["lock_freq"],
+      "lock_duration": conf["ctf"]["lock_seconds"],
+      "score_expr": conf["ctf"]["score_expr"]
+    })
+
+    r = self._api.post("/admin/ctf-config", {
+      "name": conf["ctf"]["name"],
+      "start_at": int(datetime.strptime(conf["ctf"]["start"], "%Y-%m-%d %H:%M:%S %z").timestamp()),
+      "end_at": int(datetime.strptime(conf["ctf"]["end"], "%Y-%m-%d %H:%M:%S %z").timestamp()),
+      "register_open": conf["ctf"]["register_open"],
+      "ctf_open": conf["ctf"]["ctf_open"],
+      "lock_count": conf["ctf"]["lock_count_seconds"],
+      "lock_frequency": conf["ctf"]["lock_freq"],
+      "lock_duration": conf["ctf"]["lock_seconds"],
+      "score_expr": conf["ctf"]["score_expr"]
+    })
+    r.raise_for_status()
+    print("[+] configured")
 
   def _local_challenges(self):
     chals = {}

@@ -94,7 +94,7 @@ func (s *server) Start(addr string) error {
 
 	e.POST("/submit", s.submitHandler(), s.loginMiddleware, s.ctfStartedMiddleware)
 
-	e.POST("/admin/init", s.initializeHandler(), s.adminMiddleware)
+	e.POST("/admin/ctf-config", s.ctfConfigHandler(), s.adminMiddleware)
 	e.POST("/admin/open-challenge", s.openChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/update-challenge", s.updateChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-challenge", s.newChallengeHandler(), s.adminMiddleware)

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/xerrors"
 
@@ -370,9 +371,39 @@ func (s *server) submitHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) initializeHandler() echo.HandlerFunc {
+func (s *server) ctfConfigHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
+		req := new(struct {
+			Name          string `json:"name"`
+			StartAt       int64  `json:"start_at"`
+			EndAt         int64  `json:"end_at"`
+			RegisterOpen  bool   `json:"register_open"`
+			CTFOpen       bool   `json:"ctf_open"`
+			LockCount     int    `json:"lock_count"`
+			LockFrequency int    `json:"lock_frequency"`
+			LockDuration  int    `json:"lock_duration"`
+			ScoreExpr     string `json:"score_expr"`
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		conf.CTFName = req.Name
+		conf.StartAt = time.Unix(req.StartAt, 0)
+		conf.EndAt = time.Unix(req.EndAt, 0)
+		conf.RegisterOpen = req.RegisterOpen
+		conf.CTFOpen = req.CTFOpen
+		conf.LockCount = req.LockCount
+		conf.LockFrequency = req.LockFrequency
+		conf.LockDuration = req.LockDuration
+		conf.ScoreExpr = req.ScoreExpr
+		if err := s.app.SetCTFConfig(conf); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		return c.NoContent(http.StatusOK)
 	}
 }
 

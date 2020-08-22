@@ -54,7 +54,7 @@ func run() error {
 		log.Printf(" password: %s", password)
 		log.Printf(" token: %s", token)
 
-		app.SetCTFConfig(&model.Config{
+		err = app.SetCTFConfig(&model.Config{
 			CTFName:       "KosenCTF X",
 			Token:         token,
 			StartAt:       time.Now(),
@@ -64,10 +64,10 @@ func run() error {
 			LockCount:     5,
 			LockFrequency: 10,
 			LockDuration:  1200,
-			MinScore:      100,
-			MaxScore:      500,
-			CountToMin:    60,
 		})
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
 	}
 
 	ctfConf, err := app.GetCTFConfig()
@@ -81,6 +81,6 @@ func run() error {
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v\n", err)
 	}
 }

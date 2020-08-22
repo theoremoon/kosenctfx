@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/jinzhu/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"golang.org/x/xerrors"
 )
@@ -11,8 +12,29 @@ type ConfigRepository interface {
 }
 
 func (r *repository) SetConfig(conf *model.Config) error {
-	if err := r.db.Create(conf).Error; err != nil {
-		return err
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		var c model.Config
+		if err := tx.First(&c).Error; err != nil {
+			if !gorm.IsRecordNotFoundError(err) {
+				return xerrors.Errorf(": %w", err)
+			}
+
+			// 存在しない時：つくる
+			if err := tx.Create(conf).Error; err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+			return nil
+		}
+
+		// 存在するとき： update
+		conf.Model = c.Model
+		if err := tx.Save(conf).Error; err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }

@@ -1,0 +1,20 @@
+ctf:
+  name: KosenCTF
+  start: "2020-01-01 01:23:45 +0900"
+  end: "2020-12-31 23:59:59 +0900"
+  register_open: true
+  ctf_open: false
+  lock_count_seconds: 60
+  lock_freq: 5
+  lock_seconds: 300
+  score_expr: |
+    maxScore := 500
+    minScore := 100
+    countToMin := 20
+    tx := toFloat(maxScore - minScore - 1) / toFloat(maxScore - minScore)
+    t := 0.5 * math.Log((1+tx)/(1-tx), math.E)
+    k := toFloat(maxScore - minScore) / maxScore
+    y := maxScore * math.Tanh(t * count / countToMin)
+    return toInt(k * (maxScore - y) + minScore)
+
+

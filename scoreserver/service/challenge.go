@@ -1,7 +1,6 @@
 package service
 
 import (
-	"math"
 	"path/filepath"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
@@ -162,10 +161,10 @@ func (app *app) ListAllChallenges() ([]*Challenge, error) {
 		solvedByMap[*s.ChallengeId] = append(solvedByMap[*s.ChallengeId], teamMap[s.TeamId])
 	}
 
-	conf, err := app.repo.GetConfig()
-	if err != nil {
-		return nil, err
-	}
+	// conf, err := app.repo.GetConfig()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// make structure
 	challenges := make([]*Challenge, len(chals))
@@ -176,7 +175,8 @@ func (app *app) ListAllChallenges() ([]*Challenge, error) {
 			Flag:        c.Flag,
 			Description: c.Description,
 			Author:      c.Author,
-			Score:       CalcChallengeScore(conf, uint(len(solvedByMap[c.ID]))),
+			Score:       500,
+			// Score:       CalcChallengeScore(conf, uint(len(solvedByMap[c.ID]))),
 			Tags:        tagMap[c.ID],
 			Attachments: attachmentMap[c.ID],
 			SolvedBy:    solvedByMap[c.ID],
@@ -328,15 +328,15 @@ func (app *app) SubmitFlag(user *model.User, flag string, ctfRunning bool) (*mod
 	}
 }
 
-func CalcChallengeScore(conf *model.Config, solveCount uint) uint {
-	max := float64(conf.MaxScore)
-	min := float64(conf.MinScore)
-
-	a := max - min
-	tx := (a - 1) / a
-	t := 0.5 * math.Log((1+tx)/(1-tx)) // tanh^{-1}(tx)
-
-	r := a / max
-	y := max * math.Tanh(float64(solveCount)/(float64(conf.CountToMin)/t))
-	return uint(r*(max-y) + min)
-}
+// func CalcChallengeScore(conf *model.Config, solveCount uint) uint {
+// 	max := float64(conf.MaxScore)
+// 	min := float64(conf.MinScore)
+//
+// 	a := max - min
+// 	tx := (a - 1) / a
+// 	t := 0.5 * math.Log((1+tx)/(1-tx)) // tanh^{-1}(tx)
+//
+// 	r := a / max
+// 	y := max * math.Tanh(float64(solveCount)/(float64(conf.CountToMin)/t))
+// 	return uint(r*(max-y) + min)
+// }

@@ -123,8 +123,10 @@ class CommandClass():
       "lock_duration": conf["ctf"]["lock_seconds"],
       "score_expr": conf["ctf"]["score_expr"]
     })
-    r.raise_for_status()
-    print("[+] configured")
+    if 200 <= r.status_code < 400:
+      print("[+] configured")
+    else:
+      print("[-] {}".format(r.json()))
 
   def _local_challenges(self):
     chals = {}
@@ -133,6 +135,17 @@ class CommandClass():
         taskinfo = json.load(f)
       chals[taskinfo["name"]] = taskinfo
     return chals
+
+  def scores(self, maxCount):
+    """
+    問題のsolve数と点数の関係をemulateする
+    """
+    r = self._api.get("/admin/score-emulate?maxCount={}".format(maxCount))
+    if 200 <= r.status_code < 400:
+      print("[+] configured")
+    else:
+      print("[-] {}".format(r.json()))
+    print(r.json())
 
   def list(self):
     """
@@ -171,6 +184,38 @@ class CommandClass():
     ])
 
 
+  def close(self, ids):
+    """
+    - 問題の公開をとりやめる。idsは数値またはリスト
+    """
+    if isinstance(ids, int):
+      ids = [ids]
+    else:
+      ids = ids
+
+    r = self._api.get("/admin/list-challenges")
+    remote = r.json()
+    for id in ids:
+      for c in remote:
+        if c["id"] != id:
+          continue
+
+        name = c["name"]
+        # TODO close firewall with taskinfo
+
+        # open する
+        r = self._api.post("/admin/close-challenge", {
+          "name": name,
+        })
+        if 200 <= r.status_code < 400:
+          print("[+] closed: {}".format(name))
+        else:
+          print("[-] {}".format(r.text))
+        break
+      else:
+        print("[-] no such challenge: {}".format(id))
+
+
   def open(self, ids):
     """
     - 問題を公開する。idsは数値またはリスト
@@ -194,8 +239,10 @@ class CommandClass():
         r = self._api.post("/admin/open-challenge", {
           "name": name,
         })
-        r.raise_for_status()
-        print("[+] opened: {}".format(name))
+        if 200 <= r.status_code < 400:
+          print("[+] opened: {}".format(name))
+        else:
+          print("[-] {}".format(r.text))
         break
       else:
         print("[-] no such challenge: {}".format(id))

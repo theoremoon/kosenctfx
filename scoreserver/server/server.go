@@ -35,6 +35,7 @@ var (
 	RegistrationClosedMessage = "Registraction is closed now"
 
 	ChallengeOpenMessage   = "Open the challenge"
+	ChallengeCloseMessage  = "Close the challenge"
 	ChallengeAddMessage    = "Added the challenge"
 	ChallengeUpdateMessage = "Updated the challenge"
 
@@ -98,8 +99,10 @@ func (s *server) Start(addr string) error {
 
 	e.POST("/submit", s.submitHandler(), s.loginMiddleware, s.ctfStartedMiddleware, s.ctfPlayableMiddleware)
 
+	e.GET("/admin/score-emulate", s.scoreEmulateHandler(), s.adminMiddleware)
 	e.POST("/admin/ctf-config", s.ctfConfigHandler(), s.adminMiddleware)
 	e.POST("/admin/open-challenge", s.openChallengeHandler(), s.adminMiddleware)
+	e.POST("/admin/close-challenge", s.closeChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/update-challenge", s.updateChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-challenge", s.newChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-notification", s.newNotificationHandler(), s.adminMiddleware)

@@ -13,7 +13,9 @@
           <div class="mr-4">
             <router-link to="/challenges">CHALLENGES</router-link>
           </div>
-          <div class="mr-4"><router-link to="/">RANKING</router-link></div>
+          <div class="mr-4">
+            <router-link to="/ranking">RANKING</router-link>
+          </div>
         </div>
 
         <div class="flex flex-0">
@@ -78,6 +80,7 @@ export default Vue.extend({
     this.checkLogin();
     this.$eventHub.$on("login-check", () => {
       this.checkLogin();
+      this.infoUpdate();
     });
 
     this.$eventHub.$on("message", msg => {
@@ -107,9 +110,18 @@ export default Vue.extend({
       API.get("/info-update")
         .then(r => {
           console.log(r.data);
-          for (const [key, value] of Object.entries(r.data)) {
-            Vue.set(this.$store, key, value);
+          if ("ranking" in r.data) {
+            Vue.set(this.$store, "ranking", r.data.ranking);
+          } else {
+            Vue.set(this.$store, "ranking", null);
           }
+          if ("challenges" in r.data) {
+            Vue.set(this.$store, "challenges", r.data.challenges);
+          } else {
+            Vue.set(this.$store, "challenges", null);
+          }
+
+          console.log(this.$store.ranking);
         })
         .catch(e => errorHandle(this, e));
     },

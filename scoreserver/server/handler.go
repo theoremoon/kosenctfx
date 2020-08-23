@@ -20,6 +20,7 @@ import (
 const (
 	cacheDuration     = 1 * time.Minute
 	challengesJSONKey = "challengesJSONKey"
+	rankingJSONKey    = "rankingJSONKey"
 )
 
 func (s *server) registerWithTeamHandler() echo.HandlerFunc {
@@ -137,46 +138,50 @@ func (s *server) infoUpdateHandler() echo.HandlerFunc {
 		ret := make(map[string]interface{})
 
 		// TODO notification / ranking
+		// cache を使う
+		if status == service.CTFRunning {
+			challenges, ranking, err := s.getCacheInfo()
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
 
-		// 問題情報を返す
-		if u != nil {
-			// cache を使う
+			if challenges != "" && ranking != "" {
+				var cs []*service.Challenge
+				var rank []*service.ScoreFeedEntry
+				err1 := json.Unmarshal([]byte(challenges), &cs)
+				err2 := json.Unmarshal([]byte(ranking), &rank)
+				if err1 == nil && err2 == nil {
+					ret["challenges"] = cs
+					ret["ranking"] = rank
+				}
+			}
+		}
+
+		_, exist1 := ret["challenges"]
+		_, exist2 := ret["ranking"]
+		if !exist1 || !exist2 {
+			challenges, ranking, err := s.app.ScoreFeed()
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+			for i := range challenges {
+				challenges[i].Flag = ""
+			}
+			ret["challenges"] = challenges
+			ret["ranking"] = ranking
+
+			// cacheする
 			if status == service.CTFRunning {
-				s, err := s.getChallengesJSON()
-				if err != nil {
-					return errorHandle(c, xerrors.Errorf(": %w", err))
-				}
-
-				if s != "" {
-					var j []interface{}
-					if err := json.Unmarshal([]byte(s), &j); err != nil {
-						return errorHandle(c, xerrors.Errorf(": %w", err))
-					}
-					ret["challenges"] = j
+				bytes1, err1 := json.Marshal(challenges)
+				bytes2, err2 := json.Marshal(ranking)
+				if err1 == nil && err2 == nil {
+					s.setCacheInfo(string(bytes1), string(bytes2))
 				}
 			}
+		}
 
-			if _, exists := ret["challenges"]; !exists {
-				challenges, err := s.app.ListOpenChallenges()
-				for i := range challenges {
-					challenges[i].Flag = ""
-				}
-				if err != nil {
-					return errorHandle(c, xerrors.Errorf(": %w", err))
-				}
-				ret["challenges"] = challenges
-
-				// cache を使う
-				if status == service.CTFRunning {
-					jbytes, err := json.Marshal(challenges)
-					if err != nil {
-						return errorHandle(c, xerrors.Errorf(": %w", err))
-					}
-					if err := s.setChallngesJSON(string(jbytes)); err != nil {
-						return errorHandle(c, xerrors.Errorf(": %w", err))
-					}
-				}
-			}
+		if u == nil {
+			delete(ret, "challenges")
 		}
 		return c.JSON(http.StatusOK, ret)
 	}
@@ -413,6 +418,33 @@ func (s *server) submitHandler() echo.HandlerFunc {
 	}
 }
 
+func (s *server) scoreEmulateHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		maxCountStr := c.QueryParam("maxCount")
+		maxCount, err := strconv.Atoi(maxCountStr)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		if maxCount < 0 {
+			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage("maxCount should be larger than 0")))
+		}
+
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		scores := make([]int, maxCount+1)
+		for i := 0; i <= maxCount; i++ {
+			scores[i], err = service.CalcChallengeScore(i, conf.ScoreExpr)
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+		}
+		return c.JSON(http.StatusOK, scores)
+	}
+}
+
 func (s *server) ctfConfigHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
@@ -429,6 +461,13 @@ func (s *server) ctfConfigHandler() echo.HandlerFunc {
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+
+		// score_exprのチェック
+		_, err := service.CalcChallengeScore(10, req.ScoreExpr)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
 		conf, err := s.app.GetCTFConfig()
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
@@ -464,9 +503,28 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 		if err := s.app.OpenChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		// TODO add notification?
 		s.systemWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
 		return c.JSON(http.StatusOK, ChallengeOpenMessage)
+	}
+}
+
+func (s *server) closeChallengeHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		req := new(struct {
+			Name string `json:"name"`
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		chal, err := s.app.GetRawChallengeByName(req.Name)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		if err := s.app.CloseChallenge(chal.ID); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		s.systemWebhook.Post(fmt.Sprintf("Challenge `%s` closed!", chal.Name))
+		return c.JSON(http.StatusOK, ChallengeCloseMessage)
 	}
 }
 
@@ -608,6 +666,37 @@ func (s *server) getChallengesJSON() (string, error) {
 
 func (s *server) setChallngesJSON(value string) error {
 	err := s.redis.Set(challengesJSONKey, value, cacheDuration).Err()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (s *server) getCacheInfo() (string, string, error) {
+	c, err := s.redis.Get(challengesJSONKey).Result()
+	if err == redis.Nil {
+		return "", "", nil
+	} else if err != nil {
+		return "", "", xerrors.Errorf(": %w", err)
+	}
+
+	r, err := s.redis.Get(rankingJSONKey).Result()
+	if err == redis.Nil {
+		return "", "", nil
+	} else if err != nil {
+		return "", "", xerrors.Errorf(": %w", err)
+	}
+
+	return c, r, nil
+}
+
+func (s *server) setCacheInfo(challenges, ranking string) error {
+	err := s.redis.Set(challengesJSONKey, challenges, cacheDuration).Err()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	err = s.redis.Set(rankingJSONKey, ranking, cacheDuration).Err()
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

@@ -8,6 +8,7 @@ import User from "../views/User.vue";
 import ResetRequest from "../views/ResetRequest.vue";
 import Reset from "../views/Reset.vue";
 import Challenges from "../views/Challenges.vue";
+import Ranking from "../views/Ranking.vue";
 
 Vue.use(VueRouter);
 
@@ -52,6 +53,11 @@ const routes = [
     path: "/challenges",
     name: "Challenges",
     component: Challenges
+  },
+  {
+    path: "/ranking",
+    name: "Ranking",
+    component: Ranking
   }
 ];
 

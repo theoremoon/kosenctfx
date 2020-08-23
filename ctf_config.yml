@@ -8,13 +8,17 @@ ctf:
   lock_freq: 5
   lock_seconds: 300
   score_expr: |
-    maxScore := 500
-    minScore := 100
-    countToMin := 20
-    tx := toFloat(maxScore - minScore - 1) / toFloat(maxScore - minScore)
-    t := 0.5 * math.Log((1+tx)/(1-tx), math.E)
-    k := toFloat(maxScore - minScore) / maxScore
-    y := maxScore * math.Tanh(t * count / countToMin)
-    return toInt(k * (maxScore - y) + minScore)
+    func calc(count) {
+      max = toFloat(500)
+      min = toFloat(100)
+      countToMin = toFloat(200)
+
+      a = max - min
+      tx = (a - 1) / a
+      t = 0.5 * math.Log((1+tx)/(1-tx))
+      r = a / max
+      y = max * math.Tanh(toFloat(count) * t / countToMin)
+      return toInt(r * (max - y) + min)
+    }
 
 

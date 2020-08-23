@@ -1,8 +1,13 @@
 package service
 
 import (
+	"fmt"
 	"path/filepath"
 
+	"github.com/mattn/anko/core"
+	"github.com/mattn/anko/env"
+	_ "github.com/mattn/anko/packages"
+	"github.com/mattn/anko/vm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"golang.org/x/xerrors"
@@ -11,6 +16,12 @@ import (
 type Attachment struct {
 	Name string `json:"name"`
 	URL  string `json:"url"`
+}
+
+type SolvedBy struct {
+	SolvedAt int64  `json:"solved_at"`
+	TeamID   uint   `json:"team_id"`
+	TeamName string `json:"team_name"`
 }
 
 type Challenge struct {
@@ -22,7 +33,7 @@ type Challenge struct {
 	Score       uint         `json:"score"`
 	Tags        []string     `json:"tags"`
 	Attachments []Attachment `json:"attachments"`
-	SolvedBy    []string     `json:"solved_by"`
+	SolvedBy    []SolvedBy   `json:"solved_by"`
 
 	IsOpen    bool `json:"is_open"`
 	IsRunning bool `json:"is_running"`
@@ -37,7 +48,8 @@ type ChallengeApp interface {
 	ListOpenChallenges() ([]*Challenge, error)
 
 	AddChallenge(c *Challenge) error
-	OpenChallenge(challlengeID uint) error
+	OpenChallenge(challengeID uint) error
+	CloseChallenge(challengeID uint) error
 	UpdateChallenge(challengeID uint, c *Challenge) error
 
 	SubmitFlag(user *model.User, flag string, ctfRunning bool) (*model.Challenge, bool, bool, error)
@@ -60,8 +72,8 @@ func (app *app) GetChallengeByName(name string) (*Challenge, error) {
 		Flag:        c.Flag,
 		Description: c.Description,
 		Author:      c.Author,
-		Score:       0,          //TODO
-		SolvedBy:    []string{}, // TODO
+		Score:       0,            //TODO
+		SolvedBy:    []SolvedBy{}, // TODO
 		IsOpen:      c.IsOpen,
 		IsRunning:   false, // TODO
 		IsSurvey:    c.IsSurvey,
@@ -153,30 +165,37 @@ func (app *app) ListAllChallenges() ([]*Challenge, error) {
 	}
 
 	// key: challlenge id, value: team name who solved this chal
-	solvedByMap := make(map[uint][]string)
+	solvedByMap := make(map[uint][]SolvedBy)
 	for _, c := range chals {
-		solvedByMap[c.ID] = make([]string, 0)
+		solvedByMap[c.ID] = make([]SolvedBy, 0)
 	}
 	for _, s := range submissions {
-		solvedByMap[*s.ChallengeId] = append(solvedByMap[*s.ChallengeId], teamMap[s.TeamId])
+		solvedByMap[*s.ChallengeId] = append(solvedByMap[*s.ChallengeId], SolvedBy{
+			TeamName: teamMap[s.TeamId],
+			TeamID:   s.TeamId,
+			SolvedAt: s.CreatedAt.Unix(),
+		})
 	}
 
-	// conf, err := app.repo.GetConfig()
-	// if err != nil {
-	// 	return nil, err
-	// }
+	conf, err := app.repo.GetConfig()
+	if err != nil {
+		return nil, err
+	}
 
 	// make structure
 	challenges := make([]*Challenge, len(chals))
 	for i, c := range chals {
+		score, err := CalcChallengeScore(int(len(solvedByMap[c.ID])), conf.ScoreExpr)
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
 		challenges[i] = &Challenge{
 			ID:          c.ID,
 			Name:        c.Name,
 			Flag:        c.Flag,
 			Description: c.Description,
 			Author:      c.Author,
-			Score:       500,
-			// Score:       CalcChallengeScore(conf, uint(len(solvedByMap[c.ID]))),
+			Score:       uint(score),
 			Tags:        tagMap[c.ID],
 			Attachments: attachmentMap[c.ID],
 			SolvedBy:    solvedByMap[c.ID],
@@ -243,7 +262,13 @@ func (app *app) OpenChallenge(challengeID uint) error {
 	}
 	return nil
 }
+func (app *app) CloseChallenge(challengeID uint) error {
+	if err := app.repo.CloseChallengeByID(challengeID); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
 
+}
 func (app *app) UpdateChallenge(challengeID uint, c *Challenge) error {
 	chal := model.Challenge{
 		Name:        c.Name,
@@ -325,6 +350,35 @@ func (app *app) SubmitFlag(user *model.User, flag string, ctfRunning bool) (*mod
 			return chal, true, false, nil
 		}
 
+	}
+}
+
+func CalcChallengeScore(solveCount int, scoreExpr string) (int, error) {
+	script := fmt.Sprintf(`
+	var math = import("math")
+	%s
+	toInt(calc(count))
+	`, scoreExpr)
+
+	e := env.NewEnv()
+	core.ImportToX(e)
+	e.Define("count", solveCount)
+	r, err := vm.Execute(e, nil, script)
+	if err != nil {
+		return 0, xerrors.Errorf(": %w", err)
+	}
+
+	switch v := r.(type) {
+	case int:
+		return v, nil
+	case uint:
+		return int(v), nil
+	case int64:
+		return int(v), nil
+	case uint64:
+		return int(v), nil
+	default:
+		return 0, xerrors.Errorf(": %w", NewErrorMessage(fmt.Sprintf("score calculation returns invalid type: %T", r)))
 	}
 }
 

@@ -24,6 +24,7 @@ type ChallengeRepository interface {
 	DeleteTagByChallengeId(challengeId uint) error
 
 	OpenChallengeByID(chalelngeID uint) error
+	CloseChallengeByID(chalelngeID uint) error
 }
 
 func (r *repository) AddChallenge(c *model.Challenge) error {
@@ -132,6 +133,13 @@ func (r *repository) DeleteTagByChallengeId(challengeId uint) error {
 
 func (r *repository) OpenChallengeByID(challengeID uint) error {
 	if err := r.db.Model(&model.Challenge{}).Where("id = ?", challengeID).Update("is_open", true).Error; err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (r *repository) CloseChallengeByID(challengeID uint) error {
+	if err := r.db.Model(&model.Challenge{}).Where("id = ?", challengeID).Update("is_open", false).Error; err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil

@@ -4,6 +4,13 @@ import router from "./router";
 import eventHub from "./eventHub";
 import store from "./store";
 import "./assets/tailwind.css";
+import { library } from "@fortawesome/fontawesome-svg-core";
+import { faFlag } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+
+library.add(faFlag);
+
+Vue.component("font-awesome-icon", FontAwesomeIcon);
 
 Vue.config.productionTip = false;
 Vue.use(eventHub);

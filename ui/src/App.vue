@@ -109,7 +109,6 @@ export default Vue.extend({
     infoUpdate() {
       API.get("/info-update")
         .then(r => {
-          console.log(r.data);
           if ("ranking" in r.data) {
             Vue.set(this.$store, "ranking", r.data.ranking);
           } else {
@@ -120,8 +119,6 @@ export default Vue.extend({
           } else {
             Vue.set(this.$store, "challenges", null);
           }
-
-          console.log(this.$store.ranking);
         })
         .catch(e => errorHandle(this, e));
     },

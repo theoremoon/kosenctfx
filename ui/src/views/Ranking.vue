@@ -62,7 +62,10 @@ export default Vue.extend({
 @import "../assets/vars.scss";
 
 .ranking {
-  padding-top: 5rem;
+  padding-top: 10rem;
+
+  display: block;
+  overflow-x: auto;
 
   tr {
     border-bottom: 1px solid $fg-color;
@@ -73,8 +76,9 @@ export default Vue.extend({
     display: inline-block;
     transform-origin: left bottom;
     transform: rotate(-45deg);
-    width: 1em;
+    width: 2em;
   }
+
   white-space: pre;
 }
 </style>

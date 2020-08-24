@@ -17,7 +17,7 @@
       <div class="focus-challenge">
         <p class="challenge-name">{{ focusedchallenge.name }}</p>
         <div class="flex justify-between">
-          <div>
+          <div class="w-3/4 break-words">
             <p>
               <span
                 v-for="tag in focusedchallenge.tags"
@@ -58,7 +58,7 @@
             </div>
           </div>
 
-          <div class="flex-grow-0">
+          <div class="w-1/4">
             <h2 class="text-xl">solved by</h2>
             <div v-for="t in focusedchallenge.solved_by" :key="t">
               {{ t }}

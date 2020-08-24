@@ -73,10 +73,17 @@ type ScoreFeedEntry struct {
 /// 問題一覧、とチームのランキングを同時に計算する
 func (app *app) ScoreFeed() ([]*Challenge, []*ScoreFeedEntry, error) {
 	// list all challenges, tags, and attachments
-	chals, err := app.repo.ListAllChallenges()
+	allchals, err := app.repo.ListAllChallenges()
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}
+	chals := make([]*model.Challenge, 0, len(allchals))
+	for _, c := range allchals {
+		if c.IsOpen {
+			chals = append(chals, c)
+		}
+	}
+
 	tags, err := app.repo.ListAllTags()
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)

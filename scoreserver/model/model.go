@@ -60,7 +60,7 @@ type Challenge struct {
 
 	Name        string `gorm:"unique"`
 	Flag        string `gorm:"unique"`
-	Description string `gorm:""`
+	Description string `gorm:"size:10000"`
 	Author      string
 	Host        *string
 	Port        *int

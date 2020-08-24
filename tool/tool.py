@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 import json
 import glob
 import fire
@@ -12,7 +13,6 @@ from io import BytesIO
 from minio import Minio
 import hashlib
 from string import Template
-import tableprint
 import yaml
 import random
 import string
@@ -37,9 +37,6 @@ def iterate_challenges(basedir):
     yield taskdir.parent
 
 class API():
-  """
-  Challenge Manager用のAPI
-  """
   def __init__(self, url, token):
     self.url = url
     self.token = token
@@ -75,13 +72,14 @@ class CommandClass():
     bucket = self._conf["bucket"]
     self._minio = Minio(bucket["endpoint"], access_key=bucket["access_key"], secret_key=bucket["secret_key"], secure=False if "insecure"  in bucket else True)
 
-  def init(self):
+  def manager_init(self):
     r = self._manager.post("/init", {
       "server_url": self._conf["scoreserver"]["url"],
       "server_token": self._conf["scoreserver"]["token"],
     })
     print("[+] challenge manager initialized")
 
+  def bucket_init(self):
     # バケットがなければ作り、ついでにポリシーを制定する
     # よく考えるとこのツールでbucketを作ってるのはおかしいんだよな……
     # おかしくはなくて、bucket名の指定とAPI keyを渡しているのは正しい（？）
@@ -105,7 +103,7 @@ class CommandClass():
       }))
     print("[+] bucket initialized")
 
-  def config(self, path):
+  def apply_config(self, path):
     """
     CTFの設定を反映する
     """
@@ -136,7 +134,7 @@ class CommandClass():
       chals[taskinfo["name"]] = taskinfo
     return chals
 
-  def scores(self, maxCount):
+  def score_emulate(self, maxCount):
     """
     問題のsolve数と点数の関係をemulateする
     """
@@ -163,25 +161,21 @@ class CommandClass():
       lc = local.get(name)
       rc = remote.get(name)
       if rc:
-        chals.append([
-          rc["name"],
-          "0x{:08x}".format(rc["id"]),
-          rc["score"],
-          str(rc["is_running"]), # FIXME
-          str(rc["is_open"]),
-          len(rc["solved_by"])
-        ])
+        chals.append({
+          "Challenge": rc["name"],
+          "ID": rc["id"],
+          "Score": rc["score"],
+          "IsRunning": rc["is_running"],
+          "IsOpen": rc["is_open"],
+          "Solved": len(rc["solved_by"])
+        })
       elif lc:
-        chals.append([lc["name"],"-","-","-","-","-"])
+        chals.append({
+          "Challenge": lc["name"],
+        })
 
-    tableprint.table(chals, [
-      'Challenge',
-      'ID',
-      'Score',
-      'IsRunning',
-      'IsOpen',
-      'Solved',
-    ])
+    print(json.dumps(chals, ensure_ascii=False, indent=4))
+
 
 
   def close(self, ids):
@@ -201,9 +195,8 @@ class CommandClass():
           continue
 
         name = c["name"]
-        # TODO close firewall with taskinfo
 
-        # open する
+        # close する
         r = self._api.post("/admin/close-challenge", {
           "name": name,
         })
@@ -215,6 +208,8 @@ class CommandClass():
       else:
         print("[-] no such challenge: {}".format(id))
 
+  def close_firewall(self, ids):
+    raise Exception("unimplemented")
 
   def open(self, ids):
     """
@@ -233,8 +228,6 @@ class CommandClass():
           continue
 
         name = c["name"]
-        # TODO open firewall with taskinfo
-
         # open する
         r = self._api.post("/admin/open-challenge", {
           "name": name,
@@ -246,6 +239,9 @@ class CommandClass():
         break
       else:
         print("[-] no such challenge: {}".format(id))
+
+  def open_firewall(self, ids):
+    raise Exception("unimplemented")
 
   def start(self, ids):
     """
@@ -285,8 +281,88 @@ class CommandClass():
         print("[-] failed to stop: {}".format(id))
         print(r.text)
 
+  def _upload_file(self, fileobj, size, name):
+      self._minio.put_object(self._conf["bucket"]["name"], name, fileobj, size)
 
-  def register(self):
+      # uploadしたファイルのdownloadableなリンク
+      url = "{schema}://{host}/{name}/{key}".format(
+          schema="http" if "insecure" in self._conf["bucket"] else "https",
+          host=self._conf["bucket"]["endpoint"],
+          name=self._conf["bucket"]["name"],
+          key=name,
+      )
+      return url
+
+
+  def _compress_distfiles(self, dir):
+      # 圧縮パート
+      tarbytes = BytesIO()
+      with tarfile.open(fileobj=tarbytes, mode="w:gz") as tar:
+        for f in dir.iterdir():
+            tar.add(f, arcname=f.as_posix()[len(dir.as_posix()):], recursive=True)
+      return tarbytes.getvalue()
+
+  def _build_push_image(self, compose_path, image_name):
+      """
+      既存のdocker-compose.ymlを読み込んで、imageセクションを追加してbuild / pushし、新しくなったdocker-compose.ymlの内容を返す
+      """
+      dir = compose_path.parent
+
+      # 既存のdocker-compose.ymlを読み込んで imageを追加する
+      with open(compose_path) as f:
+        compose = yaml.safe_load(f)
+      for service in compose["services"].keys():
+        if "image" in service:
+          print("[+] unsupported!!!")
+          quit()
+
+        # imageタグをセットする
+        compose["services"][service]["image"] = "{}/{}/{}_{}:latest".format(self._conf["registry"]["server"], self._conf["registry"]["name"], image_name, service)
+
+        # buildは削除する
+        if "build" in service:
+          del compose["services"][service]["build"]
+
+      # 新しいcompose.ymlを作る
+      new_compose_path = dir / "docker-compose_{}.yml".format(randname())
+      new_compose = yaml.dump(compose, default_flow_style=False)
+      with open(new_compose_path, "w") as f:
+        f.write(new_compose)
+
+      # 新しく作ったdocker-compose.ymlを使ってイメージをビルド、pushする
+      subprocess.run(["docker-compose", "-f", new_compose_path.name, "build"], cwd=dir, check=True)
+      subprocess.run(["docker", "login", self._conf["registry"]["server"], "-u", self._conf["registry"]["username"], "-p", self._conf["registry"]["password"]], check=True)
+      subprocess.run(["docker-compose", "-f", new_compose_path.name, "push"], cwd=dir, check=True)
+
+      # 新しく作ったdocker-compose.ymlはもういらないので消す
+      os.remove(new_compose_path)
+
+      # 新しいdocker-composeの内容だけを返す
+      return new_compose
+
+  def _register_to_manager(self, compose_file, challengeid, taskinfo):
+      new_compose = self._build_push_image(compose_file, md5(taskinfo["name"].encode()).decode())
+      solve_compose_path = chal / "solution" / "docker-compose.yml"
+      if solve_compose_path.is_file():
+        solve_compose = do_compose_iikanji(solve_compose_path, md5((taskinfo["name"] + "_solution").encode()).decode())
+      else:
+        solve_compose = ""
+
+      # challenge managerに登録する
+      r = self._manager.post("/register", {
+        "id": challengeid,
+        "compose": new_compose,
+        "solve_compose": solve_compose,
+        "flag": taskinfo["flag"],
+        "host": taskinfo["host"],
+        "port": taskinfo["port"],
+      })
+      if 200 <= r.status_code < 400:
+          print("[+] registered to manager: {}".format(taskinfo["name"]))
+      else:
+          print("[-] {}".format(r.text))
+
+  def register(self, no_manager=False):
     """
     - 問題を全てスコアサーバに登録する
     - 配布ファイルをサーバにアップロードする
@@ -307,25 +383,9 @@ class CommandClass():
       # distfiles以下のファイルを圧縮してupload
       distdir = chal / "distfiles"
       if distdir.is_dir():
-        # 圧縮パート
-        tarbytes = BytesIO()
-        with tarfile.open(fileobj=tarbytes, mode="w:gz") as tar:
-          for f in distdir.iterdir():
-              tar.add(f, arcname=f.as_posix()[len(distdir.as_posix()):], recursive=True)
-
-        # uploadパート
-        buf = tarbytes.getvalue()
-        object_name = "{}_{}.tar.gz".format(taskinfo["name"], hashlib.md5(buf).hexdigest())
-        tarbytes.seek(0)
-        self._minio.put_object(self._conf["bucket"]["name"], object_name, tarbytes, len(buf))
-
-        # uploadしたファイルのdownloadableなリンク
-        url = "{schema}://{host}/{name}/{key}".format(
-            schema="http" if "insecure" in self._conf["bucket"] else "https",
-            host=self._conf["bucket"]["endpoint"],
-            name=self._conf["bucket"]["name"],
-            key=object_name,
-        )
+        tarbytes = self._compress_distfiles(distdir)
+        object_name = "{}_{}.tar.gz".format(taskinfo["name"], hashlib.md5(tarbytes).hexdigest())
+        url = self._upload_file(BytesIO(tarbytes), len(tarbytes), object_name)
         taskinfo["attachments"].append({
           "name": object_name,
           "url": url,
@@ -336,13 +396,8 @@ class CommandClass():
       if rawdistdir.is_dir():
         for f in rawdistdir.iterdir():
           if f.is_file():
-            self._minio.fput_object(self._conf["bucket"]["name"], f.name, f.as_posix())
-            url = "{schema}://{host}/{name}/{key}".format(
-                schema="http" if "insecure" in self._conf["bucket"] else "https",
-                host=self._conf["bucket"]["endpoint"],
-                name=self._conf["bucket"]["name"],
-                key=f.name,
-            )
+            with open(f) as fileobj:
+              url = self._upload_file(fileobj, f.stat().st_size, f.name)
             taskinfo["attachments"].append({
               "name": f.name,
               "url": url,
@@ -365,68 +420,8 @@ class CommandClass():
       challengeinfo = r.json()
 
       compose_file = chal / "docker-compose.yml"
-      if compose_file.is_file():
-        def do_compose_iikanji(compose_path, name):
-          """
-          既存のdocker-compose.ymlを読み込んで、imageセクションを追加してbuild / pushし、新しくなったdocker-compose.ymlの内容を返す
-          """
-          dir = compose_path.parent
-
-          # 既存のdocker-compose.ymlを読み込んで imageを追加する
-          with open(compose_path) as f:
-            compose = yaml.safe_load(f)
-          for service in compose["services"].keys():
-            if "image" in service:
-              print("[+] unsupported!!!")
-              quit()
-
-            # imageタグをセットする
-            compose["services"][service]["image"] = "{}/{}/{}_{}:latest".format(self._conf["registry"]["server"], self._conf["registry"]["name"], md5(taskinfo["name"].encode()).hexdigest(), service)
-
-            # buildは削除する
-            if "build" in service:
-              del compose["services"][service]["build"]
-
-          # 新しいcompose.ymlを作る
-          new_compose_path = dir / "docker-compose_{}.yml".format(randname())
-          new_compose = yaml.dump(compose, default_flow_style=False)
-          with open(new_compose_path, "w") as f:
-            f.write(new_compose)
-
-          # 新しく作ったdocker-compose.ymlを使ってイメージをビルド、pushする
-          subprocess.run(["docker-compose", "-f", new_compose_path.name, "build"], cwd=dir, check=True)
-          subprocess.run(["docker", "login", self._conf["registry"]["server"], "-u", self._conf["registry"]["username"], "-p", self._conf["registry"]["password"]], check=True)
-          subprocess.run(["docker-compose", "-f", new_compose_path.name, "push"], cwd=dir, check=True)
-
-          # 新しく作ったdocker-compose.ymlはもういらないので消す
-          os.remove(new_compose_path)
-
-          # 新しいdocker-composeの内容だけを返す
-          return new_compose
-
-        new_compose = do_compose_iikanji(compose_file, taskinfo["name"])
-        solve_compose_path = chal / "solution" / "docker-compose.yml"
-        if solve_compose_path.is_file():
-          solve_compose = do_compose_iikanji(solve_compose_path, taskinfo["name"] + "_solution")
-        else:
-          solve_compose = ""
-
-        # challenge managerに登録する
-        r = self._manager.post("/register", {
-          "id": challengeinfo["id"],
-          "compose": new_compose,
-          "solve_compose": solve_compose,
-          "flag": taskinfo["flag"],
-          "host": taskinfo["host"],
-          "port": taskinfo["port"],
-        })
-        if 200 <= r.status_code < 400:
-            print("[+] registered to manager: {}".format(taskinfo["name"]))
-        else:
-            print("[-] {}".format(r.text))
-            quit()
-
-
+      if no_manager == False and compose_file.is_file():
+        self._register_to_manager(compose_file, challengeinfo["id"], taskinfo)
 
 def main():
   fire.Fire(CommandClass)

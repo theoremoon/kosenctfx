@@ -23,7 +23,7 @@ func (r *repository) RegisterTeam(t *model.Team) error {
 
 func (r *repository) ListAllTeams() ([]*model.Team, error) {
 	var teams []*model.Team
-	if err := r.db.Find(&teams).Error; err != nil {
+	if err := r.db.Where("is_admin = ?", false).Find(&teams).Error; err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	return teams, nil

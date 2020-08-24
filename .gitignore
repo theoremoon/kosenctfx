@@ -1,4 +1,5 @@
 /envfile
 .terraform
 /bin
+/production
 .vagrant

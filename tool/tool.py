@@ -341,10 +341,10 @@ class CommandClass():
       return new_compose
 
   def _register_to_manager(self, compose_file, challengeid, taskinfo):
-      new_compose = self._build_push_image(compose_file, md5(taskinfo["name"].encode()).decode())
-      solve_compose_path = chal / "solution" / "docker-compose.yml"
+      new_compose = self._build_push_image(compose_file, md5(taskinfo["name"].encode()).hexdigest())
+      solve_compose_path = compose_file.parent / "solution" / "docker-compose.yml"
       if solve_compose_path.is_file():
-        solve_compose = do_compose_iikanji(solve_compose_path, md5((taskinfo["name"] + "_solution").encode()).decode())
+        solve_compose = do_compose_iikanji(solve_compose_path, md5((taskinfo["name"] + "_solution").encode()).hexdigest())
       else:
         solve_compose = ""
 

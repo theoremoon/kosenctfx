@@ -2,15 +2,23 @@ help:
 	:
 
 up:
-	(cd dev; docker-compose up)
+	docker-compose up
 
 down:
-	(cd dev; docker-compose down)
+	docker-compose down
+
+production-build:
+	mkdir -p production
+	(cd scoreserver; go build -o ../production -a -tags netgo -installsuffix netgo -ldflags="-extldflags \"-static\"")
+	(cd challengemanager; go build -o ../production -a -tags netgo -installsuffix netgo -ldflags="-extldflags \"-static\"")
 
 build:
 	mkdir -p bin
 	(cd scoreserver; go build -o ../bin)
 	(cd challengemanager; go build -o ../bin)
+
+bulid-ui:
+	(cd ui; yarn build)
 
 run: build
 	(source ./envfile; ./bin/scoreserver)

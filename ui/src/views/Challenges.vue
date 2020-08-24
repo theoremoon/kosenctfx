@@ -59,9 +59,16 @@
           </div>
 
           <div class="w-1/4">
-            <h2 class="text-xl">solved by</h2>
-            <div v-for="t in focusedchallenge.solved_by" :key="t">
-              {{ t }}
+            <h2 class="text-xl">
+              solved by ({{ focusedchallenge.solved_by.length }})
+            </h2>
+            <div
+              v-for="t in focusedchallenge.solved_by.slice(0, 10)"
+              :key="t.team_id"
+            >
+              <router-link :to="'/team/' + t.team_id">{{
+                t.team_name
+              }}</router-link>
             </div>
           </div>
         </div>
@@ -75,7 +82,11 @@
       <div
         class="challenge"
         v-for="c in list_challenges"
-        :class="{ 'challenge-solved': c.solved_by.includes($store.teamname) }"
+        :class="{
+          'challenge-solved': c.solved_by
+            .map(e => e.team_name)
+            .includes($store.teamname)
+        }"
         :key="c.name"
         @click="focus = c.name"
       >

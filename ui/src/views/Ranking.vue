@@ -14,9 +14,11 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="t in orderedTeams" :key="t.id">
+        <tr v-for="t in orderedTeams" :key="t.team_id">
           <td class="text-center">{{ t.pos }}</td>
-          <td>{{ t.team }}</td>
+          <td>
+            <router-link :to="'/team/' + t.team_id">{{ t.team }}</router-link>
+          </td>
           <td class="text-right">{{ t.points }}</td>
           <td v-for="c in orderedChallenges" :key="c.name">
             <font-awesome-icon icon="flag" v-if="t.taskStats[c.name]" />
@@ -74,7 +76,7 @@ export default Vue.extend({
 .challenge-name {
   span {
     display: inline-block;
-    transform-origin: left bottom;
+    transform-origin: left;
     transform: rotate(-45deg);
     width: 2em;
   }

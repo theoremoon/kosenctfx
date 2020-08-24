@@ -244,7 +244,8 @@ input[type="submit"]:hover {
   margin-top: 0.25rem;
   padding: 0.5rem 1rem;
   border: 1px solid $accent-color;
-  background-color: rgba($accent-color, 0.6);
+  background-color: rgba($accent-color, 0.8);
+  word-break: break-word;
 
   border-radius: 0.25rem;
 }

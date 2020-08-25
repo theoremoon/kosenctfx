@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	cacheDuration     = 1 * time.Minute
-	challengesJSONKey = "challengesJSONKey"
-	rankingJSONKey    = "rankingJSONKey"
+	cacheDuration      = 1 * time.Minute
+	challengesJSONKey  = "challengesJSONKey"
+	rankingJSONKey     = "rankingJSONKey"
+	userRankingJSONKey = "userRankingJSONKey"
 )
 
 func (s *server) registerWithTeamHandler() echo.HandlerFunc {
@@ -140,19 +141,22 @@ func (s *server) infoUpdateHandler() echo.HandlerFunc {
 		// TODO notification
 		// cache を使う
 		if status == service.CTFRunning {
-			challenges, ranking, err := s.getCacheInfo()
+			challenges, ranking, userRanking, err := s.getCacheInfo()
 			if err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
 
-			if challenges != "" && ranking != "" {
+			if challenges != "" && ranking != "" && userRanking != "" {
 				var cs []*service.Challenge
 				var scoreboard *service.Scoreboard
+				var userScoreboard *service.Scoreboard
 				err1 := json.Unmarshal([]byte(challenges), &cs)
 				err2 := json.Unmarshal([]byte(ranking), &scoreboard)
-				if err1 == nil && err2 == nil {
+				err3 := json.Unmarshal([]byte(userRanking), &userScoreboard)
+				if err1 == nil && err2 == nil && err3 == nil {
 					ret["challenges"] = cs
 					ret["ranking"] = scoreboard
+					ret["userRanking"] = userScoreboard
 				}
 			}
 		}
@@ -160,7 +164,7 @@ func (s *server) infoUpdateHandler() echo.HandlerFunc {
 		_, exist1 := ret["challenges"]
 		_, exist2 := ret["ranking"]
 		if !exist1 || !exist2 {
-			challenges, ranking, err := s.app.ScoreFeed()
+			challenges, ranking, userRanking, err := s.app.ScoreFeed()
 			if err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
@@ -169,13 +173,15 @@ func (s *server) infoUpdateHandler() echo.HandlerFunc {
 			}
 			ret["challenges"] = challenges
 			ret["ranking"] = ranking
+			ret["userRanking"] = userRanking
 
 			// cacheする
 			if status == service.CTFRunning {
 				bytes1, err1 := json.Marshal(challenges)
 				bytes2, err2 := json.Marshal(ranking)
-				if err1 == nil && err2 == nil {
-					s.setCacheInfo(string(bytes1), string(bytes2))
+				bytes3, err3 := json.Marshal(userRanking)
+				if err1 == nil && err2 == nil && err3 == nil {
+					s.setCacheInfo(string(bytes1), string(bytes2), string(bytes3))
 				}
 			}
 		}
@@ -672,31 +678,43 @@ func (s *server) setChallngesJSON(value string) error {
 	return nil
 }
 
-func (s *server) getCacheInfo() (string, string, error) {
+func (s *server) getCacheInfo() (string, string, string, error) {
 	c, err := s.redis.Get(challengesJSONKey).Result()
 	if err == redis.Nil {
-		return "", "", nil
+		return "", "", "", nil
 	} else if err != nil {
-		return "", "", xerrors.Errorf(": %w", err)
+		return "", "", "", xerrors.Errorf(": %w", err)
 	}
 
 	r, err := s.redis.Get(rankingJSONKey).Result()
 	if err == redis.Nil {
-		return "", "", nil
+		return "", "", "", nil
 	} else if err != nil {
-		return "", "", xerrors.Errorf(": %w", err)
+		return "", "", "", xerrors.Errorf(": %w", err)
 	}
 
-	return c, r, nil
+	u, err := s.redis.Get(userRankingJSONKey).Result()
+	if err == redis.Nil {
+		return "", "", "", nil
+	} else if err != nil {
+		return "", "", "", xerrors.Errorf(": %w", err)
+	}
+
+	return c, r, u, nil
 }
 
-func (s *server) setCacheInfo(challenges, ranking string) error {
+func (s *server) setCacheInfo(challenges, ranking, userRanking string) error {
 	err := s.redis.Set(challengesJSONKey, challenges, cacheDuration).Err()
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
 	err = s.redis.Set(rankingJSONKey, ranking, cacheDuration).Err()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	err = s.redis.Set(userRankingJSONKey, ranking, cacheDuration).Err()
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

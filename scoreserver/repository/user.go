@@ -10,6 +10,7 @@ import (
 
 type UserRepository interface {
 	Register(u *model.User) error
+	ListAllUsers() ([]*model.User, error)
 	GetAdminUser() (*model.User, error)
 	GetUserByUsername(username string) (*model.User, error)
 	GetUserByEmail(username string) (*model.User, error)
@@ -29,6 +30,14 @@ func (r *repository) Register(u *model.User) error {
 		return err
 	}
 	return nil
+}
+
+func (r *repository) ListAllUsers() ([]*model.User, error) {
+	var users []*model.User
+	if err := r.db.Where("is_admin = ?", false).Find(&users).Error; err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return users, nil
 }
 
 func (r *repository) GetAdminUser() (*model.User, error) {

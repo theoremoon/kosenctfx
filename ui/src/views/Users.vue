@@ -17,7 +17,7 @@
         <tr v-for="t in orderedTeams" :key="t.team_id">
           <td class="text-center">{{ t.pos }}</td>
           <td>
-            <router-link :to="'/team/' + t.team_id">{{ t.team }}</router-link>
+            <router-link :to="'/user/' + t.team_id">{{ t.team }}</router-link>
           </td>
           <td class="text-right">{{ t.points }}</td>
           <td v-for="c in orderedChallenges" :key="c">
@@ -42,11 +42,11 @@ export default Vue.extend({
   },
   computed: {
     orderedChallenges() {
-      if (!this.$store.ranking || !this.$store.ranking.tasks) {
+      if (!this.$store.userRanking || !this.$store.userRanking.tasks) {
         return [];
       }
 
-      return this.$store.ranking.tasks.slice().sort((a, b) => {
+      return this.$store.userRanking.tasks.slice().sort((a, b) => {
         if (a.name < b.name) {
           return -1;
         } else if (a.name > b.name) {
@@ -57,10 +57,10 @@ export default Vue.extend({
       });
     },
     orderedTeams() {
-      if (!this.$store.ranking) {
+      if (!this.$store.userRanking) {
         return [];
       }
-      return this.$store.ranking.standings;
+      return this.$store.userRanking.standings;
     }
   }
 });

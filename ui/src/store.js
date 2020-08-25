@@ -12,7 +12,8 @@ const store = {
           ctfEnd: null,
           ctfName: null,
           challenges: [],
-          ranking: []
+          ranking: [],
+          userRanking: []
         };
       }
     });

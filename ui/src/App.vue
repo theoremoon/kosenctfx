@@ -16,6 +16,9 @@
           <div class="mr-4">
             <router-link to="/ranking">RANKING</router-link>
           </div>
+          <div class="mr-4">
+            <router-link to="/users">USERS</router-link>
+          </div>
         </div>
 
         <div class="flex flex-0">
@@ -40,9 +43,6 @@
             </div>
             <div class="mr-4">
               <router-link to="/register">REGISTER</router-link>
-            </div>
-            <div class="mr-4">
-              <button @click="logout">LOGOUT</button>
             </div>
           </template>
         </div>
@@ -114,14 +114,16 @@ export default Vue.extend({
           } else {
             Vue.set(this.$store, "ranking", null);
           }
+          if ("userRanking" in r.data) {
+            Vue.set(this.$store, "userRanking", r.data.userRanking);
+          } else {
+            Vue.set(this.$store, "userRanking", null);
+          }
           if ("challenges" in r.data) {
             Vue.set(this.$store, "challenges", r.data.challenges);
           } else {
             Vue.set(this.$store, "challenges", null);
           }
-
-          console.log(this.$store.ranking);
-          console.log(this.$store.challenges);
         })
         .catch(e => errorHandle(this, e));
     },

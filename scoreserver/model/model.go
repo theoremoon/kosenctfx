@@ -100,6 +100,7 @@ type ValidSubmission struct {
 
 	ChallengeId  uint `gorm:"unique_index:valid_submission"`
 	TeamId       uint `gorm:"unique_index:valid_submission"`
+	UserId       uint
 	SubmissionId uint
 }
 

@@ -9,6 +9,7 @@ import ResetRequest from "../views/ResetRequest.vue";
 import Reset from "../views/Reset.vue";
 import Challenges from "../views/Challenges.vue";
 import Ranking from "../views/Ranking.vue";
+import Users from "../views/Users.vue";
 
 Vue.use(VueRouter);
 
@@ -58,6 +59,11 @@ const routes = [
     path: "/ranking",
     name: "Ranking",
     component: Ranking
+  },
+  {
+    path: "/users",
+    name: "Users",
+    component: Users
   }
 ];
 

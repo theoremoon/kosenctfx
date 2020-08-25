@@ -1,14 +1,14 @@
 <template>
-  <div class="mt-4 mx-8">
+  <div class="my-4 mx-8">
     <table class="ranking">
       <thead>
         <tr>
           <th>Rank</th>
           <th>Team</th>
           <th>Score</th>
-          <th v-for="c in orderedChallenges" :key="c.id" class="challenge-name">
+          <th v-for="c in orderedChallenges" :key="c" class="challenge-name">
             <span>
-              {{ c.name }}
+              {{ c }}
             </span>
           </th>
         </tr>
@@ -20,8 +20,8 @@
             <router-link :to="'/team/' + t.team_id">{{ t.team }}</router-link>
           </td>
           <td class="text-right">{{ t.points }}</td>
-          <td v-for="c in orderedChallenges" :key="c.name">
-            <font-awesome-icon icon="flag" v-if="t.taskStats[c.name]" />
+          <td v-for="c in orderedChallenges" :key="c">
+            <font-awesome-icon icon="flag" v-if="t.taskStats[c]" />
           </td>
         </tr>
       </tbody>
@@ -31,7 +31,6 @@
 
 <script>
 import Vue from "vue";
-import { message } from "../message";
 
 export default Vue.extend({
   data() {
@@ -41,15 +40,13 @@ export default Vue.extend({
       focus: null
     };
   },
-  mounted() {
-    if (!this.$store.challenges) {
-      message(this, "Competition is now closed");
-      this.$router.push("/");
-    }
-  },
   computed: {
     orderedChallenges() {
-      return this.$store.challenges.slice().sort((a, b) => {
+      if (!this.$store.ranking.tasks) {
+        return [];
+      }
+
+      return this.$store.ranking.tasks.slice().sort((a, b) => {
         if (a.name < b.name) {
           return -1;
         } else if (a.name > b.name) {
@@ -60,7 +57,7 @@ export default Vue.extend({
       });
     },
     orderedTeams() {
-      return this.$store.ranking;
+      return this.$store.ranking.standings;
     }
   }
 });

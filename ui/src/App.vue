@@ -119,6 +119,9 @@ export default Vue.extend({
           } else {
             Vue.set(this.$store, "challenges", null);
           }
+
+          console.log(this.$store.ranking);
+          console.log(this.$store.challenges);
         })
         .catch(e => errorHandle(this, e));
     },
@@ -139,6 +142,8 @@ export default Vue.extend({
           Vue.set(this.$store, "ctfStart", r.data.ctf_start);
           Vue.set(this.$store, "ctfEnd", r.data.ctf_end);
           Vue.set(this.$store, "ctfName", r.data.ctf_name);
+
+          document.title = this.$store.ctfName;
         })
         .catch(() => {});
     },

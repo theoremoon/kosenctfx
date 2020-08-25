@@ -18,7 +18,7 @@ type App interface {
 	ChallengeApp
 	CTFApp
 	NotificationApp
-	ScoreFeed() ([]*Challenge, []*ScoreFeedEntry, error)
+	ScoreFeed() ([]*Challenge, *Scoreboard, error)
 }
 
 type app struct {
@@ -69,9 +69,13 @@ type ScoreFeedEntry struct {
 	TeamID         uint                 `json:"team_id"`
 	LastSubmission int64                `json:"last_submission"`
 }
+type Scoreboard struct {
+	Tasks     []string          `json:"tasks"`
+	Standings []*ScoreFeedEntry `json:"standings"`
+}
 
 /// 問題一覧、とチームのランキングを同時に計算する
-func (app *app) ScoreFeed() ([]*Challenge, []*ScoreFeedEntry, error) {
+func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, error) {
 	// list all challenges, tags, and attachments
 	allchals, err := app.repo.ListAllChallenges()
 	if err != nil {
@@ -225,5 +229,15 @@ func (app *app) ScoreFeed() ([]*Challenge, []*ScoreFeedEntry, error) {
 			scoreFeed[i].Pos = scoreFeed[i-1].Pos
 		}
 	}
-	return challenges, scoreFeed, nil
+
+	// tasksをchallengesと別に作っているのは、challengesはnot logged inなuserには見せてないから
+	tasks := make([]string, len(challenges))
+	for i, c := range challenges {
+		tasks[i] = c.Name
+	}
+
+	return challenges, &Scoreboard{
+		Tasks:     tasks,
+		Standings: scoreFeed,
+	}, nil
 }

@@ -147,12 +147,12 @@ func (s *server) infoUpdateHandler() echo.HandlerFunc {
 
 			if challenges != "" && ranking != "" {
 				var cs []*service.Challenge
-				var rank []*service.ScoreFeedEntry
+				var scoreboard *service.Scoreboard
 				err1 := json.Unmarshal([]byte(challenges), &cs)
-				err2 := json.Unmarshal([]byte(ranking), &rank)
+				err2 := json.Unmarshal([]byte(ranking), &scoreboard)
 				if err1 == nil && err2 == nil {
 					ret["challenges"] = cs
-					ret["ranking"] = rank
+					ret["ranking"] = scoreboard
 				}
 			}
 		}

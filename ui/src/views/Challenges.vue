@@ -1,5 +1,5 @@
 <template>
-  <div class="mt-4 mx-8">
+  <div class="my-4 mx-8">
     <div class="flex justify-between">
       <form class="inline-form" @submit.prevent="submit">
         <label>flag:</label>

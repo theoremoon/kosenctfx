@@ -17,26 +17,21 @@ const (
 )
 
 type CTFApp interface {
-	CurrentCTFStatus() (CTFStatus, error)
 	GetCTFConfig() (*model.Config, error)
 	SetCTFConfig(config *model.Config) error
 }
 
-func (app *app) CurrentCTFStatus() (CTFStatus, error) {
+func CalcCTFStatus(conf *model.Config) CTFStatus {
 	now := time.Now()
-	conf, err := app.repo.GetConfig()
-	if err != nil {
-		return InvalidCTFSTatus, xerrors.Errorf(": %w", err)
-	}
 
 	if !conf.CTFOpen {
-		return CTFNotStarted, nil
+		return CTFNotStarted
 	} else if now.Before(conf.StartAt) {
-		return CTFNotStarted, nil
+		return CTFNotStarted
 	} else if now.After(conf.StartAt) && now.Before(conf.EndAt) {
-		return CTFRunning, nil
+		return CTFRunning
 	} else {
-		return CTFEnded, nil
+		return CTFEnded
 	}
 }
 

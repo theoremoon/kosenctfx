@@ -8,10 +8,10 @@ import (
 )
 
 type Model struct {
-	ID        uint `gorm:"primary_key"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt *time.Time
+	ID        uint       `gorm:"primary_key" json:"id"`
+	CreatedAt time.Time  `json:"-"`
+	UpdatedAt time.Time  `json:"-"`
+	DeletedAt *time.Time `json:"-"`
 }
 
 func (model *Model) BeforeCreate(scope *gorm.Scope) error {
@@ -56,18 +56,18 @@ type Team struct {
 }
 
 type Challenge struct {
-	Model
+	Model `json:"model"`
 
-	Name        string `gorm:"unique"`
-	Flag        string `gorm:"unique"`
-	Description string `gorm:"size:10000"`
-	Author      string
-	Host        *string
-	Port        *int
+	Name        string  `gorm:"unique" json:"name"`
+	Flag        string  `gorm:"unique" json:"flag"`
+	Description string  `gorm:"size:10000" json:"description"`
+	Author      string  `json:"author"`
+	Host        *string `json:"host"`
+	Port        *int    `json:"port"`
 
-	IsOpen    bool
-	IsRunning bool
-	IsSurvey  bool
+	IsOpen    bool `json:"is_open"`
+	IsRunning bool `json:"is_running"`
+	IsSurvey  bool `json:"is_survey"`
 }
 
 type Tag struct {
@@ -92,8 +92,22 @@ type Submission struct {
 	UserId      uint
 	TeamId      uint
 	IsCorrect   bool
-	IsValid     bool
 	Flag        string
+}
+
+type ValidSubmission struct {
+	Model
+
+	ChallengeId  uint `gorm:"unique_index:valid_submission"`
+	TeamId       uint `gorm:"unique_index:valid_submission"`
+	SubmissionId uint
+}
+
+type SubmissionLock struct {
+	Model
+
+	TeamId uint
+	Until  time.Time
 }
 
 type Notification struct {
@@ -115,9 +129,9 @@ type Config struct {
 	RegisterOpen bool
 	CTFOpen      bool
 
-	LockCount     int
-	LockFrequency int
-	LockDuration  int
+	LockCount    int
+	LockSecond   int
+	LockDuration int
 
 	ScoreExpr string `gorm:"size:10000"`
 }

@@ -36,6 +36,8 @@ func (r *repository) Migrate() {
 		&model.Tag{},
 		&model.Attachment{},
 		&model.Submission{},
+		&model.ValidSubmission{},
+		&model.SubmissionLock{},
 		&model.Config{},
 	)
 }

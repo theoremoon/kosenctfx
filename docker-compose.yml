@@ -41,6 +41,8 @@ services:
     #     MAIL: 'kosenctf@example.com'
     #     MAIL_SERVER: 'smtp.gmail.com:587'
     #     MAIL_PASSWORD: 'XXXXXXXXXXXX'
+    #     ADMIN_WEBHOOK: "https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    #     SYSTEM_WEBHOOK: "https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
     #   ports:
     #     - 5000:5000
     #   command: ["sh", "-c" ,"sleep 10 && ./scoreserver"]

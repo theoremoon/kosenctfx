@@ -53,19 +53,19 @@ type server struct {
 	SessionKey    string
 	FrontendURL   string
 	redis         *redis.Client
-	adminWebhook  webhook.Webhook
-	systemWebhook webhook.Webhook
+	AdminWebhook  webhook.Webhook
+	SystemWebhook webhook.Webhook
 }
 
-func New(app service.App, redis *redis.Client, frontendURL, token string) Server {
+func New(app service.App, redis *redis.Client, frontendURL, token string) *server {
 	return &server{
 		app:           app,
 		SessionKey:    "kosenctfx",
 		Token:         token,
 		FrontendURL:   frontendURL,
 		redis:         redis,
-		adminWebhook:  webhook.Dummy("ADMIN"),
-		systemWebhook: webhook.Dummy("SYSTEM"),
+		AdminWebhook:  webhook.Dummy("ADMIN"),
+		SystemWebhook: webhook.Dummy("SYSTEM"),
 	}
 }
 
@@ -91,8 +91,6 @@ func (s *server) Start(addr string) error {
 	e.POST("/password-update", s.passwordUpdateHandler(), s.loginMiddleware)
 	e.POST("/teamname-update", s.teamnameUpdateHandler(), s.loginMiddleware, s.ctfNotStartedMiddleware)
 
-	e.GET("/challenges", s.challengesHandler(), s.ctfStartedMiddleware, s.ctfPlayableMiddleware)
-	e.GET("/ranking", s.rankingHandler(), s.ctfStartedMiddleware)
 	e.GET("/notifications", s.notificationsHandler())
 	e.GET("/team/:id", s.teamHandler())
 	e.GET("/user/:id", s.userHandler())

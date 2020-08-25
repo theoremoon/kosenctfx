@@ -116,9 +116,9 @@ class CommandClass():
       "end_at": int(datetime.strptime(conf["ctf"]["end"], "%Y-%m-%d %H:%M:%S %z").timestamp()),
       "register_open": conf["ctf"]["register_open"],
       "ctf_open": conf["ctf"]["ctf_open"],
-      "lock_count": conf["ctf"]["lock_count_seconds"],
-      "lock_frequency": conf["ctf"]["lock_freq"],
-      "lock_duration": conf["ctf"]["lock_seconds"],
+      "lock_count": conf["ctf"]["lock_count_times"],
+      "lock_duration": conf["ctf"]["lock_count_second"],
+      "lock_second": conf["ctf"]["lock_second"],
       "score_expr": conf["ctf"]["score_expr"]
     })
     if 200 <= r.status_code < 400:
@@ -163,15 +163,15 @@ class CommandClass():
       if rc:
         chals.append({
           "Challenge": rc["name"],
-          "ID": rc["id"],
-          "Score": rc["score"],
+          "ID": rc["model"]["id"],
+          "Flag": rc["flag"],
           "IsRunning": rc["is_running"],
           "IsOpen": rc["is_open"],
-          "Solved": len(rc["solved_by"])
         })
       elif lc:
         chals.append({
           "Challenge": lc["name"],
+          "Flag": lc["flag"],
         })
 
     print(json.dumps(chals, ensure_ascii=False, indent=4))
@@ -191,7 +191,7 @@ class CommandClass():
     remote = r.json()
     for id in ids:
       for c in remote:
-        if c["id"] != id:
+        if c["model"]["id"] != id:
           continue
 
         name = c["name"]
@@ -224,7 +224,7 @@ class CommandClass():
     remote = r.json()
     for id in ids:
       for c in remote:
-        if c["id"] != id:
+        if c["model"]["id"] != id:
           continue
 
         name = c["name"]
@@ -421,7 +421,7 @@ class CommandClass():
 
       compose_file = chal / "docker-compose.yml"
       if no_manager == False and compose_file.is_file():
-        self._register_to_manager(compose_file, challengeinfo["id"], taskinfo)
+        self._register_to_manager(compose_file, challengeinfo["model"]["id"], taskinfo)
 
 def main():
   fire.Fire(CommandClass)

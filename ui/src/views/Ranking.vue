@@ -31,6 +31,7 @@
 
 <script>
 import Vue from "vue";
+import { message } from "../message";
 
 export default Vue.extend({
   data() {
@@ -40,7 +41,12 @@ export default Vue.extend({
       focus: null
     };
   },
-
+  mounted() {
+    if (!this.$store.challenges) {
+      message(this, "Competition is now closed");
+      this.$router.push("/");
+    }
+  },
   computed: {
     orderedChallenges() {
       return this.$store.challenges.slice().sort((a, b) => {

@@ -13,7 +13,6 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/labstack/echo/v4"
-	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 )
 
@@ -127,17 +126,18 @@ func (s *server) infoHandler() echo.HandlerFunc {
 func (s *server) infoUpdateHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		u, _ := s.getLoginUser(c)
-		status, err := s.app.CurrentCTFStatus()
+		conf, err := s.app.GetCTFConfig()
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+		status := service.CalcCTFStatus(conf)
 		if status == service.CTFNotStarted {
 			return messageHandle(c, CTFNotStartedMessage)
 		}
 
 		ret := make(map[string]interface{})
 
-		// TODO notification / ranking
+		// TODO notification
 		// cache を使う
 		if status == service.CTFRunning {
 			challenges, ranking, err := s.getCacheInfo()
@@ -272,25 +272,6 @@ func (s *server) teamnameUpdateHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) challengesHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		challenges, err := s.app.ListOpenChallenges()
-		for i := range challenges {
-			challenges[i].Flag = ""
-		}
-		if err != nil {
-			return errorHandle(c, err)
-		}
-		return c.JSON(http.StatusOK, challenges)
-	}
-}
-
-func (s *server) rankingHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, NotImplementedMessage)
-	}
-}
-
 func (s *server) notificationsHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		notifications, err := s.app.ListNotifications()
@@ -371,11 +352,22 @@ func (s *server) submitHandler() echo.HandlerFunc {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 
-		ctfStatus, err := s.app.CurrentCTFStatus()
+		// check Submission Lock
+		submittable, err := s.app.CheckSubmittable(lc.User.TeamId)
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+		if !submittable {
+			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage("Your submission is currently locked")))
+		}
 
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		ctfStatus := service.CalcCTFStatus(conf)
+
+		// flag submission
 		flag := strings.Trim(req.Flag, " ")
 		challenge, correct, valid, err := s.app.SubmitFlag(lc.User, flag, ctfStatus == service.CTFRunning)
 		if err != nil {
@@ -384,14 +376,11 @@ func (s *server) submitHandler() echo.HandlerFunc {
 
 		team, err := s.app.GetTeamByID(lc.User.TeamId)
 		if err != nil {
-			log.Println(err)
-			team = &model.Team{
-				Teamname: "",
-			}
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 
 		if valid {
-			s.systemWebhook.Post(fmt.Sprintf(
+			s.SystemWebhook.Post(fmt.Sprintf(
 				"`%s@%s` solved `%s` :100:",
 				lc.User.Username,
 				team.Teamname,
@@ -399,7 +388,7 @@ func (s *server) submitHandler() echo.HandlerFunc {
 			))
 			return messageHandle(c, fmt.Sprintf("correct! solved `%s` and got score", challenge.Name))
 		} else if correct {
-			s.adminWebhook.Post(fmt.Sprintf(
+			s.AdminWebhook.Post(fmt.Sprintf(
 				"`%s@%s` solved `%s`.",
 				lc.User.Username,
 				team.Teamname,
@@ -407,7 +396,18 @@ func (s *server) submitHandler() echo.HandlerFunc {
 			))
 			return messageHandle(c, fmt.Sprintf("correct. solved `%s`", challenge.Name))
 		} else {
-			s.adminWebhook.Post(fmt.Sprintf(
+			// wrong count
+			count, err := s.app.GetWrongCount(team.ID, time.Duration(conf.LockDuration)*time.Second)
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+			if count >= conf.LockCount {
+				if err := s.app.LockSubmission(team.ID, time.Duration(conf.LockSecond)*time.Second); err != nil {
+					return errorHandle(c, xerrors.Errorf(": %w", err))
+				}
+			}
+
+			s.AdminWebhook.Post(fmt.Sprintf(
 				"`%s@%s` submit flag `%s`, but wrong.",
 				lc.User.Username,
 				team.Teamname,
@@ -448,15 +448,15 @@ func (s *server) scoreEmulateHandler() echo.HandlerFunc {
 func (s *server) ctfConfigHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
-			Name          string `json:"name"`
-			StartAt       int64  `json:"start_at"`
-			EndAt         int64  `json:"end_at"`
-			RegisterOpen  bool   `json:"register_open"`
-			CTFOpen       bool   `json:"ctf_open"`
-			LockCount     int    `json:"lock_count"`
-			LockFrequency int    `json:"lock_frequency"`
-			LockDuration  int    `json:"lock_duration"`
-			ScoreExpr     string `json:"score_expr"`
+			Name         string `json:"name"`
+			StartAt      int64  `json:"start_at"`
+			EndAt        int64  `json:"end_at"`
+			RegisterOpen bool   `json:"register_open"`
+			CTFOpen      bool   `json:"ctf_open"`
+			LockCount    int    `json:"lock_count"`
+			LockSecond   int    `json:"lock_second"`
+			LockDuration int    `json:"lock_duration"`
+			ScoreExpr    string `json:"score_expr"`
 		})
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
@@ -478,7 +478,7 @@ func (s *server) ctfConfigHandler() echo.HandlerFunc {
 		conf.RegisterOpen = req.RegisterOpen
 		conf.CTFOpen = req.CTFOpen
 		conf.LockCount = req.LockCount
-		conf.LockFrequency = req.LockFrequency
+		conf.LockSecond = req.LockSecond
 		conf.LockDuration = req.LockDuration
 		conf.ScoreExpr = req.ScoreExpr
 		if err := s.app.SetCTFConfig(conf); err != nil {
@@ -503,7 +503,7 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 		if err := s.app.OpenChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		s.systemWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
+		s.SystemWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
 		return c.JSON(http.StatusOK, ChallengeOpenMessage)
 	}
 }
@@ -523,7 +523,7 @@ func (s *server) closeChallengeHandler() echo.HandlerFunc {
 		if err := s.app.CloseChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		s.systemWebhook.Post(fmt.Sprintf("Challenge `%s` closed!", chal.Name))
+		s.SystemWebhook.Post(fmt.Sprintf("Challenge `%s` closed!", chal.Name))
 		return c.JSON(http.StatusOK, ChallengeCloseMessage)
 	}
 }
@@ -624,14 +624,14 @@ func (s *server) newNotificationHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, err)
 		}
-		s.systemWebhook.Post(fmt.Sprintf("Notification: ```\n%s\n```", notification.Content))
+		s.SystemWebhook.Post(fmt.Sprintf("Notification: ```\n%s\n```", notification.Content))
 		return c.JSON(http.StatusOK, AddNotificationMessage)
 	}
 }
 
 func (s *server) listChallengesHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		challenges, err := s.app.ListAllChallenges()
+		challenges, err := s.app.ListAllRawChallenges()
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}

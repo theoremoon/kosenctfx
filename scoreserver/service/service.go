@@ -133,7 +133,7 @@ func (app *app) ScoreFeed() ([]*Challenge, []*ScoreFeedEntry, error) {
 		solvedByMap[c.ID] = make([]SolvedBy, 0)
 	}
 	for _, s := range submissions {
-		solvedByMap[*s.ChallengeId] = append(solvedByMap[*s.ChallengeId], SolvedBy{
+		solvedByMap[s.ChallengeId] = append(solvedByMap[s.ChallengeId], SolvedBy{
 			TeamName: teamMap[s.TeamId],
 			TeamID:   s.TeamId,
 			SolvedAt: s.CreatedAt.Unix(),
@@ -172,9 +172,9 @@ func (app *app) ScoreFeed() ([]*Challenge, []*ScoreFeedEntry, error) {
 		chalMap[c.ID] = c
 	}
 
-	teamSubmissions := make(map[uint][]*model.Submission)
+	teamSubmissions := make(map[uint][]*model.ValidSubmission)
 	for _, t := range teams {
-		teamSubmissions[t.ID] = make([]*model.Submission, 0)
+		teamSubmissions[t.ID] = make([]*model.ValidSubmission, 0)
 	}
 	for _, s := range submissions {
 		teamSubmissions[s.TeamId] = append(teamSubmissions[s.TeamId], s)
@@ -188,7 +188,7 @@ func (app *app) ScoreFeed() ([]*Challenge, []*ScoreFeedEntry, error) {
 		var lastSubmission int64 = 0
 
 		for _, s := range teamSubmissions[teams[i].ID] {
-			c := chalMap[*s.ChallengeId]
+			c := chalMap[s.ChallengeId]
 			score += c.Score
 			solvedAt := s.CreatedAt.Unix()
 			taskStats[c.Name] = &TaskStat{

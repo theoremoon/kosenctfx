@@ -124,6 +124,12 @@ export default Vue.extend({
       focus: null
     };
   },
+  mounted() {
+    if (!this.$store.challenges) {
+      message(this, "Competition is now closed");
+      this.$router.push("/");
+    }
+  },
   methods: {
     submit() {
       if (this.flag == "") {

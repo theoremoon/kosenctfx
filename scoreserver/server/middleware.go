@@ -64,10 +64,11 @@ func (s *server) notLoginMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 
 func (s *server) ctfStartedMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		status, err := s.app.CurrentCTFStatus()
+		conf, err := s.app.GetCTFConfig()
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+		status := service.CalcCTFStatus(conf)
 
 		if status == service.CTFNotStarted {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
@@ -80,10 +81,11 @@ func (s *server) ctfStartedMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 
 func (s *server) ctfNotStartedMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		status, err := s.app.CurrentCTFStatus()
+		conf, err := s.app.GetCTFConfig()
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+		status := service.CalcCTFStatus(conf)
 
 		if status != service.CTFNotStarted {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
@@ -96,10 +98,11 @@ func (s *server) ctfNotStartedMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 
 func (s *server) ctfRunningMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		status, err := s.app.CurrentCTFStatus()
+		conf, err := s.app.GetCTFConfig()
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+		status := service.CalcCTFStatus(conf)
 
 		if status != service.CTFRunning {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{

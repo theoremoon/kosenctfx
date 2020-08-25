@@ -6,13 +6,15 @@ import (
 )
 
 type Config struct {
-	Dbdsn        string
-	Addr         string
-	RedisAddr    string
-	Front        string
-	Email        string
-	MailServer   string
-	MailPassword string
+	Dbdsn            string
+	Addr             string
+	RedisAddr        string
+	Front            string
+	Email            string
+	MailServer       string
+	MailPassword     string
+	AdminWebhookURL  string
+	SystemWebhookURL string
 }
 
 func getEnv(name string) (string, error) {
@@ -60,13 +62,18 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	adminWebhookURL, _ := getEnv("ADMIN_WEBHOOK")
+	systemWebhookURL, _ := getEnv("ADMIN_WEBHOOK")
+
 	return &Config{
-		Dbdsn:        dbdsn,
-		Addr:         addr,
-		RedisAddr:    redisAddr,
-		Front:        front,
-		Email:        mailaccount,
-		MailServer:   mailserver,
-		MailPassword: mailpassword,
+		Dbdsn:            dbdsn,
+		Addr:             addr,
+		RedisAddr:        redisAddr,
+		Front:            front,
+		Email:            mailaccount,
+		MailServer:       mailserver,
+		MailPassword:     mailpassword,
+		AdminWebhookURL:  adminWebhookURL,
+		SystemWebhookURL: systemWebhookURL,
 	}, nil
 }

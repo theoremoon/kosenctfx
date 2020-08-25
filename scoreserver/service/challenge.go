@@ -2,7 +2,7 @@ package service
 
 import (
 	"fmt"
-	"path/filepath"
+	"time"
 
 	"github.com/mattn/anko/core"
 	"github.com/mattn/anko/env"
@@ -44,8 +44,7 @@ type ChallengeApp interface {
 	GetChallengeByID(challengeID uint) (*Challenge, error)
 	GetChallengeByName(name string) (*Challenge, error)
 	GetRawChallengeByName(name string) (*model.Challenge, error)
-	ListAllChallenges() ([]*Challenge, error)
-	ListOpenChallenges() ([]*Challenge, error)
+	ListAllRawChallenges() ([]*model.Challenge, error)
 
 	AddChallenge(c *Challenge) error
 	OpenChallenge(challengeID uint) error
@@ -53,6 +52,10 @@ type ChallengeApp interface {
 	UpdateChallenge(challengeID uint, c *Challenge) error
 
 	SubmitFlag(user *model.User, flag string, ctfRunning bool) (*model.Challenge, bool, bool, error)
+
+	GetWrongCount(teamID uint, duration time.Duration) (int, error)
+	LockSubmission(teamID uint, duration time.Duration) error
+	CheckSubmittable(teamID uint) (bool, error)
 }
 
 func (app *app) GetChallengeByID(challengeID uint) (*Challenge, error) {
@@ -115,109 +118,12 @@ func (app *app) GetRawChallengeByName(name string) (*model.Challenge, error) {
 	return chal, nil
 }
 
-func (app *app) ListAllChallenges() ([]*Challenge, error) {
-	// list all challenges, tags, and attachments
+func (app *app) ListAllRawChallenges() ([]*model.Challenge, error) {
 	chals, err := app.repo.ListAllChallenges()
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
-	tags, err := app.repo.ListAllTags()
-	if err != nil {
-		return nil, err
-	}
-	attachments, err := app.repo.ListAllAttachments()
-	if err != nil {
-		return nil, err
-	}
-
-	// list valid submissions and its author team to calculate score
-	submissions, err := app.repo.ListValidSubmissions()
-	if err != nil {
-		return nil, err
-	}
-	teams, err := app.repo.ListAllTeams()
-	if err != nil {
-		return nil, err
-	}
-
-	// make mapping as challenge id is the key
-	tagMap := make(map[uint][]string)
-	for _, c := range chals {
-		tagMap[c.ID] = make([]string, 0)
-	}
-	for _, t := range tags {
-		tagMap[t.ChallengeId] = append(tagMap[t.ChallengeId], t.Tag)
-	}
-
-	attachmentMap := make(map[uint][]Attachment)
-	for _, c := range chals {
-		attachmentMap[c.ID] = make([]Attachment, 0)
-	}
-	for _, a := range attachments {
-		attachmentMap[a.ChallengeId] = append(attachmentMap[a.ChallengeId], Attachment{
-			Name: filepath.Base(a.URL),
-			URL:  a.URL,
-		})
-	}
-	teamMap := make(map[uint]string)
-	for _, t := range teams {
-		teamMap[t.ID] = t.Teamname
-	}
-
-	// key: challlenge id, value: team name who solved this chal
-	solvedByMap := make(map[uint][]SolvedBy)
-	for _, c := range chals {
-		solvedByMap[c.ID] = make([]SolvedBy, 0)
-	}
-	for _, s := range submissions {
-		solvedByMap[*s.ChallengeId] = append(solvedByMap[*s.ChallengeId], SolvedBy{
-			TeamName: teamMap[s.TeamId],
-			TeamID:   s.TeamId,
-			SolvedAt: s.CreatedAt.Unix(),
-		})
-	}
-
-	conf, err := app.repo.GetConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	// make structure
-	challenges := make([]*Challenge, len(chals))
-	for i, c := range chals {
-		score, err := CalcChallengeScore(int(len(solvedByMap[c.ID])), conf.ScoreExpr)
-		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
-		}
-		challenges[i] = &Challenge{
-			ID:          c.ID,
-			Name:        c.Name,
-			Flag:        c.Flag,
-			Description: c.Description,
-			Author:      c.Author,
-			Score:       uint(score),
-			Tags:        tagMap[c.ID],
-			Attachments: attachmentMap[c.ID],
-			SolvedBy:    solvedByMap[c.ID],
-			IsOpen:      c.IsOpen,
-			IsSurvey:    c.IsSurvey,
-		}
-	}
-	return challenges, nil
-}
-
-func (app *app) ListOpenChallenges() ([]*Challenge, error) {
-	chals, err := app.ListAllChallenges()
-	if err != nil {
-		return nil, err
-	}
-	result := make([]*Challenge, 0, len(chals))
-	for _, c := range chals {
-		if c.IsOpen {
-			result = append(result, c)
-		}
-	}
-	return result, nil
+	return chals, nil
 }
 
 func (app *app) AddChallenge(c *Challenge) error {
@@ -321,7 +227,6 @@ func (app *app) SubmitFlag(user *model.User, flag string, ctfRunning bool) (*mod
 		UserId:    user.ID,
 		TeamId:    user.TeamId,
 		IsCorrect: false, //とりあえずfalseを入れておいてあとからtrueで上書きする
-		IsValid:   false, // 同上
 		Flag:      flag,
 	}
 	if chal == nil {
@@ -337,7 +242,7 @@ func (app *app) SubmitFlag(user *model.User, flag string, ctfRunning bool) (*mod
 
 		if ctfRunning {
 			// ctfRunningがtrueなときは初回の提出だけvalidになる。ここトランザクションかけておく
-			_, valid, err := app.repo.InsertSubmissionTx(s)
+			valid, err := app.repo.InsertValidableSubmission(s)
 			if err != nil {
 				return nil, false, false, xerrors.Errorf(": %w", err)
 			}
@@ -351,6 +256,30 @@ func (app *app) SubmitFlag(user *model.User, flag string, ctfRunning bool) (*mod
 		}
 
 	}
+}
+
+func (app *app) GetWrongCount(teamID uint, duration time.Duration) (int, error) {
+	cnt, err := app.repo.GetWrongCount(teamID, duration)
+	if err != nil {
+		return 0, xerrors.Errorf(": %w", err)
+	}
+	return cnt, nil
+}
+
+func (app *app) LockSubmission(teamID uint, duration time.Duration) error {
+	err := app.repo.LockSubmission(teamID, duration)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (app *app) CheckSubmittable(teamID uint) (bool, error) {
+	b, err := app.repo.CheckSubmittable(teamID)
+	if err != nil {
+		return false, xerrors.Errorf(": %w", err)
+	}
+	return b, nil
 }
 
 func CalcChallengeScore(solveCount int, scoreExpr string) (int, error) {
@@ -381,16 +310,3 @@ func CalcChallengeScore(solveCount int, scoreExpr string) (int, error) {
 		return 0, xerrors.Errorf(": %w", NewErrorMessage(fmt.Sprintf("score calculation returns invalid type: %T", r)))
 	}
 }
-
-// func CalcChallengeScore(conf *model.Config, solveCount uint) uint {
-// 	max := float64(conf.MaxScore)
-// 	min := float64(conf.MinScore)
-//
-// 	a := max - min
-// 	tx := (a - 1) / a
-// 	t := 0.5 * math.Log((1+tx)/(1-tx)) // tanh^{-1}(tx)
-//
-// 	r := a / max
-// 	y := max * math.Tanh(float64(solveCount)/(float64(conf.CountToMin)/t))
-// 	return uint(r*(max-y) + min)
-// }

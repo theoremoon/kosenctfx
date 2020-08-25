@@ -15,6 +15,7 @@ import (
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"github.com/theoremoon/kosenctfx/scoreserver/server"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
+	"github.com/theoremoon/kosenctfx/scoreserver/webhook"
 )
 
 func run() error {
@@ -60,15 +61,15 @@ func run() error {
 		log.Printf(" token: %s", token)
 
 		err = app.SetCTFConfig(&model.Config{
-			CTFName:       "KosenCTF X",
-			Token:         token,
-			StartAt:       time.Now(),
-			EndAt:         time.Now(),
-			RegisterOpen:  true, // FIXME: for production, this value should be false
-			CTFOpen:       false,
-			LockCount:     5,
-			LockFrequency: 10,
-			LockDuration:  1200,
+			CTFName:      "KosenCTF X",
+			Token:        token,
+			StartAt:      time.Now(),
+			EndAt:        time.Now(),
+			RegisterOpen: false, // FIXME: for production, this value should be false
+			CTFOpen:      false,
+			LockCount:    5,
+			LockDuration: 60,
+			LockSecond:   300,
 		})
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
@@ -81,6 +82,13 @@ func run() error {
 	}
 
 	srv := server.New(app, redis, conf.Front, ctfConf.Token)
+	if conf.AdminWebhookURL != "" {
+		srv.AdminWebhook = webhook.NewDiscord(conf.AdminWebhookURL)
+	}
+	if conf.SystemWebhookURL != "" {
+		srv.SystemWebhook = webhook.NewDiscord(conf.SystemWebhookURL)
+	}
+
 	return srv.Start(conf.Addr)
 }
 

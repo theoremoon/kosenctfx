@@ -163,7 +163,8 @@ func (s *server) infoUpdateHandler() echo.HandlerFunc {
 
 		_, exist1 := ret["challenges"]
 		_, exist2 := ret["ranking"]
-		if !exist1 || !exist2 {
+		_, exist3 := ret["userRanking"]
+		if !exist1 || !exist2 || !exist3 {
 			challenges, ranking, userRanking, err := s.app.ScoreFeed()
 			if err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))

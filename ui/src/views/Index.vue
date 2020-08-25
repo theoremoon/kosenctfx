@@ -80,23 +80,22 @@
 
 <script>
 import Vue from "vue";
-import dayjs from "dayjs";
-
+import { dateFormat } from "../dateformat";
 export default Vue.extend({
   data() {
     return {
       now: 0
     };
   },
-  methods: {
-    dateFormat(ts) {
-      return dayjs(ts * 1000).format("YYYY-MM-DD HH:mm:ss Z");
-    }
-  },
   mounted() {
     setInterval(() => {
       this.now = Math.floor(new Date().valueOf() / 1000);
     }, 1000);
+  },
+  methods: {
+    dateFormat(t) {
+      return dateFormat(t);
+    }
   },
   computed: {
     startTime() {

@@ -127,6 +127,8 @@ func (s *server) infoHandler() echo.HandlerFunc {
 func (s *server) infoUpdateHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		u, _ := s.getLoginUser(c)
+		refresh := c.QueryParam("refresh")
+
 		conf, err := s.app.GetCTFConfig()
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
@@ -140,7 +142,7 @@ func (s *server) infoUpdateHandler() echo.HandlerFunc {
 
 		// TODO notification
 		// cache を使う
-		if status == service.CTFRunning {
+		if refresh == "" && status == service.CTFRunning {
 			challenges, ranking, userRanking, err := s.getCacheInfo()
 			if err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))

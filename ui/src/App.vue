@@ -97,7 +97,7 @@ export default Vue.extend({
     }, 60 * 1000);
 
     this.$eventHub.$on("update-request", () => {
-      this.infoUpdate();
+      this.infoUpdate(true);
     });
   },
   methods: {
@@ -106,8 +106,8 @@ export default Vue.extend({
       this.$router.push("/");
       this.$eventHub.$emit("login-check");
     },
-    infoUpdate() {
-      API.get("/info-update")
+    infoUpdate(refresh = false) {
+      API.get(refresh ? "/info-update?refresh=1" : "/info-update")
         .then(r => {
           if ("ranking" in r.data) {
             Vue.set(this.$store, "ranking", r.data.ranking);

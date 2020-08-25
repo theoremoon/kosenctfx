@@ -66,13 +66,13 @@ def get_random_unicode(length):
             return r
     
 
-dir = Path(__file__).parent / "challenges"
+dir = Path(__file__).parent / "challenges" / "dummy"
 id = challengeid()
-os.mkdir(dir / id)
+os.makedirs(dir / id)
 with open(dir / id / "task.json", "w") as f:
     json.dump({
         "name": challengename(),
-        "description": get_random_unicode(random.randrange(1000)),
+        "description": "the flag is <pre>${flag}</pre>" +  get_random_unicode(random.randrange(1000)),
         "flag": "KosenCTF{{{}}}".format(id),
         "author": author(),
         "tags": challengetag(),

@@ -17,7 +17,7 @@ build:
 	(cd scoreserver; go build -o ../bin)
 	(cd challengemanager; go build -o ../bin)
 
-bulid-ui:
+build-ui:
 	(cd ui; yarn build)
 
 run: build

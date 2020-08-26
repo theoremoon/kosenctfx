@@ -260,37 +260,6 @@ func (s *server) passwordUpdateHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) teamnameUpdateHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		lc := c.(*loginContext)
-		req := new(struct {
-			NewTeamname string
-		})
-		if err := c.Bind(req); err != nil {
-			return errorHandle(c, err)
-		}
-		team, err := s.app.GetTeamByID(lc.User.TeamId)
-		if err != nil {
-			return errorHandle(c, err)
-		}
-
-		if err := s.app.UpdateTeamname(team.ID, req.NewTeamname); err != nil {
-			return errorHandle(c, err)
-		}
-		return messageHandle(c, TeamnameUpdateMessage)
-	}
-}
-
-func (s *server) notificationsHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		notifications, err := s.app.ListNotifications()
-		if err != nil {
-			return errorHandle(c, err)
-		}
-		return c.JSON(http.StatusOK, notifications)
-	}
-}
-
 func (s *server) teamHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		teamIDstr := c.Param("id")
@@ -613,7 +582,7 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 			}
 		}
 
-		chal, err := s.app.GetChallengeByName(req.Name)
+		chal, err := s.app.GetRawChallengeByName(req.Name)
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
@@ -717,7 +686,7 @@ func (s *server) setCacheInfo(challenges, ranking, userRanking string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	err = s.redis.Set(userRankingJSONKey, ranking, cacheDuration).Err()
+	err = s.redis.Set(userRankingJSONKey, userRanking, cacheDuration).Err()
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

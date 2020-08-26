@@ -89,9 +89,9 @@ func (s *server) Start(addr string) error {
 	e.POST("/passwordreset-request", s.passwordresetRequestHandler(), s.notLoginMiddleware)
 	e.POST("/passwordreset", s.passwordresetHandler(), s.notLoginMiddleware)
 	e.POST("/password-update", s.passwordUpdateHandler(), s.loginMiddleware)
-	e.POST("/teamname-update", s.teamnameUpdateHandler(), s.loginMiddleware, s.ctfNotStartedMiddleware)
+	// e.POST("/teamname-update", s.teamnameUpdateHandler(), s.loginMiddleware, s.ctfNotStartedMiddleware)
 
-	e.GET("/notifications", s.notificationsHandler())
+	// e.GET("/notifications", s.notificationsHandler())
 	e.GET("/team/:id", s.teamHandler())
 	e.GET("/user/:id", s.userHandler())
 

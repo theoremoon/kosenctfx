@@ -126,7 +126,7 @@ export default Vue.extend({
   },
   mounted() {
     if (!this.$store.challenges) {
-      message(this, "Competition is now closed");
+      message(this, "Login required / There are challenges");
       this.$router.push("/");
     }
   },

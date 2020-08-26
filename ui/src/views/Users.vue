@@ -1,5 +1,6 @@
 <template>
   <div class="my-4 mx-8">
+    <h1 class="text-2xl">User Ranking</h1>
     <table class="ranking">
       <thead>
         <tr>
@@ -14,14 +15,14 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="t in orderedTeams" :key="t.team_id">
-          <td class="text-center">{{ t.pos }}</td>
+        <tr v-for="u in orderdUsers" :key="u.team_id">
+          <td class="text-center">{{ u.pos }}</td>
           <td>
-            <router-link :to="'/user/' + t.team_id">{{ t.team }}</router-link>
+            <router-link :to="'/user/' + u.team_id">{{ u.team }}</router-link>
           </td>
-          <td class="text-right">{{ t.points }}</td>
+          <td class="text-right">{{ u.points }}</td>
           <td v-for="c in orderedChallenges" :key="c">
-            <font-awesome-icon icon="flag" v-if="t.taskStats[c]" />
+            <font-awesome-icon icon="flag" v-if="u.taskStats[c]" />
           </td>
         </tr>
       </tbody>
@@ -33,13 +34,6 @@
 import Vue from "vue";
 
 export default Vue.extend({
-  data() {
-    return {
-      flag: "",
-      filter: "",
-      focus: null
-    };
-  },
   computed: {
     orderedChallenges() {
       if (!this.$store.userRanking || !this.$store.userRanking.tasks) {
@@ -56,7 +50,7 @@ export default Vue.extend({
         }
       });
     },
-    orderedTeams() {
+    orderdUsers() {
       if (!this.$store.userRanking) {
         return [];
       }

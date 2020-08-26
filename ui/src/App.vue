@@ -114,11 +114,13 @@ export default Vue.extend({
           } else {
             Vue.set(this.$store, "ranking", null);
           }
+
           if ("userRanking" in r.data) {
             Vue.set(this.$store, "userRanking", r.data.userRanking);
           } else {
             Vue.set(this.$store, "userRanking", null);
           }
+
           if ("challenges" in r.data) {
             Vue.set(this.$store, "challenges", r.data.challenges);
           } else {

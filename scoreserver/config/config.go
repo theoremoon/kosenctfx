@@ -63,7 +63,7 @@ func Load() (*Config, error) {
 	}
 
 	adminWebhookURL, _ := getEnv("ADMIN_WEBHOOK")
-	systemWebhookURL, _ := getEnv("ADMIN_WEBHOOK")
+	systemWebhookURL, _ := getEnv("SYSTEM_WEBHOOK")
 
 	return &Config{
 		Dbdsn:            dbdsn,

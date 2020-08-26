@@ -1,5 +1,7 @@
 <template>
   <div class="my-4 mx-8">
+    <h1 class="text-2xl">Team Ranking</h1>
+
     <table class="ranking">
       <thead>
         <tr>
@@ -33,12 +35,8 @@
 import Vue from "vue";
 
 export default Vue.extend({
-  data() {
-    return {
-      flag: "",
-      filter: "",
-      focus: null
-    };
+  mounted() {
+    this.$forceUpdate();
   },
   computed: {
     orderedChallenges() {

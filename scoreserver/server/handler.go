@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -359,18 +358,20 @@ func (s *server) submitHandler() echo.HandlerFunc {
 
 		if valid {
 			s.SystemWebhook.Post(fmt.Sprintf(
-				"`%s@%s` solved `%s` :100:",
+				"`%s@%s` solved `%s` :100:, `%s`",
 				lc.User.Username,
 				team.Teamname,
 				challenge.Name,
+				req.Flag,
 			))
 			return messageHandle(c, fmt.Sprintf("correct! solved `%s` and got score", challenge.Name))
 		} else if correct {
 			s.AdminWebhook.Post(fmt.Sprintf(
-				"`%s@%s` solved `%s`.",
+				"`%s@%s` solved `%s`: `%s`",
 				lc.User.Username,
 				team.Teamname,
 				challenge.Name,
+				req.Flag,
 			))
 			return messageHandle(c, fmt.Sprintf("correct. solved `%s`", challenge.Name))
 		} else {
@@ -590,23 +591,6 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) newNotificationHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		req := new(struct {
-			Content string
-		})
-		if err := c.Bind(req); err != nil {
-			return errorHandle(c, err)
-		}
-		notification, err := s.app.AddNotification(req.Content)
-		if err != nil {
-			return errorHandle(c, err)
-		}
-		s.SystemWebhook.Post(fmt.Sprintf("Notification: ```\n%s\n```", notification.Content))
-		return c.JSON(http.StatusOK, AddNotificationMessage)
-	}
-}
-
 func (s *server) listChallengesHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		challenges, err := s.app.ListAllRawChallenges()
@@ -626,8 +610,12 @@ func (s *server) setChallengeStatusHandler() echo.HandlerFunc {
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		//TODO
-		log.Printf("[+] challenge-status: %v %v\n", req.Result, req.Name)
+
+		if req.Result {
+			s.AdminWebhook.Post(fmt.Sprintf(":heavy_check_mark: Solvability Checked: `%s`", req.Name))
+		} else {
+			s.SystemWebhook.Post(fmt.Sprintf(":heavy_multiplication_x: failed to solve: `%s`", req.Name))
+		}
 		return c.NoContent(http.StatusOK)
 	}
 }

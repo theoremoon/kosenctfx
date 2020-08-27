@@ -200,7 +200,10 @@ func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, *Scoreboard, error) {
 		var lastSubmission int64 = 0
 
 		for _, s := range teamSubmissions[teams[i].ID] {
-			c := chalMap[s.ChallengeId]
+			c, exist := chalMap[s.ChallengeId]
+			if !exist {
+				continue //?
+			}
 			score += c.Score
 			solvedAt := s.CreatedAt.Unix()
 			taskStats[c.Name] = &TaskStat{
@@ -260,7 +263,10 @@ func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, *Scoreboard, error) {
 		var lastSubmission int64 = 0
 
 		for _, s := range userSubmissions[users[i].ID] {
-			c := chalMap[s.ChallengeId]
+			c, exist := chalMap[s.ChallengeId]
+			if !exist {
+				continue //?
+			}
 			score += c.Score
 			solvedAt := s.CreatedAt.Unix()
 			taskStats[c.Name] = &TaskStat{

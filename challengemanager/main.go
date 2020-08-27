@@ -100,10 +100,10 @@ func (c *checker) Check(duration time.Duration) {
 					"solve",
 				)
 
-				output, err := cmd.Output()
+				output, err := cmd.CombinedOutput()
+				log.Println(string(output))
 				if err != nil {
 					log.Printf("ERROR: %+v\n", xerrors.Errorf(": %w", err))
-					log.Println(string(output))
 					// 一応解けないで送っておく
 					c.SendResult(id, false)
 				} else {
@@ -229,7 +229,7 @@ func run() error {
 			"--resolve-image=always",
 			fmt.Sprintf("%d", req.ID),
 		)
-		if output, err := cmd.Output(); err != nil {
+		if output, err := cmd.CombinedOutput(); err != nil {
 			fmt.Println(string(output))
 			return c.JSON(http.StatusBadRequest, "failed to deploy with error: "+err.Error())
 		}

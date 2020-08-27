@@ -31,9 +31,11 @@ func run() error {
 	defer db.Close()
 	db.BlockGlobalUpdate(true)
 
-	redis := redis.NewClient(&redis.Options{
-		Addr: conf.RedisAddr,
-	})
+	opt, err := redis.ParseURL(conf.RedisAddr)
+	if err != nil {
+		return err
+	}
+	redis := redis.NewClient(opt)
 
 	repo := repository.New(db)
 	repo.Migrate()

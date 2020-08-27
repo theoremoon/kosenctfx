@@ -63,7 +63,7 @@
               solved by ({{ focusedchallenge.solved_by.length }})
             </h2>
             <div
-              v-for="t in focusedchallenge.solved_by.slice(0, 10)"
+              v-for="t in topteams(focusedchallenge.solved_by)"
               :key="t.team_id"
             >
               <router-link :to="'/team/' + t.team_id">{{
@@ -147,6 +147,12 @@ export default Vue.extend({
           errorHandle(this, e);
         });
       this.flag = "";
+    },
+    topteams(xs) {
+      return xs
+        .slice()
+        .sort((a, b) => a.solved_at - b.solved_at)
+        .slice(0, 10);
     }
   },
   computed: {

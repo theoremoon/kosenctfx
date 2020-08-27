@@ -78,7 +78,7 @@ func (s *server) loginHandler() echo.HandlerFunc {
 
 		token, err := s.app.LoginUser(req.Username, req.Password)
 		if err != nil {
-			return errorHandle(c, err)
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		c.SetCookie(s.tokenCookie(token))
 		return messageHandle(c, LoginMessage)

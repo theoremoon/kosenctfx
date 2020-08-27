@@ -46,9 +46,10 @@ func hashPassword(password string) string {
 	}
 	return string(passwordHash)
 }
+
 func checkPassword(password string, hashedPassword []byte) bool {
-	hpassword := hashPassword(password)
-	return bcrypt.CompareHashAndPassword(hashedPassword, []byte(hpassword)) == nil
+	hpassword := sha256.Sum256([]byte(password))
+	return bcrypt.CompareHashAndPassword(hashedPassword, hpassword[:]) == nil
 }
 
 func (app *app) UserFilter(u *model.User) *User {
@@ -72,9 +73,9 @@ func (app *app) LoginUser(username, password string) (*model.LoginToken, error) 
 	if err != nil && gorm.IsRecordNotFoundError(err) {
 		return nil, NewErrorMessage("no such user")
 	} else if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
-	if checkPassword(password, []byte(u.PasswordHash)) {
+	if !checkPassword(password, []byte(u.PasswordHash)) {
 		return nil, NewErrorMessage("password mismatch")
 	}
 
@@ -84,7 +85,7 @@ func (app *app) LoginUser(username, password string) (*model.LoginToken, error) 
 		ExpiresAt: tokenExpiredTime(),
 	}
 	if err := app.repo.SetUserLoginToken(&token); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	return &token, nil
 }

@@ -54,6 +54,7 @@ type server struct {
 	FrontendURL   string
 	redis         *redis.Client
 	AdminWebhook  webhook.Webhook
+	SolveWebhook  webhook.Webhook
 	SystemWebhook webhook.Webhook
 }
 
@@ -66,6 +67,7 @@ func New(app service.App, redis *redis.Client, frontendURL, token string) *serve
 		redis:         redis,
 		AdminWebhook:  webhook.Dummy("ADMIN"),
 		SystemWebhook: webhook.Dummy("SYSTEM"),
+		SolveWebhook:  webhook.Dummy("SOLVE"),
 	}
 }
 

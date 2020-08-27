@@ -358,6 +358,12 @@ func (s *server) submitHandler() echo.HandlerFunc {
 
 		if valid {
 			s.SystemWebhook.Post(fmt.Sprintf(
+				"`%s@%s` solved `%s` :100:",
+				lc.User.Username,
+				team.Teamname,
+				challenge.Name,
+			))
+			s.AdminWebhook.Post(fmt.Sprintf(
 				"`%s@%s` solved `%s` :100:, `%s`",
 				lc.User.Username,
 				team.Teamname,
@@ -615,17 +621,22 @@ func (s *server) listChallengesHandler() echo.HandlerFunc {
 func (s *server) setChallengeStatusHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
-			Name   string `json:"name"`
-			Result bool   `json:"result"`
+			ID     uint `json:"id"`
+			Result bool `json:"result"`
 		})
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 
+		chal, err := s.app.GetRawChallengeByID(req.ID)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
 		if req.Result {
-			s.AdminWebhook.Post(fmt.Sprintf(":heavy_check_mark: Solvability Checked: `%s`", req.Name))
+			s.SolveWebhook.Post(fmt.Sprintf(":heavy_check_mark: Solvability Checked: `%s`", chal.Name))
 		} else {
-			s.SystemWebhook.Post(fmt.Sprintf(":heavy_multiplication_x: failed to solve: `%s`", req.Name))
+			s.SystemWebhook.Post(fmt.Sprintf(":warning: failed to solve: `%s`", chal.Name))
 		}
 		return c.NoContent(http.StatusOK)
 	}

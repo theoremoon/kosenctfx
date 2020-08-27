@@ -85,6 +85,9 @@ func run() error {
 	if conf.SystemWebhookURL != "" {
 		srv.SystemWebhook = webhook.NewDiscord(conf.SystemWebhookURL)
 	}
+	if conf.SolveCheckWebhookURL != "" {
+		srv.SolveWebhook = webhook.NewDiscord(conf.SolveCheckWebhookURL)
+	}
 
 	return srv.Start(conf.Addr)
 }

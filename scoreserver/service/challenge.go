@@ -43,6 +43,7 @@ type Challenge struct {
 type ChallengeApp interface {
 	GetChallengeByID(challengeID uint) (*Challenge, error)
 	GetChallengeByName(name string) (*Challenge, error)
+	GetRawChallengeByID(challengeID uint) (*model.Challenge, error)
 	GetRawChallengeByName(name string) (*model.Challenge, error)
 	ListAllRawChallenges() ([]*model.Challenge, error)
 
@@ -105,6 +106,17 @@ func (app *app) GetChallengeByName(name string) (*Challenge, error) {
 
 	// TODO
 	return &chal, nil
+}
+
+func (app *app) GetRawChallengeByID(challengeID uint) (*model.Challenge, error) {
+	chal, err := app.repo.GetChallengeByID(challengeID)
+	if err != nil {
+		if xerrors.As(err, &repository.NotFoundError{}) {
+			return nil, NewErrorMessage("No such challenge")
+		}
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return chal, nil
 }
 
 func (app *app) GetRawChallengeByName(name string) (*model.Challenge, error) {

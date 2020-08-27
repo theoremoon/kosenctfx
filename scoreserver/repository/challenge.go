@@ -15,6 +15,7 @@ type ChallengeRepository interface {
 	ListAllAttachments() ([]*model.Attachment, error)
 	FindTagsByChallengeID(id uint) ([]*model.Tag, error)
 	FindAttachmentsByChallengeID(id uint) ([]*model.Attachment, error)
+	GetChallengeByID(challengeID uint) (*model.Challenge, error)
 	GetChallengeByName(name string) (*model.Challenge, error)
 	GetChallengeByFlag(flag string) (*model.Challenge, error)
 
@@ -81,6 +82,17 @@ func (r *repository) FindAttachmentsByChallengeID(id uint) ([]*model.Attachment,
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	return attachments, nil
+}
+
+func (r *repository) GetChallengeByID(challengeID uint) (*model.Challenge, error) {
+	var c model.Challenge
+	if err := r.db.Where("id = ?", challengeID).First(&c).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, xerrors.Errorf(": %w", NotFound("challenge"))
+		}
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return &c, nil
 }
 
 func (r *repository) GetChallengeByName(name string) (*model.Challenge, error) {

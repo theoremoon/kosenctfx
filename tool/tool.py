@@ -316,6 +316,8 @@ class CommandClass():
       # 既存のdocker-compose.ymlを読み込んで imageを追加する
       with open(compose_path) as f:
         compose = yaml.safe_load(f)
+
+      del_list = []
       for service in compose["services"].keys():
         if "image" in service:
           print("[+] unsupported!!!")
@@ -325,7 +327,7 @@ class CommandClass():
         compose["services"][service]["image"] = "{}/{}/{}_{}:latest".format(self._conf["registry"]["server"], self._conf["registry"]["name"], image_name, service)
 
         # buildは削除する
-        if "build" in service:
+        if "build" in compose["services"][service]:
           del compose["services"][service]["build"]
 
       # 新しいcompose.ymlを作る

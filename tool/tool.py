@@ -349,7 +349,7 @@ class CommandClass():
       new_compose = self._build_push_image(compose_file, md5(taskinfo["name"].encode()).hexdigest())
       solve_compose_path = compose_file.parent / "solution" / "docker-compose.yml"
       if solve_compose_path.is_file():
-        solve_compose = do_compose_iikanji(solve_compose_path, md5((taskinfo["name"] + "_solution").encode()).hexdigest())
+        solve_compose = self._build_push_image(solve_compose_path, md5((taskinfo["name"] + "_solution").encode()).hexdigest())
       else:
         solve_compose = ""
 

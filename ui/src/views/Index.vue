@@ -84,7 +84,7 @@ import { dateFormat } from "../dateformat";
 export default Vue.extend({
   data() {
     return {
-      now: 0
+      now: new Date().valueOf() / 1000
     };
   },
   mounted() {
@@ -111,10 +111,11 @@ export default Vue.extend({
       return this.$store.ctfStart <= this.now && this.now <= this.$store.ctfEnd;
     },
     hasEnd() {
-      return this.now > this.ctfEnd;
+      return this.now > this.$store.ctfEnd;
     },
     countDown() {
-      const d = this.ctfStart - this.now;
+      const d = this.$store.ctfStart - this.now;
+
       const days = ("" + Math.floor(d / (60 * 60 * 24))).padStart(2, "0");
       const hours = (
         "" + Math.floor((d % (60 * 60 * 24)) / (60 * 60))

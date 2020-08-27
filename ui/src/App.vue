@@ -1,10 +1,10 @@
 <template>
-  <div class="h-full">
+  <div class="h-full app">
     <header>
       <nav class="flex w-full p-4 navbar-border">
         <div class="flex text-lg mr-6">
           <img src="./assets/neko.png" class="brand" />
-          <router-link to="/">
+          <router-link to="/" style="color: #fff;">
             InterKosenCTF2020
           </router-link>
         </div>
@@ -182,9 +182,10 @@ body {
   color: $fg-color;
   height: 100%;
 }
-a {
+.app a {
+  color: $accent-color;
   &:hover {
-    color: $accent-color;
+    text-decoration: underline;
   }
 }
 

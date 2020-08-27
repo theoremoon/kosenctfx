@@ -317,20 +317,15 @@ class CommandClass():
       with open(compose_path) as f:
         compose = yaml.safe_load(f)
 
-      del_list = []
+      t = int(datetime.now().timestamp())
       for service in compose["services"].keys():
         if "image" in service:
           print("[+] unsupported!!!")
           quit()
 
-
-
         # imageタグをセットする
-        compose["services"][service]["image"] = "{}/{}/{}_{}:{}".format(self._conf["registry"]["server"], self._conf["registry"]["name"], image_name, service, datetime.now().timestamp())
-
-        # buildは削除する
         if "build" in compose["services"][service]:
-          del compose["services"][service]["build"]
+          compose["services"][service]["image"] = "{}/{}/{}_{}:{}".format(self._conf["registry"]["server"], self._conf["registry"]["name"], image_name, service, t)
 
       # 新しいcompose.ymlを作る
       new_compose_path = dir / "docker-compose_{}.yml".format(randname())
@@ -339,14 +334,18 @@ class CommandClass():
         f.write(new_compose)
 
       # 新しく作ったdocker-compose.ymlを使ってイメージをビルド、pushする
-      subprocess.run(["docker-compose", "-f", new_compose_path.name, "build"], cwd=dir, check=True)
+      subprocess.run(["docker-compose", "-f", new_compose_path.name, "build", "--no-cache"], cwd=dir, check=True)
       subprocess.run(["docker", "login", self._conf["registry"]["server"], "-u", self._conf["registry"]["username"], "-p", self._conf["registry"]["password"]], check=True)
       subprocess.run(["docker-compose", "-f", new_compose_path.name, "push"], cwd=dir, check=True)
 
       # 新しく作ったdocker-compose.ymlはもういらないので消す
       os.remove(new_compose_path)
 
-      # 新しいdocker-composeの内容だけを返す
+      # build tagを消してから返す
+      for service in new_compose["services"].keys():
+        if "build" in compose["services"][service]:
+          del compose["services"][service]["build"]
+
       return new_compose
 
   def _register_to_manager(self, compose_file, challengeid, taskinfo):

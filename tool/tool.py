@@ -323,8 +323,10 @@ class CommandClass():
           print("[+] unsupported!!!")
           quit()
 
+
+
         # imageタグをセットする
-        compose["services"][service]["image"] = "{}/{}/{}_{}:latest".format(self._conf["registry"]["server"], self._conf["registry"]["name"], image_name, service)
+        compose["services"][service]["image"] = "{}/{}/{}_{}:{}".format(self._conf["registry"]["server"], self._conf["registry"]["name"], image_name, service, datetime.now().timestamp())
 
         # buildは削除する
         if "build" in compose["services"][service]:

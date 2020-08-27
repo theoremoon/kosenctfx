@@ -367,7 +367,7 @@ class CommandClass():
       else:
           print("[-] {}".format(r.text))
 
-  def register(self, no_manager=False):
+  def register(self, no_manager=False, host=None):
     """
     - 問題を全てスコアサーバに登録する
     - 配布ファイルをサーバにアップロードする
@@ -378,6 +378,9 @@ class CommandClass():
     for chal in iterate_challenges(self._basedir):
       with open(chal / "task.json", "r") as f:
         taskinfo = json.load(f)
+
+      if host and "host" in taskinfo:
+        taskinfo["host"] = host
 
       if "port" in taskinfo:
         taskinfo["port"] = str(taskinfo["port"])

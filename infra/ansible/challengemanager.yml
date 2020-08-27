@@ -3,7 +3,7 @@
   tasks:
     - name: Install Challengemanager
       copy:
-        src: ../../bin/challengemanager
+        src: ../../production/challengemanager
         dest: /usr/local/bin/challengemanager
         owner: root
         group: root

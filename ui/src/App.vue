@@ -4,7 +4,7 @@
       <nav class="flex w-full p-4 navbar-border">
         <div class="flex text-lg mr-6">
           <img src="./assets/neko.png" class="brand" />
-          <router-link to="/" style="color: #fff;">
+          <router-link to="/">
             InterKosenCTF2020
           </router-link>
         </div>
@@ -234,6 +234,10 @@ input[type="submit"]:hover {
 .brand {
   height: 1.5em;
   width: auto;
+}
+
+nav a {
+  color: $fg-color;
 }
 
 .navbar-border {

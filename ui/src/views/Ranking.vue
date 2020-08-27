@@ -35,9 +35,6 @@
 import Vue from "vue";
 
 export default Vue.extend({
-  mounted() {
-    this.$forceUpdate();
-  },
   computed: {
     orderedChallenges() {
       if (!this.$store.ranking || !this.$store.ranking.tasks) {

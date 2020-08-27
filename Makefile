@@ -7,7 +7,7 @@ up:
 down:
 	docker-compose down
 
-production-build:
+build-production:
 	mkdir -p production
 	(cd scoreserver; go build -o ../production -a -tags netgo -installsuffix netgo -ldflags="-extldflags \"-static\"")
 	(cd challengemanager; go build -o ../production -a -tags netgo -installsuffix netgo -ldflags="-extldflags \"-static\"")

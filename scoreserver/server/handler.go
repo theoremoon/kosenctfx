@@ -482,7 +482,18 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 		if err := s.app.OpenChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		s.SystemWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
+
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		status := service.CalcCTFStatus(conf)
+		if status == service.CTFRunning {
+			s.SystemWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
+		} else {
+			s.AdminWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
+		}
 		return c.JSON(http.StatusOK, ChallengeOpenMessage)
 	}
 }

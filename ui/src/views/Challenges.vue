@@ -126,7 +126,7 @@ export default Vue.extend({
   },
   mounted() {
     if (!this.$store.challenges) {
-      message(this, "Login required / There are challenges");
+      message(this, "Login required / There are no challenges");
       this.$router.push("/");
     }
   },

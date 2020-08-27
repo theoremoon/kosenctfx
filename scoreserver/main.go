@@ -50,10 +50,7 @@ func run() error {
 		if _, err := app.CreateAdminUser(conf.Email, password); err != nil {
 			return err
 		}
-
-		// token := uuid.New().String()
 		token := password
-
 		log.Printf("---[ADMIN]---\n")
 		log.Printf(" username: admin\n")
 		log.Printf(" email: %s\n", conf.Email)

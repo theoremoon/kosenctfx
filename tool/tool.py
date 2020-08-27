@@ -10,7 +10,8 @@ import pickle
 import configparser
 import tarfile
 from io import BytesIO
-from minio import Minio
+import boto3
+from botocore.exceptions import ClientError
 import hashlib
 from string import Template
 import yaml
@@ -68,9 +69,10 @@ class CommandClass():
       self._conf["digitalocean"]["token"],
     )
 
-    # uploaderの設定。Minioを使ってS3 compatibleなendpointを利用できる
+    # uploaderの設定。boto3を使ってS3 compatibleなendpointを利用できる
     bucket = self._conf["bucket"]
-    self._minio = Minio(bucket["endpoint"], access_key=bucket["access_key"], secret_key=bucket["secret_key"], secure=False if "insecure"  in bucket else True)
+    session = boto3.session.Session()
+    self._s3 = session.client("s3", region_name=bucket["region"], endpoint_url=("http://" if "insecure" in bucket else "https://") + bucket["endpoint"], aws_access_key_id=bucket["access_key"], aws_secret_access_key=bucket["secret_key"])
 
   def manager_init(self):
     r = self._manager.post("/init", {
@@ -87,9 +89,11 @@ class CommandClass():
     # どちらかといえばDigital Ocean側の鍵を持っているのがおかしい
     # Read可能 / List不可能 / Write不可能
     bucket = self._conf["bucket"]
-    if not self._minio.bucket_exists(bucket["name"]):
-      self._minio.make_bucket(bucket["name"], bucket["region"])
-      self._minio.set_bucket_policy(bucket["name"], json.dumps({
+    try:
+      self._s3.head_bucket(Bucket=bucket["name"])
+    except ClientError:
+      self._s3.create_bucket(Bucket=bucket["name"])
+      self._s3.put_bucket_policy(Bucket=bucket["name"], Policy=json.dumps({
         "Version":"2012-10-17",
         "Statement":[
           {
@@ -282,7 +286,7 @@ class CommandClass():
         print(r.text)
 
   def _upload_file(self, fileobj, size, name):
-      self._minio.put_object(self._conf["bucket"]["name"], name, fileobj, size)
+      self._s3.put_object(Bucket=self._conf["bucket"]["name"], Key=name, Body=fileobj)
 
       # uploadしたファイルのdownloadableなリンク
       url = "{schema}://{host}/{name}/{key}".format(
@@ -291,6 +295,7 @@ class CommandClass():
           name=self._conf["bucket"]["name"],
           key=name,
       )
+      print("[+] uploaded: {}".format(url))
       return url
 
 

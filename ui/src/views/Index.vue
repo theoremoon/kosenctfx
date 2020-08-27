@@ -29,7 +29,9 @@
       <h2 class="text-2xl">[ Contact ]</h2>
       <p class="ml-4">
         Discord:
-        <a href="https://discord.gg/" target="_blank">https://discord.gg/</a>
+        <a href="https://discord.gg/vs39DfA" target="_blank"
+          >https://discord.gg/vs39DfA</a
+        >
       </p>
     </div>
     <div class="mt-4">

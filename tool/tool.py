@@ -342,11 +342,11 @@ class CommandClass():
       os.remove(new_compose_path)
 
       # build tagを消してから返す
-      for service in new_compose["services"].keys():
+      for service in compose["services"].keys():
         if "build" in compose["services"][service]:
           del compose["services"][service]["build"]
 
-      return new_compose
+      return yaml.dump(compose, default_flow_style=False)
 
   def _register_to_manager(self, compose_file, challengeid, taskinfo):
       new_compose = self._build_push_image(compose_file, md5(taskinfo["name"].encode()).hexdigest())

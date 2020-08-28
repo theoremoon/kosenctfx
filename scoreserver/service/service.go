@@ -76,15 +76,23 @@ type Scoreboard struct {
 
 /// 問題一覧、とチームのランキングを同時に計算する
 func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, *Scoreboard, error) {
+	conf, err := app.repo.GetConfig()
+	if err != nil {
+		return nil, nil, nil, xerrors.Errorf(": %w", err)
+	}
+	status := CalcCTFStatus(conf)
+
 	// list all challenges, tags, and attachments
 	allchals, err := app.repo.ListAllChallenges()
 	if err != nil {
 		return nil, nil, nil, xerrors.Errorf(": %w", err)
 	}
 	chals := make([]*model.Challenge, 0, len(allchals))
-	for _, c := range allchals {
-		if c.IsOpen {
-			chals = append(chals, c)
+	if status == CTFRunning || status == CTFEnded {
+		for _, c := range allchals {
+			if c.IsOpen {
+				chals = append(chals, c)
+			}
 		}
 	}
 
@@ -142,11 +150,6 @@ func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, *Scoreboard, error) {
 			TeamID:   s.TeamId,
 			SolvedAt: s.CreatedAt.Unix(),
 		})
-	}
-
-	conf, err := app.repo.GetConfig()
-	if err != nil {
-		return nil, nil, nil, xerrors.Errorf(": %w", err)
 	}
 
 	// make structure

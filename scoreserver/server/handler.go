@@ -133,9 +133,6 @@ func (s *server) infoUpdateHandler() echo.HandlerFunc {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		status := service.CalcCTFStatus(conf)
-		if status == service.CTFNotStarted {
-			return messageHandle(c, CTFNotStartedMessage)
-		}
 
 		ret := make(map[string]interface{})
 
@@ -188,7 +185,7 @@ func (s *server) infoUpdateHandler() echo.HandlerFunc {
 			}
 		}
 
-		if u == nil {
+		if u == nil || status == service.CTFNotStarted {
 			delete(ret, "challenges")
 		}
 		return c.JSON(http.StatusOK, ret)

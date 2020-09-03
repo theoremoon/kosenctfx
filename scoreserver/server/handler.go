@@ -579,6 +579,7 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 				IsSurvey:    req.IsSurvey,
 				Tags:        req.Tags,
 				Attachments: req.Attachments,
+				IsOpen:      chal.IsOpen,
 			}); err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
@@ -618,14 +619,14 @@ func (s *server) listChallengesHandler() echo.HandlerFunc {
 func (s *server) setChallengeStatusHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
-			ID     uint `json:"id"`
-			Result bool `json:"result"`
+			Name   string `json:"name"`
+			Result bool   `json:"result"`
 		})
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 
-		chal, err := s.app.GetRawChallengeByID(req.ID)
+		chal, err := s.app.GetRawChallengeByName(req.Name)
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}

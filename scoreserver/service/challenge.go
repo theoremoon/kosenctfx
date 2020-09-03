@@ -194,6 +194,7 @@ func (app *app) UpdateChallenge(challengeID uint, c *Challenge) error {
 		Description: c.Description,
 		Author:      c.Author,
 		IsSurvey:    c.IsSurvey,
+		IsOpen:      c.IsOpen,
 	}
 	chal.ID = challengeID
 

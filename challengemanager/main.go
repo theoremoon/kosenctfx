@@ -236,7 +236,7 @@ func run() error {
 
 		// チェックするようにする
 		checker.Lock()
-		checker.Challenges[req.ID].IsRunning = false
+		checker.Challenges[req.ID].IsRunning = true
 		checker.Unlock()
 		return c.NoContent(http.StatusOK)
 	})

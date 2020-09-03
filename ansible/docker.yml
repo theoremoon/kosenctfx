@@ -35,20 +35,19 @@
         append: yes
       become: yes
 
-    - name: set docker.service
-      template:
-        src: ./docker.service
-        dest: /lib/systemd/system/docker.service
-        owner: root
-        group: root
-        mode: 0644
-      become: yes
+     - name: Block access to metadata from container
+       iptables:
+         chain: DOCKER-USER
+         action: insert
+         source: 172.17.0.0/16
+         destination: 169.254.0.0/16
+         jump: DROP
+       become: yes
 
     - name: Ensure docker service is enabled
       systemd:
         name: docker
         state: restarted
-        daemon_reload: yes
         enabled: yes
       become: yes
 
@@ -63,3 +62,4 @@
         dest: /usr/local/bin/docker-compose
         mode: "0755"
       become: yes
+

@@ -32,14 +32,14 @@ def main():
             continue
 
         try:
+            print("[+] solve {}...".format(cinfo["name"]))
+            r = subprocess.run(["docker-compose", "build"], timeout=300, cwd=compose_path.parent.as_posix())
             r = subprocess.run([
                 "docker-compose",
-                "-f", compose_path.as_posix(),
                 "run",
                 "-e", "HOST={}".format(cinfo["host"]),
                 "-e", "POST={}".format(cinfo["port"]),
-                "solve"], timeout=300, capture_output=True)
-            print(r.stdout)
+                "solve"], timeout=300, cwd=compose_path.parent.as_posix(), stdout=subprocess.PIPE)
             if cinfo["flag"] in r.stdout.decode():
                 solved = True
             else:
@@ -59,4 +59,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -128,7 +128,7 @@ class CommandClass():
     if 200 <= r.status_code < 400:
       print("[+] configured")
     else:
-      print("[-] {}".format(r.json()))
+      print("[-] {}".format(r.text))
 
   def _local_challenges(self):
     chals = {}
@@ -370,7 +370,35 @@ class CommandClass():
       else:
           print("[-] {}".format(r.text))
 
-  def register(self, no_manager=False, host=None):
+  def _task_upload(self, taskinfo, challengedir):
+    attachments = []
+
+    # distfiles以下のファイルを圧縮してupload
+    distdir = challengedir / "distfiles"
+    if distdir.is_dir():
+      tarbytes = self._compress_distfiles(distdir)
+      object_name = "{}_{}.tar.gz".format(taskinfo["name"], hashlib.md5(tarbytes).hexdigest())
+      url = self._upload_file(BytesIO(tarbytes), len(tarbytes), object_name)
+      attachments.append({
+        "name": object_name,
+        "url": url,
+      })
+
+    # rawdistfiles以下のファイルはそのままupload
+    rawdistdir = challengedir / "rawdistfiles"
+    if rawdistdir.is_dir():
+      for f in rawdistdir.iterdir():
+        if f.is_file():
+          with open(f) as fileobj:
+            url = self._upload_file(fileobj, f.stat().st_size, f.name)
+          attachments.append({
+            "name": f.name,
+            "url": url,
+          })
+    return attachments
+
+
+  def register(self, challenges=[], no_manager=False, host=None):
     """
     - 問題を全てスコアサーバに登録する
     - 配布ファイルをサーバにアップロードする
@@ -382,6 +410,9 @@ class CommandClass():
       with open(chal / "task.json", "r") as f:
         taskinfo = json.load(f)
 
+      if len(challenges) > 0 and taskinfo["name"] not in challenges:
+        continue
+
       if host and "host" in taskinfo:
         taskinfo["host"] = host
 
@@ -389,30 +420,7 @@ class CommandClass():
         taskinfo["port"] = str(taskinfo["port"])
       # hostとかportとかをdescriptionに埋め込んでいる場合
       taskinfo["description"] = Template(taskinfo["description"]).substitute(taskinfo)
-      taskinfo["attachments"] = []
-
-      # distfiles以下のファイルを圧縮してupload
-      distdir = chal / "distfiles"
-      if distdir.is_dir():
-        tarbytes = self._compress_distfiles(distdir)
-        object_name = "{}_{}.tar.gz".format(taskinfo["name"], hashlib.md5(tarbytes).hexdigest())
-        url = self._upload_file(BytesIO(tarbytes), len(tarbytes), object_name)
-        taskinfo["attachments"].append({
-          "name": object_name,
-          "url": url,
-        })
-
-      # rawdistfiles以下のファイルはそのままupload
-      rawdistdir = chal / "rawdistfiles"
-      if rawdistdir.is_dir():
-        for f in rawdistdir.iterdir():
-          if f.is_file():
-            with open(f) as fileobj:
-              url = self._upload_file(fileobj, f.stat().st_size, f.name)
-            taskinfo["attachments"].append({
-              "name": f.name,
-              "url": url,
-            })
+      taskinfo["attachments"] = self._task_upload(taskinfo, chal)
 
       # scoreserverに送る
       r = self._api.post("/admin/new-challenge", data={

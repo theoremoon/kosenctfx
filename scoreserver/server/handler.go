@@ -629,6 +629,9 @@ func (s *server) setChallengeStatusHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+		if !chal.IsOpen {
+			return c.NoContent(http.StatusOK)
+		}
 
 		if req.Result {
 			s.SolveWebhook.Post(fmt.Sprintf(":heavy_check_mark: Solvability Checked: `%s`", chal.Name))

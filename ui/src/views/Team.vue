@@ -15,6 +15,8 @@
       <input type="submit" value="Regenerate" @click="regenerate" />
     </div>
 
+    <graph :chartdata="chartData"></graph>
+
     <div class="mt-4 ml-4 text-xl">
       <table class="table-auto w-full xl:w-3/4 mx-auto">
         <thead>
@@ -41,8 +43,13 @@ import Vue from "vue";
 import API from "@/api";
 import { message, errorHandle } from "@/message";
 import { dateFormat } from "../dateformat";
+import Graph from "../components/Graph";
+import colorhash from "../colorhash";
 
 export default Vue.extend({
+  components: {
+    graph: Graph
+  },
   data() {
     return {
       token: "",
@@ -120,8 +127,32 @@ export default Vue.extend({
         };
       });
       challenges.sort((a, b) => a.time - b.time);
-      console.log(challenges);
       return challenges;
+    },
+    chartData() {
+      let current_score = 0;
+      let data = [];
+
+      this.solvedChallenges.forEach(c => {
+        current_score += c.points;
+        data.push({
+          t: new Date(c.time * 1000),
+          y: current_score,
+          name: c.name,
+          score: c.points,
+          team: ""
+        });
+      });
+      return [
+        {
+          lineTension: 0,
+          borderColor: colorhash(this.teamname),
+          backgroundColor: colorhash(this.teamname),
+          fill: false,
+          data: data,
+          label: this.teamname
+        }
+      ];
     }
   }
 });

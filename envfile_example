@@ -1,6 +1,6 @@
 #!/bin/bash
 export DBDSN='kosenctfxuser:kosenctfxpassword@tcp(localhost:13306)/kosenctfx'
-export REDIS="localhost:6379"
+export REDIS="rediss://localhost:6379"
 export FRONT='http://front.web.localhost:8080'
 export MAIL='kosenctf@example.com'
 export MAIL_SERVER='smtp.gmail.com:587'

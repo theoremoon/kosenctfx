@@ -1,3 +1,0 @@
-FROM redis:5
-
-ADD challenge/redis.conf /redis.conf

@@ -1,8 +1,0 @@
-{
-    "name": "Sample",
-    "description": "<p>the flag is <code>KosenCTF{s4mp13_f14g}</code></p>",
-    "flag": "KosenCTF{s4mp13_f14g}",
-    "author": "theoremoon",
-    "tags": ["warmup"],
-    "is_survey": false
-}

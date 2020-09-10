@@ -2,20 +2,6 @@
 url=http://api.web.localhost:5000
 token=XXXXXXXXXXXXXXXXXX
 
-[manager]
-url=http://X.Y.Z.W:5000
-token=YYYYYYYYYYYYYYYYYY
-
-[digitalocean]
-url=http://api.digitalocean.com
-token=ZZZZZZZZZZZZZZZZZZ
-
-[registry]
-server=registry.digitalocean.com
-name=XXXXXXXX
-username=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-password=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 [bucket]
 # endpoint = s3.amazonaws.com
 endpoint=localhost:49000

@@ -1,41 +1,52 @@
 # KosenCTFx
 
-## 周辺環境系
+CTF Scoreserver for InterKosenCTF 2020
 
-主に`tool/tool.py`を用いるところと`infra/infra.py`を用いるところがある。
+## Files
 
-`infra/infra.py`は`init` みたいなサブコマンドが用意されているけどまだ安定してない
+```
+.
+├── ansible
+│   └── docker.yml           -- ansible scripts for installing docker
+├── docker-compose.yml
+├── Dockerfile
+├── envfile_example
+├── Makefile
+├── README.md
+├── scoreserver              -- backend (golang)
+├── solvability_check        -- toy script for solvability check
+├── tool                     -- ctf management tool (python)
+│   ├── ctf_config.yml
+│   ├── config.ini_example
+│   └── tool.py
+└── ui                       -- frontend (vue)
+```
 
-### Bucket の初期化
+## Usage (test / development)
 
-`python ./tool.py bucket_init` とする
+up database / redis / file storate
+```
+$ docker-compose up
+```
 
-### Managerの初期化
+run scoreserver
+```
+$ make run
+```
 
-`python ./tool.py manager_init` とする
+run frontend
+```
+$ cd ui; yarn serve
+```
 
-## CTFの管理系
+## Note
 
-主に`tool/tool.py`を用いる。先に`config.ini`をいい感じに設定しておく必要がある。
-くわしくは
+ This project is mainly for personal use. If you have some troubles and/or questions, tell the author by Issue.
 
-### ScoreServerの設定（CTFの開催時刻など）を変更する
+## License
 
-`ctf_config.yml`を設定した上で、 `python ./tool.py apply_config ../ctf_config.yml`
+- TBD
 
-### 問題の登録
+## Author
 
-問題を取り扱う場合は`python ./tool.py --basedir <challenges dir path>` から始める
-
-`python ./tool.py --basedir <challenges dir path> register`
-
-### 問題のオープン
-
-目当ての問題のIDを `python ./tool.py --basedir <challenges dir path> list | jq '...'`などとして手に入れておき
-`python ./tool.py --basedir <challenges dir path> open <id>`
-
-
-### その他
-
-ヘルプを見てくれ
-
+- theoremoon

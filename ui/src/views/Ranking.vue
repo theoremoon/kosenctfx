@@ -25,7 +25,37 @@
           </td>
           <td class="text-right">{{ t.points }}</td>
           <td v-for="c in orderedChallenges" :key="c">
-            <font-awesome-icon icon="flag" v-if="t.taskStats[c]" />
+            <div
+              title="First blood!!!"
+              v-if="
+                solveOrder[c] &&
+                  solveOrder[c].length >= 1 &&
+                  solveOrder[c][0].team_id == t.team_id
+              "
+            >
+              🥇
+            </div>
+            <div
+              title="Second blood!!"
+              v-else-if="
+                solveOrder[c] &&
+                  solveOrder[c].length >= 2 &&
+                  solveOrder[c][1].team_id == t.team_id
+              "
+            >
+              🥈
+            </div>
+            <div
+              title="Third blood!"
+              v-else-if="
+                solveOrder[c] &&
+                  solveOrder[c].length >= 3 &&
+                  solveOrder[c][2].team_id == t.team_id
+              "
+            >
+              🥉
+            </div>
+            <div v-else-if="t.taskStats[c]">🏳️</div>
           </td>
         </tr>
       </tbody>
@@ -42,6 +72,7 @@ export default Vue.extend({
   components: {
     graph: Graph
   },
+
   computed: {
     orderedChallenges() {
       if (!this.$store.ranking || !this.$store.ranking.tasks) {
@@ -63,6 +94,36 @@ export default Vue.extend({
         return [];
       }
       return this.$store.ranking.standings;
+    },
+    solveOrder() {
+      if (
+        !this.$store.ranking ||
+        !this.$store.ranking.standings ||
+        !this.$store.ranking.tasks
+      ) {
+        return [];
+      }
+
+      let solves = this.$store.ranking.standings.reduce((solves, t) => {
+        Object.entries(t.taskStats).forEach(([challengeName, info]) => {
+          if (!solves[challengeName]) {
+            solves[challengeName] = [];
+          }
+          solves[challengeName].push({
+            team_id: t.team_id,
+            time: info.time
+          });
+        });
+        return solves;
+      }, new Object());
+
+      Object.keys(solves).forEach(key => {
+        solves[key].sort((a, b) => {
+          return a.time - b.time;
+        });
+      });
+
+      return solves;
     },
     dataReady() {
       if (!this.$store.ranking) {

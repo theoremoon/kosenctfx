@@ -54,7 +54,7 @@ func (s *server) loginHandler() echo.HandlerFunc {
 			})
 		}
 
-		token, err := s.app.Login(req.Teamname, req.Password)
+		token, err := s.app.Login(req.Teamname, req.Password, c.RealIP())
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}

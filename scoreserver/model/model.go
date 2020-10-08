@@ -33,6 +33,7 @@ type LoginToken struct {
 
 	TeamId    uint
 	Token     string `gorm:"unique"`
+	IPAddress string
 	ExpiresAt time.Time
 }
 

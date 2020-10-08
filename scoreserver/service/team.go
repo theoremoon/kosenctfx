@@ -13,7 +13,7 @@ import (
 )
 
 type TeamApp interface {
-	Login(teamname, password string) (*model.LoginToken, error)
+	Login(teamname, password, ipaddress string) (*model.LoginToken, error)
 	RegisterTeam(teamname, password, email string) (*model.Team, error)
 	GetAdminTeam() (*model.Team, error)
 	MakeTeamAdmin(t *model.Team) error
@@ -79,7 +79,7 @@ func (app *app) GetLoginTeam(token string) (*model.Team, error) {
 	return team, nil
 }
 
-func (app *app) Login(teamname, password string) (*model.LoginToken, error) {
+func (app *app) Login(teamname, password, ipaddress string) (*model.LoginToken, error) {
 	t, err := app.repo.GetTeamByName(teamname)
 	if err != nil && gorm.IsRecordNotFoundError(err) {
 		return nil, NewErrorMessage("no such team")
@@ -94,6 +94,7 @@ func (app *app) Login(teamname, password string) (*model.LoginToken, error) {
 		TeamId:    t.ID,
 		Token:     newToken(),
 		ExpiresAt: tokenExpiredTime(),
+		IPAddress: ipaddress,
 	}
 	if err := app.repo.SetTeamLoginToken(&token); err != nil {
 		return nil, xerrors.Errorf(": %w", err)

@@ -4,16 +4,6 @@
       {{ teamname }} - <span class="text-2xl">{{ score }}</span
       >pts
     </h1>
-    <div class="px-4 py-2">
-      <div class="member" v-for="m in members" :key="m.id">
-        <router-link :to="'/user/' + m.id"> {{ m.username }}</router-link>
-      </div>
-    </div>
-
-    <div v-if="token" class="inline-form px-4">
-      <label>teamtoken:</label> <input type="text" readonly v-model="token" />
-      <input type="submit" value="Regenerate" @click="regenerate" />
-    </div>
 
     <graph :chartdata="chartData"></graph>
 
@@ -53,8 +43,7 @@ export default Vue.extend({
   data() {
     return {
       token: "",
-      teamname: "",
-      members: []
+      teamname: ""
     };
   },
   mounted() {
@@ -63,11 +52,7 @@ export default Vue.extend({
   methods: {
     getInfo() {
       API.get("team/" + this.$route.params.id).then(r => {
-        if ("token" in r.data) {
-          this.token = r.data.token;
-        }
         this.teamname = r.data.teamname;
-        this.members = r.data.members;
       });
     },
     regenerate() {

@@ -4,12 +4,10 @@ import Index from "../views/Index.vue";
 import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
 import Team from "../views/Team.vue";
-import User from "../views/User.vue";
 import ResetRequest from "../views/ResetRequest.vue";
 import Reset from "../views/Reset.vue";
 import Challenges from "../views/Challenges.vue";
 import Ranking from "../views/Ranking.vue";
-import Users from "../views/Users.vue";
 
 Vue.use(VueRouter);
 
@@ -36,11 +34,6 @@ const routes = [
   },
 
   {
-    path: "/user/:id",
-    name: "User",
-    component: User
-  },
-  {
     path: "/reset-request",
     name: "ResetRequest",
     component: ResetRequest
@@ -59,11 +52,6 @@ const routes = [
     path: "/ranking",
     name: "Ranking",
     component: Ranking
-  },
-  {
-    path: "/users",
-    name: "Users",
-    component: Users
   }
 ];
 

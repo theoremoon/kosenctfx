@@ -47,14 +47,18 @@ func run() error {
 	app := service.New(repo, mailer)
 
 	// admin ユーザを自動生成して適当なCTF情報を入れる
-	if _, err := app.GetAdminUser(); err != nil {
+	if _, err := app.GetAdminTeam(); err != nil {
 		password := uuid.New().String()
-		if _, err := app.CreateAdminUser(conf.Email, password); err != nil {
-			return err
+		t, err := app.RegisterTeam("admin", conf.Email, password)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		if err := app.MakeTeamAdmin(t); err != nil {
+			return xerrors.Errorf(": %w", err)
 		}
 		token := password
 		log.Printf("---[ADMIN]---\n")
-		log.Printf(" username: admin\n")
+		log.Printf(" team: admin\n")
 		log.Printf(" email: %s\n", conf.Email)
 		log.Printf(" password: %s", password)
 		log.Printf(" token: %s", token)

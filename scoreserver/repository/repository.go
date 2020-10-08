@@ -8,7 +8,6 @@ import (
 )
 
 type Repository interface {
-	UserRepository
 	TeamRepository
 	ChallengeRepository
 	SubmissionRepository
@@ -28,7 +27,6 @@ func New(db *gorm.DB) Repository {
 
 func (r *repository) Migrate() {
 	r.db.AutoMigrate(
-		&model.User{},
 		&model.LoginToken{},
 		&model.PasswordResetToken{},
 		&model.Team{},

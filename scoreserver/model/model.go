@@ -24,6 +24,7 @@ type Team struct {
 	Teamname     string `gorm:"unique"`
 	Email        string `gorm:"unique"`
 	PasswordHash string
+	CountryCode  string
 
 	IsAdmin bool
 }

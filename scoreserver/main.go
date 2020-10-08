@@ -49,7 +49,7 @@ func run() error {
 	// admin ユーザを自動生成して適当なCTF情報を入れる
 	if _, err := app.GetAdminTeam(); err != nil {
 		password := uuid.New().String()
-		t, err := app.RegisterTeam("admin", conf.Email, password)
+		t, err := app.RegisterTeam("admin", conf.Email, password, "")
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}

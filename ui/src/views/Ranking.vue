@@ -22,6 +22,7 @@
           <td class="text-center">{{ t.pos }}</td>
           <td>
             <router-link :to="'/team/' + t.team_id">{{ t.team }}</router-link>
+            {{ t.country | countryFlag }}
           </td>
           <td class="text-right">{{ t.points }}</td>
           <td v-for="c in orderedChallenges" :key="c">

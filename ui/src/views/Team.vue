@@ -1,7 +1,8 @@
 <template>
   <div class="mt-4">
     <h1 class="text-lg">
-      {{ teamname }} - <span class="text-2xl">{{ score }}</span
+      {{ teamname }} {{ country | countryFlag }} -
+      <span class="text-2xl">{{ score }}</span
       >pts
     </h1>
 
@@ -43,7 +44,8 @@ export default Vue.extend({
   data() {
     return {
       token: "",
-      teamname: ""
+      teamname: "",
+      country: ""
     };
   },
   mounted() {
@@ -53,6 +55,7 @@ export default Vue.extend({
     getInfo() {
       API.get("team/" + this.$route.params.id).then(r => {
         this.teamname = r.data.teamname;
+        this.country = r.data.country;
       });
     },
     regenerate() {

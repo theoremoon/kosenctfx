@@ -23,6 +23,13 @@
           <input type="password" v-model="password" id="password" required />
         </div>
 
+        <div class="mb-4">
+          <label class="block text-sm" for="country">
+            Country Code {{ country | countryFlag }}
+          </label>
+          <input type="text" v-model="country" id="country" />
+        </div>
+
         <div class="mv-4">
           <input type="submit" value="Register" @click="register" />
         </div>
@@ -41,7 +48,8 @@ export default Vue.extend({
     return {
       email: "",
       password: "",
-      teamname: ""
+      teamname: "",
+      country: ""
     };
   },
   mounted() {
@@ -54,7 +62,8 @@ export default Vue.extend({
       API.post("/register", {
         teamname: this.teamname,
         email: this.email,
-        password: this.password
+        password: this.password,
+        country: this.country
       })
         .then(r => {
           message(this, r.data.message);

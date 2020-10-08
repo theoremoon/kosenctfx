@@ -63,6 +63,7 @@ type TaskStat struct {
 type ScoreFeedEntry struct {
 	Pos            int                  `json:"pos"`
 	Teamname       string               `json:"team"`
+	Country        string               `json:"country"`
 	Score          int                  `json:"points"`
 	TaskStats      map[string]*TaskStat `json:"taskStats"`
 	TeamID         uint                 `json:"team_id"`
@@ -220,6 +221,7 @@ func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, error) {
 		scoreFeed[i] = &ScoreFeedEntry{
 			Pos:            0,
 			Teamname:       teams[i].Teamname,
+			Country:        teams[i].CountryCode,
 			TeamID:         teams[i].ID,
 			Score:          int(score),
 			TaskStats:      taskStats,

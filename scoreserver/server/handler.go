@@ -24,9 +24,10 @@ const (
 func (s *server) registerHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
-			Teamname string
-			Email    string
-			Password string
+			Teamname    string
+			Email       string
+			Password    string
+			CountryCode string `json:"country"`
 		})
 		if err := c.Bind(req); err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]interface{}{
@@ -34,7 +35,7 @@ func (s *server) registerHandler() echo.HandlerFunc {
 			})
 		}
 
-		if _, err := s.app.RegisterTeam(req.Teamname, req.Password, req.Email); err != nil {
+		if _, err := s.app.RegisterTeam(req.Teamname, req.Password, req.Email, req.CountryCode); err != nil {
 			return errorHandle(c, err)
 		}
 		return messageHandle(c, RegisteredMessage)
@@ -221,6 +222,7 @@ func (s *server) teamHandler() echo.HandlerFunc {
 		res := map[string]interface{}{
 			"teamname": team.Teamname,
 			"teamid":   team.ID,
+			"country":  team.CountryCode,
 		}
 
 		return c.JSON(http.StatusOK, res)

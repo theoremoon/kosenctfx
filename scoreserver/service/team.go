@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/pariz/gountries"
+
 	"github.com/jinzhu/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
@@ -14,7 +16,7 @@ import (
 
 type TeamApp interface {
 	Login(teamname, password, ipaddress string) (*model.LoginToken, error)
-	RegisterTeam(teamname, password, email string) (*model.Team, error)
+	RegisterTeam(teamname, password, email, countryCode string) (*model.Team, error)
 	GetAdminTeam() (*model.Team, error)
 	MakeTeamAdmin(t *model.Team) error
 	GetTeamByID(teamID uint) (*model.Team, error)
@@ -24,7 +26,7 @@ type TeamApp interface {
 	PasswordUpdate(team *model.Team, newpassword string) error
 }
 
-func (app *app) RegisterTeam(teamname, password, email string) (*model.Team, error) {
+func (app *app) RegisterTeam(teamname, password, email, countryCode string) (*model.Team, error) {
 	if err := app.validateTeamname(teamname); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -35,10 +37,16 @@ func (app *app) RegisterTeam(teamname, password, email string) (*model.Team, err
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
+	country, err := validateCountryCode(countryCode)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
 	t := model.Team{
 		Teamname:     teamname,
 		PasswordHash: hashPassword(password),
 		Email:        email,
+		CountryCode:  country,
 	}
 	if err := app.repo.RegisterTeam(&t); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -207,4 +215,16 @@ func hashPassword(password string) string {
 func checkPassword(password string, hashedPassword []byte) bool {
 	hpassword := sha256.Sum256([]byte(password))
 	return bcrypt.CompareHashAndPassword(hashedPassword, hpassword[:]) == nil
+}
+
+func validateCountryCode(countryCode string) (string, error) {
+	if countryCode == "" {
+		return "", nil
+	}
+	q := gountries.New()
+	c, err := q.FindCountryByAlpha(countryCode)
+	if err != nil {
+		return "", NewErrorMessage("invalid country code. please follow ISO 3166-1 alpha-3")
+	}
+	return c.Alpha2, nil
 }

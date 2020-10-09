@@ -24,6 +24,8 @@ type TeamApp interface {
 	PasswordResetRequest(email string) error
 	PasswordReset(token, newpassword string) error
 	PasswordUpdate(team *model.Team, newpassword string) error
+	UpdateTeamname(team *model.Team, newTeamname string) error
+	UpdateCountry(team *model.Team, newCountryCode string) error
 }
 
 func (app *app) RegisterTeam(teamname, password, email, countryCode string) (*model.Team, error) {
@@ -169,6 +171,35 @@ func (app *app) PasswordUpdate(team *model.Team, newpassword string) error {
 	return nil
 }
 
+func (app *app) UpdateTeamname(team *model.Team, newTeamname string) error {
+	if newTeamname == "" {
+		return NewErrorMessage("teamname is required")
+	}
+	if err := app.repo.UpdateTeamname(team, newTeamname); err != nil {
+		if xerrors.As(err, &repository.DuplicatedError{}) {
+			return xerrors.Errorf(": %w", NewErrorMessage("that teamname is already used"))
+		}
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (app *app) UpdateCountry(team *model.Team, newCountryCode string) error {
+	if newCountryCode == "" {
+		return NewErrorMessage("countrycode is required")
+	}
+
+	country, err := validateCountryCode(newCountryCode)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	if err := app.repo.UpdateCountry(team, country); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
 func (app *app) validateTeamname(teamname string) error {
 	if teamname == "" {
 		return NewErrorMessage("teamname is required")
@@ -224,7 +255,7 @@ func validateCountryCode(countryCode string) (string, error) {
 	q := gountries.New()
 	c, err := q.FindCountryByAlpha(countryCode)
 	if err != nil {
-		return "", NewErrorMessage("invalid country code. please follow ISO 3166-1 alpha-3")
+		return "", NewErrorMessage("invalid country code. please follow ISO 3166-1 alpha-2")
 	}
 	return c.Alpha2, nil
 }

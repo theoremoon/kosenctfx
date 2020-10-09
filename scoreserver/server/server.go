@@ -24,8 +24,7 @@ var (
 	AdminUnauthorizedMessage      = "you are not the admin"
 	PasswordResetEmailSentMessage = "password reset email has been sent"
 	PasswordUpdateMessage         = "password is successfully reset"
-	TeamnameUpdateMessage         = "temaname is successfully updated"
-	RenewTeamTokenMessage         = "teamtoken is updated"
+	ProfileUpdateMessage          = "team profile is successfully updated"
 
 	CTFAlreadyStartedMessage = "CTF has already started"
 	CTFNotStartedMessage     = "CTF has not started yet"
@@ -88,8 +87,7 @@ func (s *server) Start(addr string) error {
 
 	e.POST("/passwordreset-request", s.passwordresetRequestHandler(), s.notLoginMiddleware)
 	e.POST("/passwordreset", s.passwordresetHandler(), s.notLoginMiddleware)
-	e.POST("/password-update", s.passwordUpdateHandler(), s.loginMiddleware)
-	// e.POST("/teamname-update", s.teamnameUpdateHandler(), s.loginMiddleware, s.ctfNotStartedMiddleware)
+	e.POST("/update-profile", s.profileUpdateHandler(), s.loginMiddleware)
 
 	e.GET("/team/:id", s.teamHandler())
 

@@ -191,19 +191,36 @@ func (s *server) passwordresetHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) passwordUpdateHandler() echo.HandlerFunc {
+func (s *server) profileUpdateHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		lc := c.(*loginContext)
 		req := new(struct {
-			NewPassword string `json:"new_password"`
+			Teamname    string `json:"teamname"`
+			Password    string `json:"password"`
+			CountryCode string `json:"country"`
 		})
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		if err := s.app.PasswordUpdate(lc.Team, req.NewPassword); err != nil {
-			return errorHandle(c, xerrors.Errorf(": %w", err))
+
+		if req.Teamname != "" {
+			if err := s.app.UpdateTeamname(lc.Team, req.Teamname); err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
 		}
-		return messageHandle(c, PasswordUpdateMessage)
+
+		if req.Password != "" {
+			if err := s.app.PasswordUpdate(lc.Team, req.Password); err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+		}
+
+		if req.CountryCode != "" {
+			if err := s.app.UpdateCountry(lc.Team, req.CountryCode); err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+		}
+		return messageHandle(c, ProfileUpdateMessage)
 	}
 }
 

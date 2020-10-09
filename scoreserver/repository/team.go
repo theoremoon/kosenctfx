@@ -22,6 +22,8 @@ type TeamRepository interface {
 	NewPasswordResetToken(token *model.PasswordResetToken) error
 	RevokeTeamPasswordResetToken(teamID uint) error
 	UpdateTeamPassword(team *model.Team, passwordHash string) error
+	UpdateTeamname(team *model.Team, teamname string) error
+	UpdateCountry(team *model.Team, country string) error
 }
 
 func (r *repository) RegisterTeam(t *model.Team) error {
@@ -136,6 +138,23 @@ func (r *repository) RevokeTeamPasswordResetToken(teamID uint) error {
 
 func (r *repository) UpdateTeamPassword(team *model.Team, passwordHash string) error {
 	if err := r.db.Model(team).Update("password_hash", passwordHash).Error; err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (r *repository) UpdateTeamname(team *model.Team, teamname string) error {
+	if err := r.db.Model(team).Update("teamname", teamname).Error; err != nil {
+		if isDuplicatedError(err) {
+			return xerrors.Errorf(": %w", Duplicated("teamname"))
+		}
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (r *repository) UpdateCountry(team *model.Team, country string) error {
+	if err := r.db.Model(team).Update("country_code", country).Error; err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil

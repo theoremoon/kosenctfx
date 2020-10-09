@@ -58,7 +58,6 @@ func (r *repository) InsertValidableSubmission(s *model.Submission) (bool, error
 				SubmissionId: s.ID,
 				ChallengeId:  *s.ChallengeId,
 				TeamId:       s.TeamId,
-				UserId:       s.UserId,
 			}
 			if err := r.db.Create(&vs).Error; err != nil {
 				// ただしConstraint Errorが起きたらやはりValidではなかった

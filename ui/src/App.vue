@@ -16,18 +16,10 @@
           <div class="mr-4">
             <router-link to="/ranking">RANKING</router-link>
           </div>
-          <div class="mr-4">
-            <router-link to="/users">USERS</router-link>
-          </div>
         </div>
 
         <div class="flex flex-0">
-          <template v-if="username != null">
-            <div class="mr-4">
-              <router-link :to="'/user/' + $store.userid">{{
-                $store.username
-              }}</router-link>
-            </div>
+          <template v-if="$store.teamname != null">
             <div class="mr-4">
               <router-link :to="'/team/' + $store.teamid">{{
                 $store.teamname
@@ -115,12 +107,6 @@ export default Vue.extend({
             Vue.set(this.$store, "ranking", null);
           }
 
-          if ("userRanking" in r.data) {
-            Vue.set(this.$store, "userRanking", r.data.userRanking);
-          } else {
-            Vue.set(this.$store, "userRanking", null);
-          }
-
           if ("challenges" in r.data) {
             Vue.set(this.$store, "challenges", r.data.challenges);
           } else {
@@ -132,15 +118,11 @@ export default Vue.extend({
     checkLogin() {
       API.get("/info")
         .then(r => {
-          if ("username" in r.data) {
-            Vue.set(this.$store, "username", r.data.username);
+          if ("teamname" in r.data) {
             Vue.set(this.$store, "teamname", r.data.teamname);
-            Vue.set(this.$store, "userid", r.data.userid);
             Vue.set(this.$store, "teamid", r.data.teamid);
           } else {
-            Vue.set(this.$store, "username", null);
             Vue.set(this.$store, "teamname", null);
-            Vue.set(this.$store, "userid", null);
             Vue.set(this.$store, "teamid", null);
           }
           Vue.set(this.$store, "ctfStart", r.data.ctf_start);
@@ -162,11 +144,6 @@ export default Vue.extend({
         id: id
       });
       return id;
-    }
-  },
-  computed: {
-    username() {
-      return this.$store.username;
     }
   }
 });

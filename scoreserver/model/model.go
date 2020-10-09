@@ -18,41 +18,32 @@ func (model *Model) BeforeCreate(scope *gorm.Scope) error {
 	return scope.SetColumn("ID", uuid.New().ID())
 }
 
-type User struct {
+type Team struct {
 	Model
 
-	Username     string `gorm:"unique"`
-	PasswordHash string
+	Teamname     string `gorm:"unique"`
 	Email        string `gorm:"unique"`
-	IsAdmin      bool
+	PasswordHash string
+	CountryCode  string
 
-	IconPath *string
-	TeamId   uint
+	IsAdmin bool
 }
 
 type LoginToken struct {
 	Model
 
-	UserId    uint
+	TeamId    uint
 	Token     string `gorm:"unique"`
+	IPAddress string
 	ExpiresAt time.Time
 }
 
 type PasswordResetToken struct {
 	Model
 
-	UserId    uint
+	TeamId    uint
 	Token     string `gorm:"unique"`
 	ExpiresAt time.Time
-}
-
-type Team struct {
-	Model
-
-	Teamname string `gorm:"unique"`
-	Token    string `gorm:"unique"`
-
-	IsAdmin bool
 }
 
 type Challenge struct {
@@ -89,7 +80,6 @@ type Submission struct {
 	Model
 
 	ChallengeId *uint
-	UserId      uint
 	TeamId      uint
 	IsCorrect   bool
 	Flag        string
@@ -100,7 +90,6 @@ type ValidSubmission struct {
 
 	ChallengeId  uint `gorm:"unique_index:valid_submission"`
 	TeamId       uint `gorm:"unique_index:valid_submission"`
-	UserId       uint
 	SubmissionId uint
 }
 

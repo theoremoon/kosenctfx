@@ -1,18 +1,42 @@
 <template>
   <div class="mt-4">
     <h1 class="text-lg">
-      {{ teamname }} - <span class="text-2xl">{{ score }}</span
+      {{ teamname }} {{ country | countryFlag }} -
+      <span class="text-2xl">{{ score }}</span
       >pts
     </h1>
-    <div class="px-4 py-2">
-      <div class="member" v-for="m in members" :key="m.id">
-        <router-link :to="'/user/' + m.id"> {{ m.username }}</router-link>
-      </div>
-    </div>
 
-    <div v-if="token" class="inline-form px-4">
-      <label>teamtoken:</label> <input type="text" readonly v-model="token" />
-      <input type="submit" value="Regenerate" @click="regenerate" />
+    <div v-if="$store.teamname == teamname">
+      <button @click="editmode = !editmode">edit profile</button>
+      <div class="w-1/4 ml-4" v-if="editmode">
+        <div class="mb-4">
+          <label class="block text-sm" for="teamname">
+            teamname
+          </label>
+          <input type="text" v-model="edit_teamname" id="teamname" />
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm" for="password">
+            password
+          </label>
+          <input type="password" v-model="edit_password" id="password" />
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm" for="country">
+            Country Code {{ edit_country | countryFlag }}
+          </label>
+          <input type="text" v-model="edit_country" id="country" />
+        </div>
+
+        <input
+          type="submit"
+          value="update"
+          class="float-right"
+          @click="updateProfile"
+        />
+      </div>
     </div>
 
     <graph :chartdata="chartData"></graph>
@@ -54,7 +78,12 @@ export default Vue.extend({
     return {
       token: "",
       teamname: "",
-      members: []
+      country: "",
+
+      editmode: false,
+      edit_teamname: "",
+      edit_password: "",
+      edit_country: ""
     };
   },
   mounted() {
@@ -63,18 +92,24 @@ export default Vue.extend({
   methods: {
     getInfo() {
       API.get("team/" + this.$route.params.id).then(r => {
-        if ("token" in r.data) {
-          this.token = r.data.token;
-        }
         this.teamname = r.data.teamname;
-        this.members = r.data.members;
+        this.country = r.data.country;
       });
     },
-    regenerate() {
-      API.post("/renew-teamtoken", {})
+    updateProfile() {
+      API.post("/update-profile", {
+        teamname: this.edit_teamname,
+        country: this.edit_country
+      })
         .then(r => {
           message(this, r.data.message);
+          this.$eventHub.$emit("login-check");
           this.getInfo();
+
+          this.edit_teamname = "";
+          this.edit_password = "";
+          this.edit_country = "";
+          this.editmode = false;
         })
         .catch(e => {
           errorHandle(this, e);

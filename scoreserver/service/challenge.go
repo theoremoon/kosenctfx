@@ -52,7 +52,7 @@ type ChallengeApp interface {
 	CloseChallenge(challengeID uint) error
 	UpdateChallenge(challengeID uint, c *Challenge) error
 
-	SubmitFlag(user *model.User, flag string, ctfRunning bool) (*model.Challenge, bool, bool, error)
+	SubmitFlag(team *model.Team, flag string, ctfRunning bool) (*model.Challenge, bool, bool, error)
 
 	GetWrongCount(teamID uint, duration time.Duration) (int, error)
 	LockSubmission(teamID uint, duration time.Duration) error
@@ -230,15 +230,14 @@ func (app *app) UpdateChallenge(challengeID uint, c *Challenge) error {
 }
 
 /// 返り値は 解いたchallenge（is_correctがfalseならnil)、 is_correct, is_valid, error
-func (app *app) SubmitFlag(user *model.User, flag string, ctfRunning bool) (*model.Challenge, bool, bool, error) {
+func (app *app) SubmitFlag(team *model.Team, flag string, ctfRunning bool) (*model.Challenge, bool, bool, error) {
 	chal, err := app.repo.GetChallengeByFlag(flag)
 	if err != nil && !xerrors.As(err, &repository.NotFoundError{}) {
 		return nil, false, false, xerrors.Errorf(": %w", err)
 	}
 
 	s := &model.Submission{
-		UserId:    user.ID,
-		TeamId:    user.TeamId,
+		TeamId:    team.ID,
 		IsCorrect: false, //とりあえずfalseを入れておいてあとからtrueで上書きする
 		Flag:      flag,
 	}

@@ -30,7 +30,7 @@ export default Vue.extend({
     };
   },
   mounted() {
-    if (this.$store.username != null) {
+    if (this.$store.teamname != null) {
       this.$router.push("/");
     }
   },

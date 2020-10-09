@@ -24,8 +24,7 @@ var (
 	AdminUnauthorizedMessage      = "you are not the admin"
 	PasswordResetEmailSentMessage = "password reset email has been sent"
 	PasswordUpdateMessage         = "password is successfully reset"
-	TeamnameUpdateMessage         = "temaname is successfully updated"
-	RenewTeamTokenMessage         = "teamtoken is updated"
+	ProfileUpdateMessage          = "team profile is successfully updated"
 
 	CTFAlreadyStartedMessage = "CTF has already started"
 	CTFNotStartedMessage     = "CTF has not started yet"
@@ -80,22 +79,17 @@ func (s *server) Start(addr string) error {
 		AllowMethods:     []string{http.MethodGet, http.MethodPost},
 	}))
 
-	e.POST("/register-with-team", s.registerWithTeamHandler(), s.notLoginMiddleware, s.registerableMiddleware)
-	e.POST("/register-and-join-team", s.registerAndJoinTeamHandler(), s.notLoginMiddleware, s.registerableMiddleware)
+	e.POST("/register", s.registerHandler(), s.notLoginMiddleware, s.registerableMiddleware)
 	e.POST("/login", s.loginHandler())
 	e.POST("/logout", s.logoutHandler())
 	e.GET("/info", s.infoHandler())
 	e.GET("/info-update", s.infoUpdateHandler())
 
-	e.POST("/renew-teamtoken", s.renewTeamTokenHanler(), s.loginMiddleware)
 	e.POST("/passwordreset-request", s.passwordresetRequestHandler(), s.notLoginMiddleware)
 	e.POST("/passwordreset", s.passwordresetHandler(), s.notLoginMiddleware)
-	e.POST("/password-update", s.passwordUpdateHandler(), s.loginMiddleware)
-	// e.POST("/teamname-update", s.teamnameUpdateHandler(), s.loginMiddleware, s.ctfNotStartedMiddleware)
+	e.POST("/update-profile", s.profileUpdateHandler(), s.loginMiddleware)
 
-	// e.GET("/notifications", s.notificationsHandler())
 	e.GET("/team/:id", s.teamHandler())
-	e.GET("/user/:id", s.userHandler())
 
 	e.POST("/submit", s.submitHandler(), s.loginMiddleware, s.ctfStartedMiddleware, s.ctfPlayableMiddleware)
 
@@ -152,18 +146,18 @@ func (s *server) removeTokenCookie() *http.Cookie {
 
 type loginContext struct {
 	echo.Context
-	User *model.User
+	Team *model.Team
 }
 
-func (s *server) getLoginUser(c echo.Context) (*model.User, error) {
+func (s *server) getLoginTeam(c echo.Context) (*model.Team, error) {
 	cookie, err := c.Cookie(s.SessionKey)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := s.app.GetLoginUser(cookie.Value)
+	team, err := s.app.GetLoginTeam(cookie.Value)
 	if err != nil {
 		return nil, err
 	}
-	return user, nil
+	return team, nil
 }

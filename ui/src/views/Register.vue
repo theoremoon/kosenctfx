@@ -10,10 +10,10 @@
         </div>
 
         <div class="mb-4">
-          <label class="block text-sm" for="username">
-            username
+          <label class="block text-sm" for="teamname">
+            teamname
           </label>
-          <input type="text" v-model="username" id="username" required />
+          <input type="text" v-model="teamname" id="teamname" required />
         </div>
 
         <div class="mb-4">
@@ -22,30 +22,16 @@
           </label>
           <input type="password" v-model="password" id="password" required />
         </div>
-      </div>
 
-      <div class="flex w-full">
-        <div class="w-1/2 p-4">
-          <label for="teamname" class="block text-sm">
-            teamname
+        <div class="mb-4">
+          <label class="block text-sm" for="country">
+            Country Code {{ country | countryFlag }}
           </label>
-          <input type="text" v-model="teamname" id="teamname" />
-          <input
-            type="submit"
-            value="Create New Team"
-            class="float-right"
-            @click="createTeam"
-          />
+          <input type="text" v-model="country" id="country" />
         </div>
-        <div class="w-1/2 p-4">
-          <label for="token" class="block text-sm">team token</label>
-          <input type="text" v-model="token" id="token" />
-          <input
-            type="submit"
-            value="Join to the Team"
-            class="float-right"
-            @click="joinTeam"
-          />
+
+        <div class="mv-4">
+          <input type="submit" value="Register" @click="register" />
         </div>
       </div>
     </form>
@@ -60,40 +46,24 @@ import { message, errorHandle } from "@/message";
 export default Vue.extend({
   data() {
     return {
-      username: "",
       email: "",
       password: "",
       teamname: "",
-      token: ""
+      country: ""
     };
   },
   mounted() {
-    if (this.$store.username != null) {
+    if (this.$store.teamname != null) {
       this.$router.push("/");
     }
   },
   methods: {
-    createTeam() {
-      API.post("/register-with-team", {
+    register() {
+      API.post("/register", {
         teamname: this.teamname,
-        username: this.username,
         email: this.email,
-        password: this.password
-      })
-        .then(r => {
-          message(this, r.data.message);
-          this.$router.push("/login");
-        })
-        .catch(e => {
-          errorHandle(this, e);
-        });
-    },
-    joinTeam() {
-      API.post("/register-and-join-team", {
-        token: this.token,
-        username: this.username,
-        email: this.email,
-        password: this.password
+        password: this.password,
+        country: this.country
       })
         .then(r => {
           message(this, r.data.message);

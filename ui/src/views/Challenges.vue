@@ -7,8 +7,15 @@
         <input type="submit" value="Submit" />
       </form>
 
-      <div class="inline-form">
-        <input type="text" placeholder="filter" v-model="filter" />
+      <div class="flex">
+        <div class="inline-form">
+          <label>
+            <input type="checkbox" v-model="showsolved" />show solved challenges
+          </label>
+        </div>
+        <div class="inline-form">
+          <input type="text" placeholder="filter" v-model="filter" />
+        </div>
       </div>
     </div>
 
@@ -85,7 +92,10 @@
         :class="{
           'challenge-solved': c.solved_by
             .map(e => e.team_name)
-            .includes($store.teamname)
+            .includes($store.teamname),
+          'challenge-hidden':
+            !showsolved &&
+            c.solved_by.map(e => e.team_name).includes($store.teamname)
         }"
         :key="c.name"
         @click="focus = c.name"
@@ -121,7 +131,8 @@ export default Vue.extend({
     return {
       flag: "",
       filter: "",
-      focus: null
+      focus: null,
+      showsolved: false
     };
   },
   mounted() {
@@ -241,10 +252,6 @@ export default Vue.extend({
   }
 }
 
-.challenge-solved {
-  border: $accent-color 4px solid;
-}
-
 .challenges {
   .challenge {
     background: $fg-color;
@@ -270,6 +277,15 @@ export default Vue.extend({
     .challenge-value {
       font-size: 1.5rem;
     }
+  }
+
+  .challenge-solved {
+    border: $accent-color 4px solid;
+    background: rgba($fg-color, 0.7);
+  }
+
+  .challenge-hidden {
+    display: none;
   }
 }
 

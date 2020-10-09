@@ -13,12 +13,11 @@ import (
 )
 
 type App interface {
-	UserApp
 	TeamApp
 	ChallengeApp
 	CTFApp
 	NotificationApp
-	ScoreFeed() ([]*Challenge, *Scoreboard, *Scoreboard, error)
+	ScoreFeed() ([]*Challenge, *Scoreboard, error)
 }
 
 type app struct {
@@ -64,6 +63,7 @@ type TaskStat struct {
 type ScoreFeedEntry struct {
 	Pos            int                  `json:"pos"`
 	Teamname       string               `json:"team"`
+	Country        string               `json:"country"`
 	Score          int                  `json:"points"`
 	TaskStats      map[string]*TaskStat `json:"taskStats"`
 	TeamID         uint                 `json:"team_id"`
@@ -75,17 +75,17 @@ type Scoreboard struct {
 }
 
 /// 問題一覧、とチームのランキングを同時に計算する
-func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, *Scoreboard, error) {
+func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, error) {
 	conf, err := app.repo.GetConfig()
 	if err != nil {
-		return nil, nil, nil, xerrors.Errorf(": %w", err)
+		return nil, nil, xerrors.Errorf(": %w", err)
 	}
 	status := CalcCTFStatus(conf)
 
 	// list all challenges, tags, and attachments
 	allchals, err := app.repo.ListAllChallenges()
 	if err != nil {
-		return nil, nil, nil, xerrors.Errorf(": %w", err)
+		return nil, nil, xerrors.Errorf(": %w", err)
 	}
 	chals := make([]*model.Challenge, 0, len(allchals))
 	if status == CTFRunning || status == CTFEnded {
@@ -98,21 +98,21 @@ func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, *Scoreboard, error) {
 
 	tags, err := app.repo.ListAllTags()
 	if err != nil {
-		return nil, nil, nil, xerrors.Errorf(": %w", err)
+		return nil, nil, xerrors.Errorf(": %w", err)
 	}
 	attachments, err := app.repo.ListAllAttachments()
 	if err != nil {
-		return nil, nil, nil, xerrors.Errorf(": %w", err)
+		return nil, nil, xerrors.Errorf(": %w", err)
 	}
 
 	// list valid submissions and its author team to calculate score
 	submissions, err := app.repo.ListValidSubmissions()
 	if err != nil {
-		return nil, nil, nil, xerrors.Errorf(": %w", err)
+		return nil, nil, xerrors.Errorf(": %w", err)
 	}
 	teams, err := app.repo.ListAllTeams()
 	if err != nil {
-		return nil, nil, nil, xerrors.Errorf(": %w", err)
+		return nil, nil, xerrors.Errorf(": %w", err)
 	}
 
 	// make mapping as challenge id is the key
@@ -157,7 +157,7 @@ func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, *Scoreboard, error) {
 	for i, c := range chals {
 		score, err := CalcChallengeScore(int(len(solvedByMap[c.ID])), conf.ScoreExpr)
 		if err != nil {
-			return nil, nil, nil, xerrors.Errorf(": %w", err)
+			return nil, nil, xerrors.Errorf(": %w", err)
 		}
 		challenges[i] = &Challenge{
 			ID:          c.ID,
@@ -221,6 +221,7 @@ func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, *Scoreboard, error) {
 		scoreFeed[i] = &ScoreFeedEntry{
 			Pos:            0,
 			Teamname:       teams[i].Teamname,
+			Country:        teams[i].CountryCode,
 			TeamID:         teams[i].ID,
 			Score:          int(score),
 			TaskStats:      taskStats,
@@ -244,74 +245,8 @@ func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, *Scoreboard, error) {
 		}
 	}
 
-	// ----
-
-	users, err := app.repo.ListAllUsers()
-	if err != nil {
-		return nil, nil, nil, xerrors.Errorf(": %w", err)
-	}
-	userSubmissions := make(map[uint][]*model.ValidSubmission)
-	for _, u := range users {
-		userSubmissions[u.ID] = make([]*model.ValidSubmission, 0)
-	}
-	for _, s := range submissions {
-		userSubmissions[s.UserId] = append(userSubmissions[s.UserId], s)
-	}
-
-	// とりあえずエントリを作成する
-	userScoreFeed := make([]*ScoreFeedEntry, len(users))
-	for i := 0; i < len(users); i++ {
-		var score uint = 0
-		taskStats := make(map[string]*TaskStat)
-		var lastSubmission int64 = 0
-
-		for _, s := range userSubmissions[users[i].ID] {
-			c, exist := chalMap[s.ChallengeId]
-			if !exist {
-				continue //?
-			}
-			score += c.Score
-			solvedAt := s.CreatedAt.Unix()
-			taskStats[c.Name] = &TaskStat{
-				Score:    c.Score,
-				SolvedAt: solvedAt,
-			}
-			if !c.IsSurvey && lastSubmission < solvedAt {
-				lastSubmission = solvedAt
-			}
-		}
-
-		userScoreFeed[i] = &ScoreFeedEntry{
-			Pos:            0,
-			Teamname:       users[i].Username,
-			TeamID:         users[i].ID,
-			Score:          int(score),
-			TaskStats:      taskStats,
-			LastSubmission: lastSubmission,
-		}
-	}
-
-	// スコアと最終提出時刻でsort
-	sort.Slice(userScoreFeed, func(i, j int) bool {
-		if userScoreFeed[i].Score == userScoreFeed[j].Score {
-			return userScoreFeed[i].LastSubmission < userScoreFeed[j].LastSubmission
-		}
-		return userScoreFeed[i].Score > userScoreFeed[j].Score
-	})
-
-	// Posの値を埋める
-	for i := 0; i < len(userScoreFeed); i++ {
-		userScoreFeed[i].Pos = i + 1
-		if i != 0 && userScoreFeed[i].Score == userScoreFeed[i-1].Score && userScoreFeed[i].LastSubmission == userScoreFeed[i-1].LastSubmission {
-			userScoreFeed[i].Pos = userScoreFeed[i-1].Pos
-		}
-	}
-
 	return challenges, &Scoreboard{
-			Tasks:     tasks,
-			Standings: scoreFeed,
-		}, &Scoreboard{
-			Tasks:     tasks,
-			Standings: userScoreFeed,
-		}, nil
+		Tasks:     tasks,
+		Standings: scoreFeed,
+	}, nil
 }

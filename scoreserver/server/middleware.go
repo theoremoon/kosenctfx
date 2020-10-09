@@ -11,13 +11,13 @@ import (
 
 func (s *server) loginMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		user, err := s.getLoginUser(c)
+		team, err := s.getLoginTeam(c)
 		if err != nil {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 				"message": UnauthorizedMessage,
 			})
 		}
-		return h(&loginContext{c, user})
+		return h(&loginContext{c, team})
 	}
 }
 
@@ -26,34 +26,34 @@ func (s *server) adminMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 		// tokenによる認証
 		auth := c.Request().Header.Get(echo.HeaderAuthorization)
 		if strings.Contains(auth, s.Token) {
-			user, err := s.app.GetAdminUser()
+			team, err := s.app.GetAdminTeam()
 			if err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
 
-			return h(&loginContext{c, user})
+			return h(&loginContext{c, team})
 		}
 
 		// admin loginによる認証
-		user, err := s.getLoginUser(c)
+		team, err := s.getLoginTeam(c)
 		if err != nil {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 				"message": UnauthorizedMessage,
 			})
 		}
-		if !user.IsAdmin {
+		if !team.IsAdmin {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 				"message": AdminUnauthorizedMessage,
 			})
 		}
-		return h(&loginContext{c, user})
+		return h(&loginContext{c, team})
 	}
 }
 
 func (s *server) notLoginMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		user, _ := s.getLoginUser(c)
-		if user != nil {
+		team, _ := s.getLoginTeam(c)
+		if team != nil {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 				"message": AlreadyAuthorizedMessage,
 			})

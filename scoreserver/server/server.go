@@ -38,7 +38,7 @@ var (
 	ChallengeAddMessage    = "Added the challenge"
 	ChallengeUpdateMessage = "Updated the challenge"
 
-	AddNotificationMessage = "Add New Notification"
+	ConfigUpdateMessage = "Config is Updated"
 
 	NotImplementedMessage = "Not Implemented"
 )
@@ -94,7 +94,8 @@ func (s *server) Start(addr string) error {
 	e.POST("/submit", s.submitHandler(), s.loginMiddleware, s.ctfStartedMiddleware, s.ctfPlayableMiddleware)
 
 	e.GET("/admin/score-emulate", s.scoreEmulateHandler(), s.adminMiddleware)
-	e.POST("/admin/ctf-config", s.ctfConfigHandler(), s.adminMiddleware)
+	e.GET("/admin/get-config", s.getConfigHandler(), s.adminMiddleware)
+	e.POST("/admin/set-config", s.ctfConfigHandler(), s.adminMiddleware)
 	e.POST("/admin/open-challenge", s.openChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/close-challenge", s.closeChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/update-challenge", s.updateChallengeHandler(), s.adminMiddleware)

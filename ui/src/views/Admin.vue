@@ -12,6 +12,20 @@
 
 <script>
 import Vue from "vue";
+import API from "@/api";
+import { errorHandle } from "@/message";
 
-export default Vue.extend({});
+export default Vue.extend({
+  mounted() {
+    this.getConfig();
+  },
+  methods: {
+    getConfig() {
+      API.get("admin/get-config").catch(() => {
+        errorHandle(this, "forbidden");
+        this.$router.push("/");
+      });
+    }
+  }
+});
 </script>

@@ -332,19 +332,45 @@ func (s *server) scoreEmulateHandler() echo.HandlerFunc {
 			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage("maxCount should be larger than 0")))
 		}
 
+		expr := c.QueryParam("expr")
+		if expr == "" {
+			conf, err := s.app.GetCTFConfig()
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+			expr = conf.ScoreExpr
+		}
+
+		scores := make([]int, maxCount+1)
+		for i := 0; i <= maxCount; i++ {
+			scores[i], err = service.CalcChallengeScore(i, expr)
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage(err.Error())))
+			}
+		}
+		return c.JSON(http.StatusOK, scores)
+	}
+}
+
+func (s *server) getConfigHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
 		conf, err := s.app.GetCTFConfig()
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 
-		scores := make([]int, maxCount+1)
-		for i := 0; i <= maxCount; i++ {
-			scores[i], err = service.CalcChallengeScore(i, conf.ScoreExpr)
-			if err != nil {
-				return errorHandle(c, xerrors.Errorf(": %w", err))
-			}
-		}
-		return c.JSON(http.StatusOK, scores)
+		ret := make(map[string]interface{})
+		ret["ctf_name"] = conf.CTFName
+		ret["start_at"] = conf.StartAt.Unix()
+		ret["end_at"] = conf.EndAt.Unix()
+		ret["score_expr"] = conf.ScoreExpr
+		ret["register_open"] = conf.RegisterOpen
+		ret["ctf_open"] = conf.CTFOpen
+		ret["lock_second"] = conf.LockSecond
+		ret["lock_duration"] = conf.LockDuration
+		ret["lock_count"] = conf.LockCount
+
+		return c.JSON(http.StatusOK, ret)
 	}
 }
 
@@ -387,7 +413,7 @@ func (s *server) ctfConfigHandler() echo.HandlerFunc {
 		if err := s.app.SetCTFConfig(conf); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		return c.NoContent(http.StatusOK)
+		return c.JSON(http.StatusOK, ConfigUpdateMessage)
 	}
 }
 

@@ -183,9 +183,12 @@ input[type="submit"] {
   background-color: transparent;
   border: 1px solid $accent-color;
   border-radius: 0.25rem;
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: $accent-color;
     cursor: pointer;
+  }
+  &[disabled] {
+    filter: grayscale(50%);
   }
 }
 textarea {

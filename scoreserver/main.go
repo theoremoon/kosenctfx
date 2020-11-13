@@ -10,6 +10,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"golang.org/x/xerrors"
 
+	"github.com/theoremoon/kosenctfx/scoreserver/bucket"
 	"github.com/theoremoon/kosenctfx/scoreserver/config"
 	"github.com/theoremoon/kosenctfx/scoreserver/mailer"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
@@ -93,6 +94,20 @@ func run() error {
 	}
 	if conf.SolveCheckWebhookURL != "" {
 		srv.SolveWebhook = webhook.NewDiscord(conf.SolveCheckWebhookURL)
+	}
+	if conf.BucketName != "" {
+		b := bucket.NewS3Bucket(
+			conf.BucketName,
+			conf.BucketEndpoint,
+			conf.BucketRegion,
+			conf.BucketAccessKey,
+			conf.BucketSecretKey,
+			conf.InsecureBucket,
+		)
+		if err := b.CreateBucket(); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		srv.Bucket = b
 	}
 
 	return srv.Start(conf.Addr)

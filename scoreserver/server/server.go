@@ -8,6 +8,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/theoremoon/kosenctfx/scoreserver/bucket"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"github.com/theoremoon/kosenctfx/scoreserver/webhook"
@@ -55,6 +56,7 @@ type server struct {
 	AdminWebhook  webhook.Webhook
 	SolveWebhook  webhook.Webhook
 	SystemWebhook webhook.Webhook
+	Bucket        bucket.Bucket
 }
 
 func New(app service.App, redis *redis.Client, frontendURL, token string) *server {
@@ -103,6 +105,7 @@ func (s *server) Start(addr string) error {
 	// e.POST("/admin/new-notification", s.newNotificationHandler(), s.adminMiddleware)
 	e.GET("/admin/list-challenges", s.listChallengesHandler(), s.adminMiddleware)
 	e.POST("/admin/set-challenge-status", s.setChallengeStatusHandler(), s.adminMiddleware)
+	e.POST("/admin/get-presigned-url", s.getPresignedURLHandler(), s.adminMiddleware)
 
 	return e.Start(addr)
 }

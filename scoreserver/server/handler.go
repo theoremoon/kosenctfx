@@ -11,6 +11,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/go-redis/redis"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 )
@@ -587,6 +588,35 @@ func (s *server) setChallengeStatusHandler() echo.HandlerFunc {
 			s.SystemWebhook.Post(fmt.Sprintf(":warning: failed to solve: `%s`", chal.Name))
 		}
 		return c.NoContent(http.StatusOK)
+	}
+}
+
+func (s *server) getPresignedURLHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		req := new(struct {
+			Key string `json:"key"`
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		if req.Key == "" {
+			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage("Key is required")))
+		}
+
+		if s.Bucket == nil {
+			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage("Bucket information is not registered to the server")))
+		}
+
+		key := uuid.New().String() + "/" + req.Key
+		presignedURL, downloadURL, err := s.Bucket.GeneratePresignedURL(key)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"presignedURL": presignedURL,
+			"downloadURL":  downloadURL,
+		})
 	}
 }
 

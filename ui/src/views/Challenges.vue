@@ -20,66 +20,8 @@
     </div>
 
     <div v-if="focus">
-      <div class="focus-background" @click="focus = ''"></div>
-      <div class="focus-challenge">
-        <p class="challenge-name">{{ focusedchallenge.name }}</p>
-        <div class="flex justify-between">
-          <div class="w-3/4 break-words">
-            <p>
-              <span
-                v-for="tag in focusedchallenge.tags"
-                class="challenge-tag"
-                :key="tag"
-                >{{ tag }}</span
-              >
-            </p>
-            <div class="flex">
-              <p class="mr-4">
-                <span class="challenge-value">{{ focusedchallenge.score }}</span
-                >pts
-              </p>
-              <p>
-                <span class="challenge-value">{{
-                  focusedchallenge.solved_by.length
-                }}</span
-                >solves
-              </p>
-            </div>
-
-            <div class="p-4">
-              <div v-html="focusedchallenge.description"></div>
-              <div class="text-right">author:{{ focusedchallenge.author }}</div>
-
-              <div v-if="focusedchallenge.attachments">
-                <a
-                  v-for="a in focusedchallenge.attachments"
-                  :key="a.name"
-                  :href="a.url"
-                  download
-                  class="attachment"
-                  @click.stop
-                >
-                  {{ a.name }}
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div class="w-1/4">
-            <h2 class="text-xl">
-              solved by ({{ focusedchallenge.solved_by.length }})
-            </h2>
-            <div
-              v-for="t in topteams(focusedchallenge.solved_by)"
-              :key="t.team_id"
-            >
-              <router-link :to="'/team/' + t.team_id">{{
-                t.team_name
-              }}</router-link>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div class="focus-background" @click="focus = null"></div>
+      <challenge-dialog :c="focus" />
     </div>
 
     <div
@@ -98,7 +40,7 @@
             c.solved_by.map(e => e.team_name).includes($store.teamname)
         }"
         :key="c.name"
-        @click="focus = c.name"
+        @click="focus = c"
       >
         <p class="challenge-name">{{ c.name }}</p>
         <div class="flex justify-around">
@@ -125,8 +67,11 @@
 import Vue from "vue";
 import API from "@/api";
 import { message, errorHandle } from "@/message";
-
+import ChallengeDialog from "../components/ChallengeDialog";
 export default Vue.extend({
+  components: {
+    ChallengeDialog
+  },
   data() {
     return {
       flag: "",

@@ -3,8 +3,12 @@
     <h1 class="text-2xl">Administration</h1>
 
     <div>
-      <router-link to="/admin/config">Config</router-link>
-      <router-link to="/admin/challenges">Challenges</router-link>
+      <router-link to="/admin/config" class="inline-block mr-2"
+        >Config</router-link
+      >
+      <router-link to="/admin/challenges" class="inline-block mr-2"
+        >Challenges</router-link
+      >
     </div>
     <router-view></router-view>
   </div>

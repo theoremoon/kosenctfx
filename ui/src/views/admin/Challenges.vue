@@ -54,7 +54,7 @@
 import Vue from "vue";
 
 import API from "@/api";
-import { errorHandle } from "../../message";
+import { errorHandle, message } from "../../message";
 
 import ChallengeRaw from "./components/ChallengeRaw.vue";
 import ChallengeDialog from "../../components/ChallengeDialog";
@@ -109,6 +109,10 @@ export default Vue.extend({
         promises.push(
           API.post(endpoint, {
             name: c.name
+          }).then(r => {
+            if (!r.data.includes("already")) {
+              message(this, r.data);
+            }
           })
         );
       });

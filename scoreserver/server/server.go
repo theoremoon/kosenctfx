@@ -34,12 +34,12 @@ var (
 	CTFClosedMessage          = "Competition is closed now"
 	RegistrationClosedMessage = "Registraction is closed now"
 
-	ChallengeOpenMessage          = "Open the challenge"
-	ChallengeAlreadyOpenedMessage = "Challenge is already opened"
-	ChallengeCloseMessage         = "Close the challenge"
-	ChallengeAlreadyClosedMessage = "Challenge is already closed"
-	ChallengeAddMessage           = "Added the challenge"
-	ChallengeUpdateMessage        = "Updated the challenge"
+	ChallengeOpenTemplate          = "`%s` is opened"
+	ChallengeAlreadyOpenedTemplate = "`%s` is already opened"
+	ChallengeCloseTemplate         = "`%s` is closed"
+	ChallengeAlreadyClosedTemplate = "`%s` is already closed"
+	ChallengeAddTemplate           = "Add challenge: `%s`"
+	ChallengeUpdateTemplate        = "Updated the challenge: `%s`"
 
 	ConfigUpdateMessage = "Config is Updated"
 

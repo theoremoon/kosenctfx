@@ -446,7 +446,7 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 		}
 
 		if chal.IsOpen {
-			return c.JSON(http.StatusOK, ChallengeAlreadyOpenedMessage)
+			return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeAlreadyOpenedTemplate, chal.Name))
 		}
 
 		if err := s.app.OpenChallenge(chal.ID); err != nil {
@@ -464,7 +464,7 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 		} else {
 			s.AdminWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
 		}
-		return c.JSON(http.StatusOK, ChallengeOpenMessage)
+		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeOpenTemplate, chal.Name))
 	}
 }
 
@@ -481,14 +481,14 @@ func (s *server) closeChallengeHandler() echo.HandlerFunc {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		if !chal.IsOpen {
-			return c.JSON(http.StatusOK, ChallengeAlreadyClosedMessage)
+			return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeAlreadyClosedTemplate, chal.Name))
 		}
 
 		if err := s.app.CloseChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		s.SystemWebhook.Post(fmt.Sprintf("Challenge `%s` closed!", chal.Name))
-		return c.JSON(http.StatusOK, ChallengeCloseMessage)
+		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeCloseTemplate, chal.Name))
 	}
 }
 
@@ -521,7 +521,7 @@ func (s *server) updateChallengeHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, err)
 		}
-		return c.JSON(http.StatusOK, ChallengeUpdateMessage)
+		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeUpdateTemplate, req.Name))
 	}
 }
 
@@ -554,6 +554,7 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 			}); err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
+			return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeUpdateTemplate, req.Name))
 		} else {
 			// ADD
 			if err := s.app.AddChallenge(&service.Challenge{
@@ -567,13 +568,8 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 			}); err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
+			return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeAddTemplate, req.Name))
 		}
-
-		chal, err := s.app.GetRawChallengeByName(req.Name)
-		if err != nil {
-			return errorHandle(c, xerrors.Errorf(": %w", err))
-		}
-		return c.JSON(http.StatusOK, chal)
 	}
 }
 

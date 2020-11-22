@@ -72,7 +72,7 @@
 <script>
 import Vue from "vue";
 import API from "@/api";
-import { errorHandle } from "../../message";
+import { message, errorHandle } from "../../message";
 import { dateFormat, parseDateString } from "@/dateformat";
 import Chart from "chart.js/dist/Chart";
 
@@ -125,7 +125,8 @@ export default Vue.extend({
         ctf_open: this.ctf_open,
         register_open: this.register_open
       })
-        .then(() => {
+        .then(r => {
+          message(this, r.data);
           this.getConfig();
           this.$eventHub.$emit("login-check");
         })
@@ -169,3 +170,10 @@ export default Vue.extend({
   computed: {}
 });
 </script>
+
+<style lang="scss" scoped>
+textarea {
+  width: 100%;
+  height: 5rem;
+}
+</style>

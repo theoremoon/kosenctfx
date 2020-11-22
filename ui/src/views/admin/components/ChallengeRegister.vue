@@ -18,7 +18,7 @@
     </ul>
 
     <h3 class="text-xl">Message Log</h3>
-    <div class="ml-4">
+    <div class="ml-4 message-list">
       <p v-for="(m, i) in message_log" :key="i">{{ m }}</p>
     </div>
   </div>
@@ -36,6 +36,7 @@ import { Zlib } from "zlibjs/bin/gzip.min";
 import API from "@/api";
 import { errorHandle } from "@/message";
 import md5 from "blueimp-md5";
+import { message } from "../../../message";
 
 export default Vue.extend({
   data() {
@@ -223,10 +224,8 @@ export default Vue.extend({
 
         add_promises.push(
           API.post("admin/new-challenge", taskInfo)
-            .then(() => {
-              this.message_log.push(
-                "Added/Updated Challenge: " + taskInfo["name"]
-              );
+            .then(r => {
+              message(this, r.data);
             })
             .catch(e => errorHandle(this, e))
         );
@@ -236,3 +235,10 @@ export default Vue.extend({
   }
 });
 </script>
+
+<style lang="scss" scoped>
+.message-list {
+  height: 10rem;
+  overflow-y: scroll;
+}
+</style>

@@ -1,179 +1,143 @@
 <template>
   <div class="my-4 mx-8">
-    <h2 class="text-2xl">Challenges</h2>
-    <div>
-      Load Challenge Directory
-      <input type="file" @change="loadChallengeFiles" webkitdirectory />
-    </div>
+    <h2 class="text-2xl">Current Challenges</h2>
     <div>
       <input
-        type="submit"
-        value="Add Challenges"
-        v-bind:disabled="challengeFiles.length == 0"
-        @click="addChallenges"
+        type="button"
+        value="Open / Close Challenges"
+        @click="openCloseChallenges"
       />
     </div>
-    <div>
-      Loaded Challenges
-      <ul>
-        <li v-for="n in challengeFiles" :key="n">{{ n }}</li>
-      </ul>
+    <div class="mx-4">
+      <table class="w-full">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Score</th>
+            <th>#Solve</th>
+            <th>Tags</th>
+            <th>Flag</th>
+            <th>Author</th>
+            <th>Is Open?</th>
+            <th>Is Survey?</th>
+            <th>Preview</th>
+          </tr>
+        </thead>
+        <tbody>
+          <challenge-raw
+            v-for="c in challenges"
+            :c="c"
+            @focus="focusToChallenge(c)"
+            :key="c.id"
+          ></challenge-raw>
+        </tbody>
+      </table>
     </div>
+
+    <template v-if="focus">
+      <h2 class="text-2xl mt-4">Challenge Preview</h2>
+      <div class="flex">
+        <div class="mx-8 py-4 flex dialog-background" @click="focus = null">
+          <div class="w-3/4 mx-auto">
+            <challenge-dialog :c="focus"></challenge-dialog>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <h2 class="text-2xl mt-4">Add New Challenge</h2>
+    <challenge-register @update="loadChallenges()" />
   </div>
 </template>
 
 <script>
 import Vue from "vue";
-import yaml from "js-yaml";
-import format from "string-template";
-import tar from "tar-stream";
-import { readAsText } from "promise-file-reader";
-import streamToBlob from "stream-to-blob";
-import { Zlib } from "zlibjs/bin/gzip.min";
+
 import API from "@/api";
 import { errorHandle } from "../../message";
-import md5 from "blueimp-md5";
+
+import ChallengeRaw from "./components/ChallengeRaw.vue";
+import ChallengeDialog from "../../components/ChallengeDialog";
+import ChallengeRegister from "./components/ChallengeRegister";
 
 export default Vue.extend({
+  components: {
+    ChallengeRaw,
+    ChallengeDialog,
+    ChallengeRegister
+  },
   data() {
     return {
-      tree: null,
-      challengeFiles: []
+      challenges: [],
+      checks: {},
+      focus: null
     };
   },
+  mounted() {
+    this.loadChallenges();
+  },
   methods: {
-    makeFileTree(files) {
-      let tree = {
-        type: "directory",
-        children: {}
-      };
-      files.forEach(f => {
-        const parts = f.webkitRelativePath.split("/");
-        let top = tree;
-        parts.forEach((p, i) => {
-          if (!Object.prototype.hasOwnProperty.call(top.children, p)) {
-            if (i == parts.length - 1) {
-              top.children[p] = {
-                type: "file",
-                file: f
-              };
-            } else {
-              top.children[p] = {
-                type: "directory",
-                children: {}
-              };
-            }
-          }
-          top = top.children[p];
+    loadChallenges() {
+      Vue.set(this, "challenges", []);
+      Vue.set(this, "checks", {});
+
+      API.get("admin/list-challenges")
+        .then(r => {
+          Vue.set(this, "challenges", r.data.challenges);
+        })
+        .catch(e => {
+          errorHandle(this, e);
+          this.$router.push("/");
         });
-      });
-      return tree;
-    },
-    travarseFileTree(tree, callback) {
-      if (tree.type === "file") {
-        if (!callback(tree.file)) {
-          return false;
-        }
-        return true;
-      }
-
-      for (const [, value] of Object.entries(tree.children)) {
-        if (!this.travarseFileTree(value, callback)) {
-          return false;
-        }
-      }
-      return true;
-    },
-    loadChallengeFiles(ev) {
-      this.tree = this.makeFileTree(ev.target.files);
-      this.challengeFiles = [];
-      this.travarseFileTree(this.tree, f => {
-        if (f.name === "task.yml") {
-          this.challengeFiles.push(f.webkitRelativePath);
-        }
-        return true;
-      });
-    },
-    getFile(tree, path) {
-      const dirs = path.split("/");
-      let top = tree;
-      try {
-        dirs.forEach(p => {
-          top = top.children[p];
-        });
-        return top;
-      } catch (e) {
-        return null;
-      }
     },
 
-    async addChallenges() {
-      for (let path of this.challengeFiles) {
-        const taskFile = this.getFile(this.tree, path);
-        const taskText = await readAsText(taskFile.file);
-        const taskInfo = yaml.safeLoad(taskText);
-        taskInfo["description"] = format(taskInfo["description"], taskInfo);
+    focusToChallenge(c) {
+      this.focus = Vue.util.extend({}, c);
+    },
 
-        const dirPath = path
-          .split("/")
-          .slice(0, -1)
-          .join("/");
-        const distfilesPath = dirPath + "/distfiles";
-        const distfiles = this.getFile(this.tree, distfilesPath);
-        taskInfo["attachments"] = [];
-        if (distfiles) {
-          const pack = tar.pack();
+    async openCloseChallenges() {
+      await this.openCloseChallenges_impl();
+      this.loadChallenges();
+    },
 
-          const promises = [];
-          this.travarseFileTree(distfiles, f => {
-            promises.push(
-              readAsText(f).then(fileData => {
-                pack.entry(
-                  {
-                    name: f.webkitRelativePath.slice(distfilesPath.length + 1)
-                  },
-                  fileData
-                );
-              })
-            );
-          });
-
-          await Promise.all(promises);
-          pack.finalize();
-
-          const tarBlob = await streamToBlob(pack);
-          const tarData = await tarBlob.arrayBuffer();
-          const tarGZData = new Zlib.Gzip(new Uint8Array(tarData)).compress();
-          const dataDigest = md5(tarGZData);
-          const filename = format(
-            "{0}_{1}.tar.gz",
-            dirPath.split("/").slice("-1")[0],
-            dataDigest
-          );
-
-          const url = await API.post("admin/get-presigned-url", {
-            key: filename
+    async openCloseChallenges_impl() {
+      const promises = [];
+      this.challenges.forEach(c => {
+        const endpoint = c.is_open
+          ? "admin/open-challenge"
+          : "admin/close-challenge";
+        promises.push(
+          API.post(endpoint, {
+            name: c.name
           })
-            .then(r => {
-              const formData = new FormData();
-              formData.append("file", new Blob([tarGZData]));
-              return fetch(r.data.presignedURL, {
-                method: "PUT",
-                headers: {
-                  accept: "multipart/form-data"
-                },
-                body: formData
-              }).then(() => {
-                return r.data.downloadURL;
-              });
-            })
-            .catch(e => {
-              errorHandle(this, e);
-            });
-          console.log(url);
-        }
-      }
+        );
+      });
+      return Promise.all(promises);
     }
   }
 });
 </script>
+
+<style lang="scss">
+@import "../../assets/vars.scss";
+@import "../../assets/tailwind.css";
+td,
+th {
+  border: solid 1px $fg-color;
+}
+
+.dialog-background {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1;
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+#description {
+  width: 100%;
+  height: 5rem;
+}
+</style>

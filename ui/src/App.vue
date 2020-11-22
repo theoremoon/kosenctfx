@@ -177,7 +177,8 @@ input[type="password"] {
   margin: 0.25rem;
   padding: 0.25rem 0;
 }
-input[type="submit"] {
+input[type="submit"],
+input[type="button"] {
   margin: 0.25rem 0;
   padding: 0.25rem 0.5rem;
   background-color: transparent;
@@ -214,6 +215,14 @@ textarea {
     padding: 0.25rem 0;
     margin: 0.25rem 0;
   }
+}
+
+pre {
+  display: inline-block;
+  padding: 0 0.5rem;
+  border: 1px solid $accent-color;
+  border-radius: 0.25rem;
+  background-color: rgba($accent-color, 0.2);
 }
 </style>
 

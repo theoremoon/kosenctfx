@@ -11,6 +11,7 @@ type ChallengeRepository interface {
 	UpdateChallenge(c *model.Challenge) error
 
 	ListAllChallenges() ([]*model.Challenge, error)
+	ListOpenedChallenges() ([]*model.Challenge, error)
 	ListAllTags() ([]*model.Tag, error)
 	ListAllAttachments() ([]*model.Attachment, error)
 	FindTagsByChallengeID(id uint) ([]*model.Tag, error)
@@ -48,6 +49,14 @@ func (r *repository) UpdateChallenge(c *model.Challenge) error {
 func (r *repository) ListAllChallenges() ([]*model.Challenge, error) {
 	var challenges []*model.Challenge
 	if err := r.db.Find(&challenges).Error; err != nil {
+		return nil, err
+	}
+	return challenges, nil
+}
+
+func (r *repository) ListOpenedChallenges() ([]*model.Challenge, error) {
+	var challenges []*model.Challenge
+	if err := r.db.Where("is_open = ?", true).Find(&challenges).Error; err != nil {
 		return nil, err
 	}
 	return challenges, nil

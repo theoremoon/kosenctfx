@@ -13,6 +13,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 )
 
@@ -133,7 +134,20 @@ func (s *server) infoUpdateHandler() echo.HandlerFunc {
 		_, exist1 := ret["challenges"]
 		_, exist2 := ret["ranking"]
 		if !exist1 || !exist2 {
-			challenges, ranking, err := s.app.ScoreFeed()
+			// CTF開催中またはCTF終了後なら、公開されている問題を読み込むが、そうでない（invalid or 開催前）なら読み込まない
+			chals := make([]*model.Challenge, 0)
+			if status == service.CTFRunning || status == service.CTFEnded {
+				chals, err = s.app.ListOpenedRawChallenges()
+				if err != nil {
+					return errorHandle(c, xerrors.Errorf(": %w", err))
+				}
+			}
+			teams, err := s.app.ListTeams()
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+
+			challenges, ranking, err := s.app.ScoreFeed(chals, teams)
 			if err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
@@ -430,6 +444,11 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+
+		if chal.IsOpen {
+			return c.JSON(http.StatusOK, ChallengeAlreadyOpenedMessage)
+		}
+
 		if err := s.app.OpenChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
@@ -461,6 +480,10 @@ func (s *server) closeChallengeHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+		if !chal.IsOpen {
+			return c.JSON(http.StatusOK, ChallengeAlreadyClosedMessage)
+		}
+
 		if err := s.app.CloseChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
@@ -556,11 +579,19 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 
 func (s *server) listChallengesHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		challenges, err := s.app.ListAllRawChallenges()
+		chals, err := s.app.ListAllRawChallenges()
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		return c.JSON(http.StatusOK, challenges)
+		teams, err := s.app.ListTeams()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		challenges, ranking, err := s.app.ScoreFeed(chals, teams)
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"challenges": challenges,
+			"ranking":    ranking,
+		})
 	}
 }
 

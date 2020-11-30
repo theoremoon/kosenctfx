@@ -31,3 +31,23 @@ services:
       MINIO_SECRET_KEY: minio123
     command: ["server", "/data"]
 
+  scoreserver:
+    build:
+      context: scoreserver
+    ports:
+      - "5000:5000"
+    environment:
+      DBDSN: 'kosenctfxuser:kosenctfxpassword@tcp(db:3306)/kosenctfx'
+      REDIS: 'rediss://redis:6379'
+      FRONT: 'http://ui:8080'
+      MAIL: 'kosenctf@example.com'
+      MAIL_SERVER: 'smtp.gmail.com:587'
+      MAIL_PASSWORD: 'XXXXXXXXXXXXXXXXXX'
+      ADMIN_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
+      SYSTEM_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
+
+  ui:
+    build:
+      context: ui
+    ports:
+      - "5001:80"

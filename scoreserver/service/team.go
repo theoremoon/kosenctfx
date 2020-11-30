@@ -17,6 +17,7 @@ import (
 type TeamApp interface {
 	Login(teamname, password, ipaddress string) (*model.LoginToken, error)
 	RegisterTeam(teamname, password, email, countryCode string) (*model.Team, error)
+	ListTeams() ([]*model.Team, error)
 	GetAdminTeam() (*model.Team, error)
 	MakeTeamAdmin(t *model.Team) error
 	GetTeamByID(teamID uint) (*model.Team, error)
@@ -54,6 +55,14 @@ func (app *app) RegisterTeam(teamname, password, email, countryCode string) (*mo
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	return &t, nil
+}
+
+func (app *app) ListTeams() ([]*model.Team, error) {
+	teams, err := app.repo.ListAllTeams()
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return teams, nil
 }
 
 func (app *app) GetAdminTeam() (*model.Team, error) {

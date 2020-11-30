@@ -17,7 +17,7 @@ type App interface {
 	ChallengeApp
 	CTFApp
 	NotificationApp
-	ScoreFeed() ([]*Challenge, *Scoreboard, error)
+	ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Challenge, *Scoreboard, error)
 }
 
 type app struct {
@@ -74,28 +74,13 @@ type Scoreboard struct {
 	Standings []*ScoreFeedEntry `json:"standings"`
 }
 
-/// 問題一覧、とチームのランキングを同時に計算する
-func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, error) {
+func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Challenge, *Scoreboard, error) {
 	conf, err := app.repo.GetConfig()
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}
-	status := CalcCTFStatus(conf)
 
-	// list all challenges, tags, and attachments
-	allchals, err := app.repo.ListAllChallenges()
-	if err != nil {
-		return nil, nil, xerrors.Errorf(": %w", err)
-	}
-	chals := make([]*model.Challenge, 0, len(allchals))
-	if status == CTFRunning || status == CTFEnded {
-		for _, c := range allchals {
-			if c.IsOpen {
-				chals = append(chals, c)
-			}
-		}
-	}
-
+	// List Tags and Attachments
 	tags, err := app.repo.ListAllTags()
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
@@ -105,12 +90,8 @@ func (app *app) ScoreFeed() ([]*Challenge, *Scoreboard, error) {
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}
 
-	// list valid submissions and its author team to calculate score
+	// list valid submissions
 	submissions, err := app.repo.ListValidSubmissions()
-	if err != nil {
-		return nil, nil, xerrors.Errorf(": %w", err)
-	}
-	teams, err := app.repo.ListAllTeams()
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}

@@ -1,6 +1,6 @@
 <template>
   <div class="my-4 mx-8">
-    <h1 class="text-4xl">InterKosenCTF 2020</h1>
+    <h1 class="text-4xl">{{ $store.ctfName }}</h1>
     <div class="ml-4">
       <p>{{ startTime }} 〜 {{ endTime }}</p>
       <p v-if="willHold">CTF will start in {{ countDown }}</p>

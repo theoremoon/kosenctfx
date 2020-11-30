@@ -8,6 +8,9 @@ import ResetRequest from "../views/ResetRequest.vue";
 import Reset from "../views/Reset.vue";
 import Challenges from "../views/Challenges.vue";
 import Ranking from "../views/Ranking.vue";
+import Admin from "../views/Admin.vue";
+import AdminConfig from "../views/admin/Config.vue";
+import AdminChallenges from "../views/admin/Challenges.vue";
 
 Vue.use(VueRouter);
 
@@ -52,6 +55,26 @@ const routes = [
     path: "/ranking",
     name: "Ranking",
     component: Ranking
+  },
+
+  {
+    path: "/admin",
+    name: "Admin",
+    component: Admin
+  },
+  {
+    path: "/admin/",
+    component: Admin,
+    children: [
+      {
+        path: "config",
+        component: AdminConfig
+      },
+      {
+        path: "challenges",
+        component: AdminChallenges
+      }
+    ]
   }
 ];
 

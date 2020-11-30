@@ -5,7 +5,7 @@
         <div class="flex text-lg mr-6">
           <img src="./assets/neko.png" class="brand" />
           <router-link to="/">
-            InterKosenCTF2020
+            {{ $store.ctfName }}
           </router-link>
         </div>
 
@@ -177,16 +177,28 @@ input[type="password"] {
   margin: 0.25rem;
   padding: 0.25rem 0;
 }
-input[type="submit"] {
+input[type="submit"],
+input[type="button"] {
   margin: 0.25rem 0;
   padding: 0.25rem 0.5rem;
   background-color: transparent;
   border: 1px solid $accent-color;
   border-radius: 0.25rem;
+  &:hover:not(:disabled) {
+    background-color: $accent-color;
+    cursor: pointer;
+  }
+  &[disabled] {
+    filter: grayscale(50%);
+  }
 }
-input[type="submit"]:hover {
-  background-color: $accent-color;
-  cursor: pointer;
+textarea {
+  background-color: transparent;
+  border-bottom: 1px solid $accent-color;
+  display: inline-block;
+  width: 100%;
+  margin: 0.25rem;
+  padding: 0.25rem;
 }
 
 .inline-form {
@@ -203,6 +215,14 @@ input[type="submit"]:hover {
     padding: 0.25rem 0;
     margin: 0.25rem 0;
   }
+}
+
+pre {
+  display: inline-block;
+  padding: 0 0.5rem;
+  border: 1px solid $accent-color;
+  border-radius: 0.25rem;
+  background-color: rgba($accent-color, 0.2);
 }
 </style>
 

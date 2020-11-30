@@ -8,6 +8,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/theoremoon/kosenctfx/scoreserver/bucket"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"github.com/theoremoon/kosenctfx/scoreserver/webhook"
@@ -33,12 +34,14 @@ var (
 	CTFClosedMessage          = "Competition is closed now"
 	RegistrationClosedMessage = "Registraction is closed now"
 
-	ChallengeOpenMessage   = "Open the challenge"
-	ChallengeCloseMessage  = "Close the challenge"
-	ChallengeAddMessage    = "Added the challenge"
-	ChallengeUpdateMessage = "Updated the challenge"
+	ChallengeOpenTemplate          = "`%s` is opened"
+	ChallengeAlreadyOpenedTemplate = "`%s` is already opened"
+	ChallengeCloseTemplate         = "`%s` is closed"
+	ChallengeAlreadyClosedTemplate = "`%s` is already closed"
+	ChallengeAddTemplate           = "Add challenge: `%s`"
+	ChallengeUpdateTemplate        = "Updated the challenge: `%s`"
 
-	AddNotificationMessage = "Add New Notification"
+	ConfigUpdateMessage = "Config is Updated"
 
 	NotImplementedMessage = "Not Implemented"
 )
@@ -55,6 +58,7 @@ type server struct {
 	AdminWebhook  webhook.Webhook
 	SolveWebhook  webhook.Webhook
 	SystemWebhook webhook.Webhook
+	Bucket        bucket.Bucket
 }
 
 func New(app service.App, redis *redis.Client, frontendURL, token string) *server {
@@ -94,7 +98,8 @@ func (s *server) Start(addr string) error {
 	e.POST("/submit", s.submitHandler(), s.loginMiddleware, s.ctfStartedMiddleware, s.ctfPlayableMiddleware)
 
 	e.GET("/admin/score-emulate", s.scoreEmulateHandler(), s.adminMiddleware)
-	e.POST("/admin/ctf-config", s.ctfConfigHandler(), s.adminMiddleware)
+	e.GET("/admin/get-config", s.getConfigHandler(), s.adminMiddleware)
+	e.POST("/admin/set-config", s.ctfConfigHandler(), s.adminMiddleware)
 	e.POST("/admin/open-challenge", s.openChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/close-challenge", s.closeChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/update-challenge", s.updateChallengeHandler(), s.adminMiddleware)
@@ -102,6 +107,7 @@ func (s *server) Start(addr string) error {
 	// e.POST("/admin/new-notification", s.newNotificationHandler(), s.adminMiddleware)
 	e.GET("/admin/list-challenges", s.listChallengesHandler(), s.adminMiddleware)
 	e.POST("/admin/set-challenge-status", s.setChallengeStatusHandler(), s.adminMiddleware)
+	e.POST("/admin/get-presigned-url", s.getPresignedURLHandler(), s.adminMiddleware)
 
 	return e.Start(addr)
 }

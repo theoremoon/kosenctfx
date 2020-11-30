@@ -45,6 +45,7 @@ type ChallengeApp interface {
 	GetChallengeByName(name string) (*Challenge, error)
 	GetRawChallengeByID(challengeID uint) (*model.Challenge, error)
 	GetRawChallengeByName(name string) (*model.Challenge, error)
+	ListOpenedRawChallenges() ([]*model.Challenge, error)
 	ListAllRawChallenges() ([]*model.Challenge, error)
 
 	AddChallenge(c *Challenge) error
@@ -128,6 +129,14 @@ func (app *app) GetRawChallengeByName(name string) (*model.Challenge, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	return chal, nil
+}
+
+func (app *app) ListOpenedRawChallenges() ([]*model.Challenge, error) {
+	chals, err := app.repo.ListOpenedChallenges()
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return chals, nil
 }
 
 func (app *app) ListAllRawChallenges() ([]*model.Challenge, error) {

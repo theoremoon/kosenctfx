@@ -11,7 +11,9 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/go-redis/redis"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 )
 
@@ -132,7 +134,20 @@ func (s *server) infoUpdateHandler() echo.HandlerFunc {
 		_, exist1 := ret["challenges"]
 		_, exist2 := ret["ranking"]
 		if !exist1 || !exist2 {
-			challenges, ranking, err := s.app.ScoreFeed()
+			// CTF開催中またはCTF終了後なら、公開されている問題を読み込むが、そうでない（invalid or 開催前）なら読み込まない
+			chals := make([]*model.Challenge, 0)
+			if status == service.CTFRunning || status == service.CTFEnded {
+				chals, err = s.app.ListOpenedRawChallenges()
+				if err != nil {
+					return errorHandle(c, xerrors.Errorf(": %w", err))
+				}
+			}
+			teams, err := s.app.ListTeams()
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+
+			challenges, ranking, err := s.app.ScoreFeed(chals, teams)
 			if err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
@@ -332,19 +347,45 @@ func (s *server) scoreEmulateHandler() echo.HandlerFunc {
 			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage("maxCount should be larger than 0")))
 		}
 
+		expr := c.QueryParam("expr")
+		if expr == "" {
+			conf, err := s.app.GetCTFConfig()
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+			expr = conf.ScoreExpr
+		}
+
+		scores := make([]int, maxCount+1)
+		for i := 0; i <= maxCount; i++ {
+			scores[i], err = service.CalcChallengeScore(i, expr)
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage(err.Error())))
+			}
+		}
+		return c.JSON(http.StatusOK, scores)
+	}
+}
+
+func (s *server) getConfigHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
 		conf, err := s.app.GetCTFConfig()
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 
-		scores := make([]int, maxCount+1)
-		for i := 0; i <= maxCount; i++ {
-			scores[i], err = service.CalcChallengeScore(i, conf.ScoreExpr)
-			if err != nil {
-				return errorHandle(c, xerrors.Errorf(": %w", err))
-			}
-		}
-		return c.JSON(http.StatusOK, scores)
+		ret := make(map[string]interface{})
+		ret["ctf_name"] = conf.CTFName
+		ret["start_at"] = conf.StartAt.Unix()
+		ret["end_at"] = conf.EndAt.Unix()
+		ret["score_expr"] = conf.ScoreExpr
+		ret["register_open"] = conf.RegisterOpen
+		ret["ctf_open"] = conf.CTFOpen
+		ret["lock_second"] = conf.LockSecond
+		ret["lock_duration"] = conf.LockDuration
+		ret["lock_count"] = conf.LockCount
+
+		return c.JSON(http.StatusOK, ret)
 	}
 }
 
@@ -387,7 +428,7 @@ func (s *server) ctfConfigHandler() echo.HandlerFunc {
 		if err := s.app.SetCTFConfig(conf); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		return c.NoContent(http.StatusOK)
+		return c.JSON(http.StatusOK, ConfigUpdateMessage)
 	}
 }
 
@@ -403,6 +444,11 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+
+		if chal.IsOpen {
+			return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeAlreadyOpenedTemplate, chal.Name))
+		}
+
 		if err := s.app.OpenChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
@@ -418,7 +464,7 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 		} else {
 			s.AdminWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
 		}
-		return c.JSON(http.StatusOK, ChallengeOpenMessage)
+		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeOpenTemplate, chal.Name))
 	}
 }
 
@@ -434,11 +480,15 @@ func (s *server) closeChallengeHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+		if !chal.IsOpen {
+			return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeAlreadyClosedTemplate, chal.Name))
+		}
+
 		if err := s.app.CloseChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		s.SystemWebhook.Post(fmt.Sprintf("Challenge `%s` closed!", chal.Name))
-		return c.JSON(http.StatusOK, ChallengeCloseMessage)
+		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeCloseTemplate, chal.Name))
 	}
 }
 
@@ -471,7 +521,7 @@ func (s *server) updateChallengeHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, err)
 		}
-		return c.JSON(http.StatusOK, ChallengeUpdateMessage)
+		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeUpdateTemplate, req.Name))
 	}
 }
 
@@ -504,6 +554,7 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 			}); err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
+			return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeUpdateTemplate, req.Name))
 		} else {
 			// ADD
 			if err := s.app.AddChallenge(&service.Challenge{
@@ -517,23 +568,26 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 			}); err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
+			return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeAddTemplate, req.Name))
 		}
-
-		chal, err := s.app.GetRawChallengeByName(req.Name)
-		if err != nil {
-			return errorHandle(c, xerrors.Errorf(": %w", err))
-		}
-		return c.JSON(http.StatusOK, chal)
 	}
 }
 
 func (s *server) listChallengesHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		challenges, err := s.app.ListAllRawChallenges()
+		chals, err := s.app.ListAllRawChallenges()
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		return c.JSON(http.StatusOK, challenges)
+		teams, err := s.app.ListTeams()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		challenges, ranking, err := s.app.ScoreFeed(chals, teams)
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"challenges": challenges,
+			"ranking":    ranking,
+		})
 	}
 }
 
@@ -561,6 +615,35 @@ func (s *server) setChallengeStatusHandler() echo.HandlerFunc {
 			s.SystemWebhook.Post(fmt.Sprintf(":warning: failed to solve: `%s`", chal.Name))
 		}
 		return c.NoContent(http.StatusOK)
+	}
+}
+
+func (s *server) getPresignedURLHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		req := new(struct {
+			Key string `json:"key"`
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		if req.Key == "" {
+			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage("Key is required")))
+		}
+
+		if s.Bucket == nil {
+			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage("Bucket information is not registered to the server")))
+		}
+
+		key := uuid.New().String() + "/" + req.Key
+		presignedURL, downloadURL, err := s.Bucket.GeneratePresignedURL(key)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"presignedURL": presignedURL,
+			"downloadURL":  downloadURL,
+		})
 	}
 }
 

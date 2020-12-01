@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
+    "watch": "vue-cli-service build --watch --no-clean",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
@@ -12,6 +13,7 @@
     "@fortawesome/free-solid-svg-icons": "^5.14.0",
     "@fortawesome/vue-fontawesome": "^0.1.10",
     "axios": "^0.19.2",
+    "base64-js": "^1.5.1",
     "blueimp-md5": "^2.18.0",
     "chart.js": "^2.9.3",
     "core-js": "^3.6.5",

@@ -13,11 +13,6 @@ services:
   redis:
     image: redis:5.0.7-alpine
 
-  adminer:
-    image: adminer
-    ports:
-      - "8080:8080"
-
   minio:
     image: minio/minio
     ports:
@@ -31,7 +26,6 @@ services:
   scoreserver:
     build:
       context: scoreserver
-      dockerfile: Dockerfile.dev
     environment:
       DBDSN: 'kosenctfxuser:kosenctfxpassword@tcp(db:3306)/kosenctfx'
       REDIS: 'redis://redis:6379'
@@ -39,8 +33,8 @@ services:
       MAIL: 'kosenctf@example.com'
       MAIL_SERVER: 'smtp.gmail.com:587'
       MAIL_PASSWORD: 'XXXXXXXXXXXXXXXXXX'
-      ADMIN_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
-      SYSTEM_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
+      ADMIN_WEBHOOK: ''
+      SYSTEM_WEBHOOK: ''
       BUCKET_ENDPOINT: "localhost:9000"
       BUCKET_REGION: "us-east-1"
       BUCKET_ACCESS_KEY: "minio"
@@ -50,17 +44,11 @@ services:
     depends_on:
       - minio
     network_mode: "service:minio"
-    command: >
-      reflex -r '\.go$$' -s -- sh -c '/wayt sql -dsn "$$DBDSN" && go run main.go'
-    volumes:
-      - ./scoreserver:/scoreserver
 
   ui:
     build:
       context: ui
-      dockerfile: Dockerfile.dev
     network_mode: "service:minio"
     depends_on:
       - minio
-    volumes:
-      - ./ui/dist:/usr/share/nginx/html:ro
+

@@ -2,7 +2,7 @@ help:
 	:
 
 up:
-	docker-compose up
+	parallel --lb sh -c ::: 'docker-compose up --build' 'cd ui; yarn watch'
 
 down:
 	docker-compose down
@@ -22,5 +22,7 @@ run: build
 	(source ./envfile; ./bin/scoreserver)
 
 sql:
-	(cd dev; docker-compose exec db mysql -u kosenctfxuser -pkosenctfxpassword kosenctfx)
+	docker-compose exec db mysql -u kosenctfxuser -pkosenctfxpassword kosenctfx
 
+pass:
+	echo 'select token from configs;' | docker-compose exec -T db mysql -u kosenctfxuser -pkosenctfxpassword kosenctfx

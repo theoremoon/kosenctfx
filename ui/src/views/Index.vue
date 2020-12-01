@@ -14,25 +14,11 @@
 
     <div class="mt-4">
       <h2 class="text-2xl">[ About ]</h2>
-      <p class="ml-4">
-        Welcome to InterKosenCTF 2020!<br />
-        InterKosenCTF2020 is a Jeopardy-style Capture The Flag competition
-        hosted by insecure(<a href="https://twitter.com/ptrYudai">ptr-yudai</a>,
-        <a href="https://twitter.com/theoremoon">theoldmoon0602</a>, and
-        <a href="https://twitter.com/y05h1k1ng">yoshiking</a>), a Japanese CTF
-        team. There will be challenges of mainly 4 categories (pwn, web, rev,
-        crypto) for begginer - midium level players. The flag format is
-        <code>KosenCTF{[\x21-\x7a]+}</code> unless otherwise specified.<br />
-      </p>
+      <p class="ml-4">TBD</p>
     </div>
     <div class="mt-4">
       <h2 class="text-2xl">[ Contact ]</h2>
-      <p class="ml-4">
-        Discord:
-        <a href="https://discord.gg/vs39DfA" target="_blank"
-          >https://discord.gg/vs39DfA</a
-        >
-      </p>
+      <p class="ml-4">TBD</p>
     </div>
     <div class="mt-4">
       <h2 class="text-2xl">[ Rules ]</h2>

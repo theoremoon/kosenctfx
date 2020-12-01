@@ -584,6 +584,9 @@ func (s *server) listChallengesHandler() echo.HandlerFunc {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		challenges, ranking, err := s.app.ScoreFeed(chals, teams)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"challenges": challenges,
 			"ranking":    ranking,

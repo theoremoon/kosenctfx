@@ -29,10 +29,7 @@ import Vue from "vue";
 
 import yaml from "js-yaml";
 import format from "string-template";
-import tar from "tar-stream";
-import { readAsText } from "promise-file-reader";
-import streamToBlob from "stream-to-blob";
-import { Zlib } from "zlibjs/bin/gzip.min";
+import { readAsText, readAsArrayBuffer } from "promise-file-reader";
 import API from "@/api";
 import { errorHandle } from "@/message";
 import md5 from "blueimp-md5";
@@ -108,6 +105,24 @@ export default Vue.extend({
         return null;
       }
     },
+    downloadFile(filename, data) {
+      const blob = new Blob([data], {
+        type: "application/octet-stream"
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.style = "display: none";
+      a.click();
+      setTimeout(() => {
+        console.log("CALLED");
+        a.remove();
+        return window.URL.revokeObjectURL(url);
+      }, 5000);
+      console.log("END");
+    },
     async uploadFile(filename, data) {
       return API.post("admin/get-presigned-url", {
         key: filename
@@ -142,13 +157,14 @@ export default Vue.extend({
           .split("/")
           .slice(0, -1)
           .join("/");
+        /*
         const distfilesPath = dirPath + "/distfiles";
         const distfiles = this.getFile(this.tree, distfilesPath);
         if (distfiles) {
           const file_promises = [];
           this.travarseFileTree(distfiles, f => {
             file_promises.push(
-              readAsText(f).then(fileData => ({
+              readAsArrayBuffer(f).then(fileData => ({
                 header: {
                   name: f.webkitRelativePath.slice(distfilesPath.length + 1),
                   mtime: new Date(0)
@@ -166,7 +182,7 @@ export default Vue.extend({
           const pack_promises = [];
           files.forEach(f => {
             this.message_log.push("Read file: " + f.header.name);
-            pack.entry(f.header, f.buffer);
+            pack.entry(f.header, Buffer.from(f.buffer));
           });
 
           await Promise.all(pack_promises);
@@ -190,12 +206,39 @@ export default Vue.extend({
             dirPath.split("/").slice("-1")[0],
             dataDigest
           );
+          this.downloadFile(filename, tarGZData);
+          console.log(dataDigest);
+
           const url = await this.uploadFile(filename, tarGZData);
           taskInfo["attachments"].push({
             name: filename,
             url: url
           });
           this.message_log.push("Uploaded attachment: " + filename);
+        }*/
+
+        const attachmentPromises = [];
+        const distTarsPath = dirPath + "/disttars";
+        const distTars = this.getFile(this.tree, distTarsPath);
+        if (distTars) {
+          const promises = [];
+          this.travarseFileTree(distTars, f => {
+            promises.push(
+              readAsArrayBuffer(f).then(fileData => {
+                const filename = f.webkitRelativePath.split("/").slice(-1)[0];
+                attachmentPromises.push(
+                  this.uploadFile(filename, fileData).then(url => {
+                    taskInfo["attachments"].push({
+                      name: filename,
+                      url: url
+                    });
+                    this.message_log.push("Uploaded attachment: " + filename);
+                  })
+                );
+              })
+            );
+          });
+          await Promise.all(promises);
         }
 
         const rawDistfilesPath = dirPath + "/rawdistfiles";
@@ -204,23 +247,29 @@ export default Vue.extend({
           const promises = [];
           this.travarseFileTree(rawDistfiles, f => {
             promises.push(
-              readAsText(f).then(fileData => {
+              readAsArrayBuffer(f).then(fileData => {
                 const dataDigest = md5(fileData);
                 const rawFilename = f.webkitRelativePath
                   .split("/")
                   .slice(-1)[0];
                 const filename = format("{0}_{1}", rawFilename, dataDigest);
-                this.uploadFile(filename, fileData).then(url => {
-                  taskInfo["attachments"].push({
-                    name: filename,
-                    url: url
-                  });
-                  this.message_log.push("Uploaded attachment: " + filename);
-                });
+                attachmentPromises.push(
+                  this.uploadFile(filename, fileData).then(url => {
+                    taskInfo["attachments"].push({
+                      name: filename,
+                      url: url
+                    });
+                    this.message_log.push("Uploaded attachment: " + filename);
+                  })
+                );
               })
             );
           });
+          await Promise.all(promises);
         }
+
+        await Promise.all(attachmentPromises);
+        console.log(taskInfo);
 
         add_promises.push(
           API.post("admin/new-challenge", taskInfo)

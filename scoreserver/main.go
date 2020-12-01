@@ -20,6 +20,18 @@ import (
 	"github.com/theoremoon/kosenctfx/scoreserver/webhook"
 )
 
+const scoreFunc = `
+func calc(count) {
+    if (count == 0) {
+        return 500
+    }
+    a = 2.079
+    b = -1.5
+    c = math.Log10(toFloat(count))
+    return toInt(toFloat(500) * math.Pow(1.0 + c * c / a, b))
+}
+`
+
 func run() error {
 	conf, err := config.Load()
 	if err != nil {
@@ -74,6 +86,7 @@ func run() error {
 			LockCount:    5,
 			LockDuration: 60,
 			LockSecond:   300,
+			ScoreExpr:    scoreFunc,
 		})
 		if err != nil {
 			return xerrors.Errorf(": %w", err)

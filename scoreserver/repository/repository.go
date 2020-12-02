@@ -2,7 +2,7 @@ package repository
 
 import (
 	"github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"golang.org/x/xerrors"
 )

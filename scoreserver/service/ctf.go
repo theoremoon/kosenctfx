@@ -22,13 +22,13 @@ type CTFApp interface {
 }
 
 func CalcCTFStatus(conf *model.Config) CTFStatus {
-	now := time.Now()
+	now := time.Now().Unix()
 
 	if !conf.CTFOpen {
 		return CTFNotStarted
-	} else if now.Before(conf.StartAt) {
+	} else if now < conf.StartAt {
 		return CTFNotStarted
-	} else if now.After(conf.StartAt) && now.Before(conf.EndAt) {
+	} else if conf.StartAt <= now && now < conf.EndAt {
 		return CTFRunning
 	} else {
 		return CTFEnded

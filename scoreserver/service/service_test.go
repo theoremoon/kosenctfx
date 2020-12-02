@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/config"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"

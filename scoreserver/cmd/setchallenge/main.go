@@ -16,11 +16,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/theoremoon/kosenctfx/scoreserver/config"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
+	"golang.org/x/xerrors"
+	_ "gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 type Uploader interface {
@@ -190,7 +191,7 @@ func run() error {
 			oldChal.Port = challengeMap[c].Port
 			oldChal.IsSurvey = challengeMap[c].IsSurvey
 			repo.UpdateChallenge(oldChal)
-		} else if gorm.IsRecordNotFoundError(err) {
+		} else if xerrors.Is(err, gorm.ErrRecordNotFound) {
 			// if challenge has not registered yet
 			// 1. register challenge
 			// 2. set atachments and tags

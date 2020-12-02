@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"golang.org/x/xerrors"
+	"gorm.io/gorm"
 )
 
 type ConfigRepository interface {
@@ -15,7 +15,7 @@ func (r *repository) SetConfig(conf *model.Config) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		var c model.Config
 		if err := tx.First(&c).Error; err != nil {
-			if !gorm.IsRecordNotFoundError(err) {
+			if !xerrors.Is(err, gorm.ErrRecordNotFound) {
 				return xerrors.Errorf(": %w", err)
 			}
 

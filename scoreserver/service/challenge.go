@@ -20,17 +20,17 @@ type Attachment struct {
 
 type SolvedBy struct {
 	SolvedAt int64  `json:"solved_at"`
-	TeamID   uint   `json:"team_id"`
+	TeamID   uint32 `json:"team_id"`
 	TeamName string `json:"team_name"`
 }
 
 type Challenge struct {
-	ID          uint         `json:"id"`
+	ID          uint32       `json:"id"`
 	Name        string       `json:"name"`
 	Flag        string       `json:"flag"`
 	Description string       `json:"description"`
 	Author      string       `json:"author"`
-	Score       uint         `json:"score"`
+	Score       uint32       `json:"score"`
 	Tags        []string     `json:"tags"`
 	Attachments []Attachment `json:"attachments"`
 	SolvedBy    []SolvedBy   `json:"solved_by"`
@@ -41,26 +41,26 @@ type Challenge struct {
 }
 
 type ChallengeApp interface {
-	GetChallengeByID(challengeID uint) (*Challenge, error)
+	GetChallengeByID(challengeID uint32) (*Challenge, error)
 	GetChallengeByName(name string) (*Challenge, error)
-	GetRawChallengeByID(challengeID uint) (*model.Challenge, error)
+	GetRawChallengeByID(challengeID uint32) (*model.Challenge, error)
 	GetRawChallengeByName(name string) (*model.Challenge, error)
 	ListOpenedRawChallenges() ([]*model.Challenge, error)
 	ListAllRawChallenges() ([]*model.Challenge, error)
 
 	AddChallenge(c *Challenge) error
-	OpenChallenge(challengeID uint) error
-	CloseChallenge(challengeID uint) error
-	UpdateChallenge(challengeID uint, c *Challenge) error
+	OpenChallenge(challengeID uint32) error
+	CloseChallenge(challengeID uint32) error
+	UpdateChallenge(challengeID uint32, c *Challenge) error
 
 	SubmitFlag(team *model.Team, flag string, ctfRunning bool) (*model.Challenge, bool, bool, error)
 
-	GetWrongCount(teamID uint, duration time.Duration) (int, error)
-	LockSubmission(teamID uint, duration time.Duration) error
-	CheckSubmittable(teamID uint) (bool, error)
+	GetWrongCount(teamID uint32, duration time.Duration) (int64, error)
+	LockSubmission(teamID uint32, duration time.Duration) error
+	CheckSubmittable(teamID uint32) (bool, error)
 }
 
-func (app *app) GetChallengeByID(challengeID uint) (*Challenge, error) {
+func (app *app) GetChallengeByID(challengeID uint32) (*Challenge, error) {
 	return nil, NewErrorMessage("not implemented")
 }
 
@@ -109,7 +109,7 @@ func (app *app) GetChallengeByName(name string) (*Challenge, error) {
 	return &chal, nil
 }
 
-func (app *app) GetRawChallengeByID(challengeID uint) (*model.Challenge, error) {
+func (app *app) GetRawChallengeByID(challengeID uint32) (*model.Challenge, error) {
 	chal, err := app.repo.GetChallengeByID(challengeID)
 	if err != nil {
 		if xerrors.As(err, &repository.NotFoundError{}) {
@@ -183,20 +183,20 @@ func (app *app) AddChallenge(c *Challenge) error {
 	return nil
 }
 
-func (app *app) OpenChallenge(challengeID uint) error {
+func (app *app) OpenChallenge(challengeID uint32) error {
 	if err := app.repo.OpenChallengeByID(challengeID); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }
-func (app *app) CloseChallenge(challengeID uint) error {
+func (app *app) CloseChallenge(challengeID uint32) error {
 	if err := app.repo.CloseChallengeByID(challengeID); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 
 }
-func (app *app) UpdateChallenge(challengeID uint, c *Challenge) error {
+func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
 	chal := model.Challenge{
 		Name:        c.Name,
 		Flag:        c.Flag,
@@ -279,7 +279,7 @@ func (app *app) SubmitFlag(team *model.Team, flag string, ctfRunning bool) (*mod
 	}
 }
 
-func (app *app) GetWrongCount(teamID uint, duration time.Duration) (int, error) {
+func (app *app) GetWrongCount(teamID uint32, duration time.Duration) (int64, error) {
 	cnt, err := app.repo.GetWrongCount(teamID, duration)
 	if err != nil {
 		return 0, xerrors.Errorf(": %w", err)
@@ -287,7 +287,7 @@ func (app *app) GetWrongCount(teamID uint, duration time.Duration) (int, error) 
 	return cnt, nil
 }
 
-func (app *app) LockSubmission(teamID uint, duration time.Duration) error {
+func (app *app) LockSubmission(teamID uint32, duration time.Duration) error {
 	err := app.repo.LockSubmission(teamID, duration)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -295,7 +295,7 @@ func (app *app) LockSubmission(teamID uint, duration time.Duration) error {
 	return nil
 }
 
-func (app *app) CheckSubmittable(teamID uint) (bool, error) {
+func (app *app) CheckSubmittable(teamID uint32) (bool, error) {
 	b, err := app.repo.CheckSubmittable(teamID)
 	if err != nil {
 		return false, xerrors.Errorf(": %w", err)
@@ -322,6 +322,10 @@ func CalcChallengeScore(solveCount int, scoreExpr string) (int, error) {
 	case int:
 		return v, nil
 	case uint:
+		return int(v), nil
+	case int32:
+		return int(v), nil
+	case uint32:
 		return int(v), nil
 	case int64:
 		return int(v), nil

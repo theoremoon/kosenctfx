@@ -134,7 +134,7 @@ func (s *server) tokenCookie(token *model.LoginToken) *http.Cookie {
 	return &http.Cookie{
 		Name:     s.SessionKey,
 		Value:    token.Token,
-		Expires:  token.ExpiresAt,
+		Expires:  time.Unix(token.ExpiresAt, 0),
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	}

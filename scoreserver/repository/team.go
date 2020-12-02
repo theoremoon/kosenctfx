@@ -3,9 +3,9 @@ package repository
 import (
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"golang.org/x/xerrors"
+	"gorm.io/gorm"
 )
 
 type TeamRepository interface {
@@ -13,14 +13,14 @@ type TeamRepository interface {
 	MakeTeamAdmin(t *model.Team) error
 	GetAdminTeam() (*model.Team, error)
 	ListAllTeams() ([]*model.Team, error)
-	GetTeamByID(teamId uint) (*model.Team, error)
+	GetTeamByID(teamId uint32) (*model.Team, error)
 	GetTeamByLoginToken(token string) (*model.Team, error)
 	GetTeamByName(teamname string) (*model.Team, error)
 	GetTeamByEmail(email string) (*model.Team, error)
 	GetTeamByPasswordResetToken(token string) (*model.Team, error)
 	SetTeamLoginToken(token *model.LoginToken) error
 	NewPasswordResetToken(token *model.PasswordResetToken) error
-	RevokeTeamPasswordResetToken(teamID uint) error
+	RevokeTeamPasswordResetToken(teamID uint32) error
 	UpdateTeamPassword(team *model.Team, passwordHash string) error
 	UpdateTeamname(team *model.Team, teamname string) error
 	UpdateCountry(team *model.Team, country string) error
@@ -56,7 +56,7 @@ func (r *repository) ListAllTeams() ([]*model.Team, error) {
 	return teams, nil
 }
 
-func (r *repository) GetTeamByID(teamID uint) (*model.Team, error) {
+func (r *repository) GetTeamByID(teamID uint32) (*model.Team, error) {
 	var t model.Team
 	if err := r.db.Where("id = ?", teamID).First(&t).Error; err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (r *repository) GetTeamByName(teamname string) (*model.Team, error) {
 func (r *repository) GetTeamByEmail(email string) (*model.Team, error) {
 	var t model.Team
 	if err := r.db.Where("email = ?", email).First(&t).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
+		if xerrors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, xerrors.Errorf(": %w", NotFound("team"))
 		}
 		return nil, xerrors.Errorf(": %w", err)
@@ -101,13 +101,13 @@ func (r *repository) GetTeamByPasswordResetToken(token string) (*model.Team, err
 	var resetToken model.PasswordResetToken
 	now := time.Now().Unix()
 	if err := r.db.Where("token = ? AND expires_at > ?", token, now).First(&resetToken).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
+		if xerrors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, NotFound("token")
 		}
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	if err := r.db.Where("id = ?", resetToken.TeamId).First(&t).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
+		if xerrors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, NotFound("team")
 		}
 		return nil, xerrors.Errorf(": %w", err)
@@ -129,7 +129,7 @@ func (r *repository) NewPasswordResetToken(token *model.PasswordResetToken) erro
 	return nil
 }
 
-func (r *repository) RevokeTeamPasswordResetToken(teamID uint) error {
+func (r *repository) RevokeTeamPasswordResetToken(teamID uint32) error {
 	if err := r.db.Where("taem_id = ?", teamID).Delete(model.PasswordResetToken{}).Error; err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

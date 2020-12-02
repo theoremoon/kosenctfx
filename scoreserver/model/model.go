@@ -1,21 +1,20 @@
 package model
 
 import (
-	"time"
-
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type Model struct {
-	ID        uint       `gorm:"primary_key" json:"id"`
-	CreatedAt time.Time  `json:"-"`
-	UpdatedAt time.Time  `json:"-"`
-	DeletedAt *time.Time `json:"-"`
+	ID        uint32         `gorm:"primary_key" json:"id"`
+	CreatedAt int64          `gorm:"autoCreateTime" json:"-"`
+	UpdatedAt int64          `gorm:"autoUpdateTime" json:"-"`
+	DeletedAt gorm.DeletedAt `json:"-"`
 }
 
-func (model *Model) BeforeCreate(scope *gorm.Scope) error {
-	return scope.SetColumn("ID", uuid.New().ID())
+func (model *Model) BeforeCreate(tx *gorm.DB) error {
+	model.ID = uuid.New().ID()
+	return nil
 }
 
 type Team struct {
@@ -32,18 +31,18 @@ type Team struct {
 type LoginToken struct {
 	Model
 
-	TeamId    uint
+	TeamId    uint32
 	Token     string `gorm:"unique"`
 	IPAddress string
-	ExpiresAt time.Time
+	ExpiresAt int64
 }
 
 type PasswordResetToken struct {
 	Model
 
-	TeamId    uint
+	TeamId    uint32
 	Token     string `gorm:"unique"`
-	ExpiresAt time.Time
+	ExpiresAt int64
 }
 
 type Challenge struct {
@@ -64,14 +63,14 @@ type Challenge struct {
 type Tag struct {
 	Model
 
-	ChallengeId uint
+	ChallengeId uint32
 	Tag         string
 }
 
 type Attachment struct {
 	Model
 
-	ChallengeId uint
+	ChallengeId uint32
 	Name        string
 	URL         string
 }
@@ -79,8 +78,8 @@ type Attachment struct {
 type Submission struct {
 	Model
 
-	ChallengeId *uint
-	TeamId      uint
+	ChallengeId *uint32
+	TeamId      uint32
 	IsCorrect   bool
 	Flag        string
 }
@@ -88,23 +87,16 @@ type Submission struct {
 type ValidSubmission struct {
 	Model
 
-	ChallengeId  uint `gorm:"unique_index:valid_submission"`
-	TeamId       uint `gorm:"unique_index:valid_submission"`
-	SubmissionId uint
+	ChallengeId  uint32 `gorm:"unique_index:valid_submission"`
+	TeamId       uint32 `gorm:"unique_index:valid_submission"`
+	SubmissionId uint32
 }
 
 type SubmissionLock struct {
 	Model
 
-	TeamId uint
-	Until  time.Time
-}
-
-type Notification struct {
-	Model
-
-	Title   string
-	Content string
+	TeamId uint32
+	Until  int64
 }
 
 type Config struct {
@@ -113,13 +105,13 @@ type Config struct {
 	Token string
 
 	CTFName string
-	StartAt time.Time
-	EndAt   time.Time
+	StartAt int64
+	EndAt   int64
 
 	RegisterOpen bool
 	CTFOpen      bool
 
-	LockCount    int
+	LockCount    int64
 	LockSecond   int
 	LockDuration int
 

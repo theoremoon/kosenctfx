@@ -85,8 +85,8 @@ func (s *server) infoHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, err)
 		}
-		ret["ctf_start"] = conf.StartAt.Unix()
-		ret["ctf_end"] = conf.EndAt.Unix()
+		ret["ctf_start"] = conf.StartAt
+		ret["ctf_end"] = conf.EndAt
 		ret["ctf_name"] = conf.CTFName
 
 		return c.JSON(http.StatusOK, ret)
@@ -246,7 +246,7 @@ func (s *server) teamHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		team, err := s.app.GetTeamByID(uint(teamID))
+		team, err := s.app.GetTeamByID(uint32(teamID))
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
@@ -376,8 +376,8 @@ func (s *server) getConfigHandler() echo.HandlerFunc {
 
 		ret := make(map[string]interface{})
 		ret["ctf_name"] = conf.CTFName
-		ret["start_at"] = conf.StartAt.Unix()
-		ret["end_at"] = conf.EndAt.Unix()
+		ret["start_at"] = conf.StartAt
+		ret["end_at"] = conf.EndAt
 		ret["score_expr"] = conf.ScoreExpr
 		ret["register_open"] = conf.RegisterOpen
 		ret["ctf_open"] = conf.CTFOpen
@@ -397,7 +397,7 @@ func (s *server) ctfConfigHandler() echo.HandlerFunc {
 			EndAt        int64  `json:"end_at"`
 			RegisterOpen bool   `json:"register_open"`
 			CTFOpen      bool   `json:"ctf_open"`
-			LockCount    int    `json:"lock_count"`
+			LockCount    int64  `json:"lock_count"`
 			LockSecond   int    `json:"lock_second"`
 			LockDuration int    `json:"lock_duration"`
 			ScoreExpr    string `json:"score_expr"`
@@ -417,8 +417,8 @@ func (s *server) ctfConfigHandler() echo.HandlerFunc {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		conf.CTFName = req.Name
-		conf.StartAt = time.Unix(req.StartAt, 0)
-		conf.EndAt = time.Unix(req.EndAt, 0)
+		conf.StartAt = req.StartAt
+		conf.EndAt = req.EndAt
 		conf.RegisterOpen = req.RegisterOpen
 		conf.CTFOpen = req.CTFOpen
 		conf.LockCount = req.LockCount
@@ -495,7 +495,7 @@ func (s *server) closeChallengeHandler() echo.HandlerFunc {
 func (s *server) updateChallengeHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
-			ID          uint
+			ID          uint32
 			Name        string
 			Flag        string
 			Description string

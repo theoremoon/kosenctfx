@@ -16,7 +16,6 @@ type App interface {
 	TeamApp
 	ChallengeApp
 	CTFApp
-	NotificationApp
 	ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Challenge, *Scoreboard, error)
 }
 
@@ -42,23 +41,9 @@ func newToken() string {
 	return uuid.New().String()
 }
 
-func (app *app) ValidateRunning(t time.Time) error {
-	conf, err := app.repo.GetConfig()
-	if err != nil {
-		return err
-	}
-	if !t.After(conf.StartAt) {
-		return NewErrorMessage("CTF has not started yet")
-	}
-	if !t.Before(conf.EndAt) {
-		return NewErrorMessage("CTF has alredy finished")
-	}
-	return nil
-}
-
 type TaskStat struct {
-	Score    uint  `json:"points"`
-	SolvedAt int64 `json:"time"`
+	Score    uint32 `json:"points"`
+	SolvedAt int64  `json:"time"`
 }
 type ScoreFeedEntry struct {
 	Pos            int                  `json:"pos"`
@@ -66,7 +51,7 @@ type ScoreFeedEntry struct {
 	Country        string               `json:"country"`
 	Score          int                  `json:"points"`
 	TaskStats      map[string]*TaskStat `json:"taskStats"`
-	TeamID         uint                 `json:"team_id"`
+	TeamID         uint32               `json:"team_id"`
 	LastSubmission int64                `json:"last_submission"`
 }
 type Scoreboard struct {
@@ -97,7 +82,7 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 	}
 
 	// make mapping as challenge id is the key
-	tagMap := make(map[uint][]string)
+	tagMap := make(map[uint32][]string)
 	for _, c := range chals {
 		tagMap[c.ID] = make([]string, 0)
 	}
@@ -105,7 +90,7 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 		tagMap[t.ChallengeId] = append(tagMap[t.ChallengeId], t.Tag)
 	}
 
-	attachmentMap := make(map[uint][]Attachment)
+	attachmentMap := make(map[uint32][]Attachment)
 	for _, c := range chals {
 		attachmentMap[c.ID] = make([]Attachment, 0)
 	}
@@ -115,13 +100,13 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 			URL:  a.URL,
 		})
 	}
-	teamMap := make(map[uint]string)
+	teamMap := make(map[uint32]string)
 	for _, t := range teams {
 		teamMap[t.ID] = t.Teamname
 	}
 
 	// key: challlenge id, value: team name who solved this chal
-	solvedByMap := make(map[uint][]SolvedBy)
+	solvedByMap := make(map[uint32][]SolvedBy)
 	for _, c := range chals {
 		solvedByMap[c.ID] = make([]SolvedBy, 0)
 	}
@@ -129,7 +114,7 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 		solvedByMap[s.ChallengeId] = append(solvedByMap[s.ChallengeId], SolvedBy{
 			TeamName: teamMap[s.TeamId],
 			TeamID:   s.TeamId,
-			SolvedAt: s.CreatedAt.Unix(),
+			SolvedAt: s.CreatedAt,
 		})
 	}
 
@@ -146,7 +131,7 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 			Flag:        c.Flag,
 			Description: c.Description,
 			Author:      c.Author,
-			Score:       uint(score),
+			Score:       uint32(score),
 			Tags:        tagMap[c.ID],
 			Attachments: attachmentMap[c.ID],
 			SolvedBy:    solvedByMap[c.ID],
@@ -163,12 +148,12 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 
 	// ----
 
-	chalMap := make(map[uint]*Challenge)
+	chalMap := make(map[uint32]*Challenge)
 	for _, c := range challenges {
 		chalMap[c.ID] = c
 	}
 
-	teamSubmissions := make(map[uint][]*model.ValidSubmission)
+	teamSubmissions := make(map[uint32][]*model.ValidSubmission)
 	for _, t := range teams {
 		teamSubmissions[t.ID] = make([]*model.ValidSubmission, 0)
 	}
@@ -179,7 +164,7 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 	// とりあえずエントリを作成する
 	scoreFeed := make([]*ScoreFeedEntry, len(teams))
 	for i := 0; i < len(teams); i++ {
-		var score uint = 0
+		var score uint32 = 0
 		taskStats := make(map[string]*TaskStat)
 		var lastSubmission int64 = 0
 
@@ -189,7 +174,7 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 				continue //?
 			}
 			score += c.Score
-			solvedAt := s.CreatedAt.Unix()
+			solvedAt := s.CreatedAt
 			taskStats[c.Name] = &TaskStat{
 				Score:    c.Score,
 				SolvedAt: solvedAt,

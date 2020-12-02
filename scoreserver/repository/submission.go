@@ -3,9 +3,9 @@ package repository
 import (
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"golang.org/x/xerrors"
+	"gorm.io/gorm"
 )
 
 type SubmissionRepository interface {
@@ -13,9 +13,9 @@ type SubmissionRepository interface {
 	InsertSubmission(s *model.Submission) error
 	InsertValidableSubmission(s *model.Submission) (bool, error)
 
-	GetWrongCount(teamID uint, duration time.Duration) (int, error)
-	LockSubmission(teamID uint, duration time.Duration) error
-	CheckSubmittable(teamID uint) (bool, error)
+	GetWrongCount(teamID uint32, duration time.Duration) (int64, error)
+	LockSubmission(teamID uint32, duration time.Duration) error
+	CheckSubmittable(teamID uint32) (bool, error)
 }
 
 func (r *repository) ListValidSubmissions() ([]*model.ValidSubmission, error) {
@@ -44,7 +44,7 @@ func (r *repository) InsertValidableSubmission(s *model.Submission) (bool, error
 		}
 
 		// 既存の提出を読んでvalidityを決定する
-		var count int
+		var count int64
 		if err := r.db.Model(&model.ValidSubmission{}).Where("team_id = ? AND challenge_id = ?", s.TeamId, s.ChallengeId).Count(&count).Error; err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -77,27 +77,27 @@ func (r *repository) InsertValidableSubmission(s *model.Submission) (bool, error
 	return valid, nil
 }
 
-func (r *repository) GetWrongCount(teamID uint, duration time.Duration) (int, error) {
+func (r *repository) GetWrongCount(teamID uint32, duration time.Duration) (int64, error) {
 	t := time.Now().Add(-duration)
-	var count int
+	var count int64
 	if err := r.db.Model(&model.Submission{}).Where("team_id = ? AND is_correct = ? AND created_at > ?", teamID, false, t).Count(&count).Error; err != nil {
 		return 0, xerrors.Errorf(": %w", err)
 	}
 	return count, nil
 }
 
-func (r *repository) LockSubmission(teamID uint, duration time.Duration) error {
+func (r *repository) LockSubmission(teamID uint32, duration time.Duration) error {
 	if err := r.db.Create(&model.SubmissionLock{
 		TeamId: teamID,
-		Until:  time.Now().Add(duration),
+		Until:  time.Now().Add(duration).Unix(),
 	}).Error; err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }
 
-func (r *repository) CheckSubmittable(teamID uint) (bool, error) {
-	var count uint
+func (r *repository) CheckSubmittable(teamID uint32) (bool, error) {
+	var count int64
 	if err := r.db.Model(&model.SubmissionLock{}).Where("team_id = ? AND until >= ?", teamID, time.Now()).Count(&count).Error; err != nil {
 		return false, xerrors.Errorf(": %w", err)
 	}

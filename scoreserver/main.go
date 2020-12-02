@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
 	"golang.org/x/xerrors"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/bucket"
 	"github.com/theoremoon/kosenctfx/scoreserver/config"
@@ -37,12 +37,15 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	db, err := gorm.Open("mysql", conf.Dbdsn)
+	db, err := gorm.Open(mysql.Open(conf.Dbdsn), &gorm.Config{})
 	if err != nil {
 		return err
 	}
-	defer db.Close()
-	db.BlockGlobalUpdate(true)
+	rawdb, err := db.DB()
+	if err != nil {
+		return err
+	}
+	defer rawdb.Close()
 
 	opt, err := redis.ParseURL(conf.RedisAddr)
 	if err != nil {
@@ -79,8 +82,8 @@ func run() error {
 		err = app.SetCTFConfig(&model.Config{
 			CTFName:      "KosenCTF X",
 			Token:        token,
-			StartAt:      time.Now(),
-			EndAt:        time.Now(),
+			StartAt:      time.Now().Unix(),
+			EndAt:        time.Now().Unix(),
 			RegisterOpen: false,
 			CTFOpen:      false,
 			LockCount:    5,

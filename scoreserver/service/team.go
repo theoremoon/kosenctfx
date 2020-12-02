@@ -7,11 +7,11 @@ import (
 
 	"github.com/pariz/gountries"
 
-	"github.com/jinzhu/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/xerrors"
+	"gorm.io/gorm"
 )
 
 type TeamApp interface {
@@ -20,7 +20,7 @@ type TeamApp interface {
 	ListTeams() ([]*model.Team, error)
 	GetAdminTeam() (*model.Team, error)
 	MakeTeamAdmin(t *model.Team) error
-	GetTeamByID(teamID uint) (*model.Team, error)
+	GetTeamByID(teamID uint32) (*model.Team, error)
 	GetLoginTeam(token string) (*model.Team, error)
 	PasswordResetRequest(email string) error
 	PasswordReset(token, newpassword string) error
@@ -80,7 +80,7 @@ func (app *app) MakeTeamAdmin(t *model.Team) error {
 	return nil
 }
 
-func (app *app) GetTeamByID(teamID uint) (*model.Team, error) {
+func (app *app) GetTeamByID(teamID uint32) (*model.Team, error) {
 	team, err := app.repo.GetTeamByID(teamID)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (app *app) GetTeamByID(teamID uint) (*model.Team, error) {
 
 func (app *app) GetLoginTeam(token string) (*model.Team, error) {
 	team, err := app.repo.GetTeamByLoginToken(token)
-	if err != nil && gorm.IsRecordNotFoundError(err) {
+	if err != nil && xerrors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, NewErrorMessage("invalid token")
 	} else if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func (app *app) GetLoginTeam(token string) (*model.Team, error) {
 
 func (app *app) Login(teamname, password, ipaddress string) (*model.LoginToken, error) {
 	t, err := app.repo.GetTeamByName(teamname)
-	if err != nil && gorm.IsRecordNotFoundError(err) {
+	if err != nil && xerrors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, NewErrorMessage("no such team")
 	} else if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -112,7 +112,7 @@ func (app *app) Login(teamname, password, ipaddress string) (*model.LoginToken, 
 	token := model.LoginToken{
 		TeamId:    t.ID,
 		Token:     newToken(),
-		ExpiresAt: tokenExpiredTime(),
+		ExpiresAt: tokenExpiredTime().Unix(),
 		IPAddress: ipaddress,
 	}
 	if err := app.repo.SetTeamLoginToken(&token); err != nil {
@@ -133,7 +133,7 @@ func (app *app) PasswordResetRequest(email string) error {
 	token := model.PasswordResetToken{
 		TeamId:    t.ID,
 		Token:     newToken(),
-		ExpiresAt: tokenExpiredTime(),
+		ExpiresAt: tokenExpiredTime().Unix(),
 	}
 	if err := app.repo.NewPasswordResetToken(&token); err != nil {
 		return err
@@ -219,7 +219,7 @@ func (app *app) validateTeamname(teamname string) error {
 
 	if _, err := app.repo.GetTeamByName(teamname); err == nil {
 		return NewErrorMessage("teamname already used")
-	} else if err != nil && !gorm.IsRecordNotFoundError(err) {
+	} else if err != nil && !xerrors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
 	return nil

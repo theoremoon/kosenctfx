@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"golang.org/x/xerrors"
+	"gorm.io/gorm"
 )
 
 type ChallengeRepository interface {
@@ -14,19 +14,19 @@ type ChallengeRepository interface {
 	ListOpenedChallenges() ([]*model.Challenge, error)
 	ListAllTags() ([]*model.Tag, error)
 	ListAllAttachments() ([]*model.Attachment, error)
-	FindTagsByChallengeID(id uint) ([]*model.Tag, error)
-	FindAttachmentsByChallengeID(id uint) ([]*model.Attachment, error)
-	GetChallengeByID(challengeID uint) (*model.Challenge, error)
+	FindTagsByChallengeID(id uint32) ([]*model.Tag, error)
+	FindAttachmentsByChallengeID(id uint32) ([]*model.Attachment, error)
+	GetChallengeByID(challengeID uint32) (*model.Challenge, error)
 	GetChallengeByName(name string) (*model.Challenge, error)
 	GetChallengeByFlag(flag string) (*model.Challenge, error)
 
 	AddChallengeAttachment(a *model.Attachment) error
 	AddChallengeTag(t *model.Tag) error
-	DeleteAttachmentByChallengeId(challengeId uint) error
-	DeleteTagByChallengeId(challengeId uint) error
+	DeleteAttachmentByChallengeId(challengeId uint32) error
+	DeleteTagByChallengeId(challengeId uint32) error
 
-	OpenChallengeByID(chalelngeID uint) error
-	CloseChallengeByID(chalelngeID uint) error
+	OpenChallengeByID(chalelngeID uint32) error
+	CloseChallengeByID(chalelngeID uint32) error
 }
 
 func (r *repository) AddChallenge(c *model.Challenge) error {
@@ -77,7 +77,7 @@ func (r *repository) ListAllAttachments() ([]*model.Attachment, error) {
 	}
 	return attachments, nil
 }
-func (r *repository) FindTagsByChallengeID(id uint) ([]*model.Tag, error) {
+func (r *repository) FindTagsByChallengeID(id uint32) ([]*model.Tag, error) {
 	var tags []*model.Tag
 	if err := r.db.Where("challenge_id = ?", id).Find(&tags).Error; err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -85,7 +85,7 @@ func (r *repository) FindTagsByChallengeID(id uint) ([]*model.Tag, error) {
 	return tags, nil
 
 }
-func (r *repository) FindAttachmentsByChallengeID(id uint) ([]*model.Attachment, error) {
+func (r *repository) FindAttachmentsByChallengeID(id uint32) ([]*model.Attachment, error) {
 	var attachments []*model.Attachment
 	if err := r.db.Where("challenge_id = ?", id).Find(&attachments).Error; err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -93,10 +93,10 @@ func (r *repository) FindAttachmentsByChallengeID(id uint) ([]*model.Attachment,
 	return attachments, nil
 }
 
-func (r *repository) GetChallengeByID(challengeID uint) (*model.Challenge, error) {
+func (r *repository) GetChallengeByID(challengeID uint32) (*model.Challenge, error) {
 	var c model.Challenge
 	if err := r.db.Where("id = ?", challengeID).First(&c).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
+		if xerrors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, xerrors.Errorf(": %w", NotFound("challenge"))
 		}
 		return nil, xerrors.Errorf(": %w", err)
@@ -107,7 +107,7 @@ func (r *repository) GetChallengeByID(challengeID uint) (*model.Challenge, error
 func (r *repository) GetChallengeByName(name string) (*model.Challenge, error) {
 	var c model.Challenge
 	if err := r.db.Where("name = ?", name).First(&c).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
+		if xerrors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, xerrors.Errorf(": %w", NotFound("challenge"))
 		}
 		return nil, xerrors.Errorf(": %w", err)
@@ -118,7 +118,7 @@ func (r *repository) GetChallengeByName(name string) (*model.Challenge, error) {
 func (r *repository) GetChallengeByFlag(flag string) (*model.Challenge, error) {
 	var c model.Challenge
 	if err := r.db.Where("flag = ?", flag).First(&c).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
+		if xerrors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, xerrors.Errorf(": %w", NotFound("challenge"))
 		}
 		return nil, xerrors.Errorf(": %w", err)
@@ -139,27 +139,27 @@ func (r *repository) AddChallengeTag(t *model.Tag) error {
 	return nil
 }
 
-func (r *repository) DeleteAttachmentByChallengeId(challengeId uint) error {
+func (r *repository) DeleteAttachmentByChallengeId(challengeId uint32) error {
 	if err := r.db.Where("challenge_id = ?", challengeId).Delete(&model.Attachment{}).Error; err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }
-func (r *repository) DeleteTagByChallengeId(challengeId uint) error {
+func (r *repository) DeleteTagByChallengeId(challengeId uint32) error {
 	if err := r.db.Where("challenge_id = ?", challengeId).Delete(&model.Tag{}).Error; err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }
 
-func (r *repository) OpenChallengeByID(challengeID uint) error {
+func (r *repository) OpenChallengeByID(challengeID uint32) error {
 	if err := r.db.Model(&model.Challenge{}).Where("id = ?", challengeID).Update("is_open", true).Error; err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }
 
-func (r *repository) CloseChallengeByID(challengeID uint) error {
+func (r *repository) CloseChallengeByID(challengeID uint32) error {
 	if err := r.db.Model(&model.Challenge{}).Where("id = ?", challengeID).Update("is_open", false).Error; err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

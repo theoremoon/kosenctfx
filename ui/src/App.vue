@@ -166,6 +166,14 @@ body {
   }
 }
 
+input[type="number"] {
+  text-align: center;
+  text-align: center;
+  background-color: transparent;
+  border-bottom: 1px solid $accent-color;
+  display: inline-block;
+}
+
 input[type="text"],
 input[type="email"],
 input[type="password"] {

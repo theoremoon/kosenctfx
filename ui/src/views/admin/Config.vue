@@ -49,6 +49,13 @@
         </div>
 
         <div class="mb-4">
+          Submission is locked for
+          <input type="number" v-model="lock_second" /> seconds when
+          <input type="number" v-model="lock_count" /> wrong flags submitted in
+          <input type="number" v-model="lock_duration" /> seconds.
+        </div>
+
+        <div class="mb-4">
           <label class="block text-sm" for="score_expr">
             Score Expr
           </label>
@@ -85,6 +92,9 @@ export default Vue.extend({
       score_expr: "",
       ctf_open: false,
       register_open: false,
+      lock_count: 0,
+      lock_duration: 0,
+      lock_second: 0,
       chart: null
     };
   },
@@ -110,6 +120,9 @@ export default Vue.extend({
           this.score_expr = r.data.score_expr;
           this.ctf_open = r.data.ctf_open;
           this.register_open = r.data.register_open;
+          this.lock_count = r.data.lock_count;
+          this.lock_second = r.data.lock_second;
+          this.lock_duration = r.data.lock_duration;
         })
         .catch(() => {
           errorHandle(this, "forbidden");
@@ -123,7 +136,10 @@ export default Vue.extend({
         end_at: parseDateString(this.end_at),
         score_expr: this.score_expr,
         ctf_open: this.ctf_open,
-        register_open: this.register_open
+        register_open: this.register_open,
+        lock_count: parseInt(this.lock_count),
+        lock_second: parseInt(this.lock_second),
+        lock_duration: parseInt(this.lock_duration)
       })
         .then(r => {
           message(this, r.data);

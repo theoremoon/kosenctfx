@@ -2,7 +2,9 @@
   <div class="my-4 mx-8">
     <h1 class="text-2xl">Team Ranking</h1>
 
-    <graph :chartdata="chartData" v-if="dataReady"></graph>
+    <div class="w-3/4 m-auto">
+      <graph :chartdata="chartData" v-if="dataReady" />
+    </div>
 
     <table class="ranking">
       <thead>
@@ -176,20 +178,24 @@ export default Vue.extend({
 @import "../assets/vars.scss";
 
 .ranking {
-  padding-top: 10rem;
-
+  padding-top: 5rem;
   display: block;
   overflow-x: auto;
 
   tr {
     border-bottom: 1px solid $fg-color;
   }
+
+  th:nth-child(-n + 3),
+  td:nth-child(-n + 3) {
+    padding-right: 0.5rem;
+  }
 }
 .challenge-name {
   span {
     display: inline-block;
     transform-origin: left;
-    transform: rotate(-45deg);
+    transform: rotate(-30deg);
     width: 2em;
   }
 

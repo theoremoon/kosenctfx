@@ -2,7 +2,7 @@
   <div class="my-4 mx-8">
     <h1 class="text-2xl">Team Ranking</h1>
 
-    <div class="w-3/4 m-auto">
+    <div class="lg:w-3/4 m-auto">
       <graph :chartdata="chartData" v-if="dataReady" />
     </div>
 

@@ -39,7 +39,9 @@
       </div>
     </div>
 
-    <graph :chartdata="chartData"></graph>
+    <div class="lg:w-3/4 m-auto">
+      <graph :chartdata="chartData" />
+    </div>
 
     <div class="mt-4 ml-4 text-xl">
       <table class="table-auto w-full xl:w-3/4 mx-auto">

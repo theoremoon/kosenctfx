@@ -9,18 +9,18 @@
       />
     </div>
     <div class="mx-4">
-      <table class="w-full">
+      <table class="w-full challenges">
         <thead>
           <tr>
             <th>Name</th>
             <th>Score</th>
             <th>#Solve</th>
             <th>Tags</th>
-            <th>Flag</th>
             <th>Author</th>
             <th>Is Open?</th>
             <th>Is Survey?</th>
             <th>Preview</th>
+            <th>Flag</th>
           </tr>
         </thead>
         <tbody>
@@ -125,7 +125,6 @@ export default Vue.extend({
 <style lang="scss" scoped>
 @import "../../assets/vars.scss";
 @import "../../assets/tailwind.css";
-td,
 th {
   border: solid 1px $fg-color;
 }

@@ -8,15 +8,16 @@
         >{{ tag }}
       </span>
     </td>
-    <td>
-      <pre>{{ c.flag }}</pre>
-    </td>
+
     <td>{{ c.author }}</td>
     <td>
       <input type="checkbox" v-model="c.is_open" />
     </td>
     <td><span v-if="c.is_survey">🙆</span><span v-else>🙅</span></td>
     <td @click="onFocus" class="cursor-pointer">👀</td>
+    <td>
+      <pre>{{ c.flag }}</pre>
+    </td>
   </tr>
 </template>
 
@@ -44,6 +45,12 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
+@import "../../../assets/vars.scss";
+@import "../../../assets/tailwind.css";
+td {
+  border: solid 1px $fg-color;
+}
+
 .challenge-tag {
   display: inline-block;
   padding: 0 0.25rem;

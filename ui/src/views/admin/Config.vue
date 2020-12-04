@@ -73,6 +73,13 @@
         <canvas ref="chart"></canvas>
       </div>
     </div>
+    <div class="flex">
+      <div>
+        <button class="button" @click="downloadScoreboard">
+          Download Scoreboard
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -181,6 +188,20 @@ export default Vue.extend({
           console.log(e);
           errorHandle(this, e);
         });
+    },
+    downloadScoreboard() {
+      API.get("/info-update?reresh=true").then(r => {
+        const link = document.createElement("a");
+        link.href =
+          "data:applicaion/json;charset=utf-8," +
+          encodeURIComponent(JSON.stringify(r.data.ranking));
+        link.download = "scoreboard.json";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          link.parentNode.removeChild(link);
+        }, 1000);
+      });
     }
   },
   computed: {}

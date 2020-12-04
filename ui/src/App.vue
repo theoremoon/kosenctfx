@@ -186,7 +186,8 @@ input[type="password"] {
   padding: 0.25rem 0;
 }
 input[type="submit"],
-input[type="button"] {
+.button {
+  text-decoration: none;
   margin: 0.25rem 0;
   padding: 0.25rem 0.5rem;
   background-color: transparent;

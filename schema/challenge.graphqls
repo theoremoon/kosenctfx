@@ -1,0 +1,24 @@
+type Challenge {
+  id: ID!
+  name: String!
+  flag: String
+  description: String!
+  author: String!
+  score: Int!
+  tags: [String!]!
+  attachments: [Attachment!]!
+  solvedBy: [SolvedBy!]!
+  isOpen: Boolean!
+  isSurvey: Boolean!
+}
+
+type Attachment {
+  name: String!
+  url: String!
+}
+
+type SolvedBy {
+  teamId: String!
+  teamName: String!
+  solvedAt: Int!
+}

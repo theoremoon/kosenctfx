@@ -60,18 +60,7 @@ type ChallengeApp interface {
 	CheckSubmittable(teamID uint32) (bool, error)
 }
 
-func (app *app) GetChallengeByID(challengeID uint32) (*Challenge, error) {
-	return nil, NewErrorMessage("not implemented")
-}
-
-func (app *app) GetChallengeByName(name string) (*Challenge, error) {
-	c, err := app.repo.GetChallengeByName(name)
-	if err != nil {
-		if xerrors.As(err, &repository.NotFoundError{}) {
-			return nil, NewErrorMessage("No such challenge")
-		}
-		return nil, xerrors.Errorf(": %w", err)
-	}
+func (app *app) rawChallengeToChallenge(c *model.Challenge) (*Challenge, error) {
 	chal := Challenge{
 		ID:          c.ID,
 		Flag:        c.Flag,
@@ -107,6 +96,22 @@ func (app *app) GetChallengeByName(name string) (*Challenge, error) {
 
 	// TODO
 	return &chal, nil
+}
+
+func (app *app) GetChallengeByID(challengeID uint32) (*Challenge, error) {
+	c, err := app.GetRawChallengeByID(challengeID)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return app.rawChallengeToChallenge(c)
+}
+
+func (app *app) GetChallengeByName(name string) (*Challenge, error) {
+	c, err := app.GetRawChallengeByName(name)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return app.rawChallengeToChallenge(c)
 }
 
 func (app *app) GetRawChallengeByID(challengeID uint32) (*model.Challenge, error) {

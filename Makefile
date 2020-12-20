@@ -11,12 +11,15 @@ build-production:
 	mkdir -p production
 	(cd scoreserver; go build -o ../production -a -tags netgo -installsuffix netgo -ldflags="-extldflags \"-static\"")
 
-build:
+build: generate
 	mkdir -p bin
 	(cd scoreserver; go build -o ../bin)
 
 build-ui:
 	(cd ui; yarn build)
+
+generate:
+	(cd scoreserver; go generate ./...)
 
 run: build
 	(source ./envfile; ./bin/scoreserver)

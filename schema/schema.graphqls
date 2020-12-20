@@ -1,0 +1,13 @@
+
+input PaginationInput {
+  offset: Int! =  0
+  limit: Int! = 100
+}
+
+type Query {
+  GetChallenge(id: ID!): Challenge!
+  ListChallenges: [Challenge!]!
+  GetTeam(id: ID!): Team!
+  ListSubmissions(page: PaginationInput!): [Submission!]!
+  GetNumberOfSubmissions: Int!
+}

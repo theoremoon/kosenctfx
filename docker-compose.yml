@@ -23,6 +23,7 @@ services:
     ports:
       - "9000:9000"
       - "8000:80"
+      - "5000:5000"
     environment:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: minio123

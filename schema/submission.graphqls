@@ -1,0 +1,10 @@
+type Submission {
+  id: ID!
+  team: Team!
+  flag: String!
+  challenge: Challenge
+  isCorrect: Boolean!
+  isValid: Boolean!
+  submittedAt: Int!
+}
+

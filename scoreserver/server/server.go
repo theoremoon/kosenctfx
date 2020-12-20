@@ -5,11 +5,16 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	graphqlHandler "github.com/99designs/gqlgen/handler"
 	"github.com/go-redis/redis"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/theoremoon/kosenctfx/scoreserver/bucket"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
+	"github.com/theoremoon/kosenctfx/scoreserver/resolver"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"github.com/theoremoon/kosenctfx/scoreserver/webhook"
 	"golang.org/x/xerrors"
@@ -44,6 +49,10 @@ var (
 	ConfigUpdateMessage = "Config is Updated"
 
 	NotImplementedMessage = "Not Implemented"
+)
+
+const (
+	GRAPHQL_COMPLEXITY_LIMIT = 200
 )
 
 type Server interface {
@@ -109,7 +118,28 @@ func (s *server) Start(addr string) error {
 	e.POST("/admin/set-challenge-status", s.setChallengeStatusHandler(), s.adminMiddleware)
 	e.POST("/admin/get-presigned-url", s.getPresignedURLHandler(), s.adminMiddleware)
 
+	// GraphQL
+	e.POST("/query", s.graphQLHandler(), s.resolveLoginMiddleware)
+	e.GET("/playground", s.playgroundHandler())
+
 	return e.Start(addr)
+}
+
+func (s *server) graphQLHandler() echo.HandlerFunc {
+	h := handler.New(resolver.NewExecutableSchema(
+		resolver.Config{
+			Resolvers: resolver.NewResolver(s.app),
+		},
+	))
+	h.AddTransport(transport.POST{})
+	h.Use(extension.FixedComplexityLimit(GRAPHQL_COMPLEXITY_LIMIT))
+	h.Use(extension.Introspection{})
+	return echo.WrapHandler(h)
+}
+
+func (s *server) playgroundHandler() echo.HandlerFunc {
+	h := graphqlHandler.Playground("PlayGround", "/query")
+	return echo.WrapHandler(h)
 }
 
 func errorHandle(c echo.Context, err error) error {

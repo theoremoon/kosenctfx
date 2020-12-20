@@ -5,9 +5,20 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
+	"github.com/theoremoon/kosenctfx/scoreserver/resolver"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"golang.org/x/xerrors"
 )
+
+/// Attach Logged in Team or nil into Context for GraphQL endpoint
+func (s *server) resolveLoginMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		t, _ := s.getLoginTeam(c)
+		r := c.Request()
+		c.SetRequest(r.WithContext(resolver.AttachTeam(r.Context(), t)))
+		return h(c)
+	}
+}
 
 func (s *server) loginMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {

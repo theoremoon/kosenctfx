@@ -7,11 +7,20 @@ import (
 
 type SubmissionApp interface {
 	ListSubmissions(offset, limit int64) ([]*repository.Submission, error)
+	ListSubmissionByIDs(ids []uint32) ([]*repository.Submission, error)
 	CountSubmissions() (int64, error)
 }
 
 func (app *app) ListSubmissions(offset, limit int64) ([]*repository.Submission, error) {
 	submissions, err := app.repo.ListSubmissions(offset, limit)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return submissions, nil
+}
+
+func (app *app) ListSubmissionByIDs(ids []uint32) ([]*repository.Submission, error) {
+	submissions, err := app.repo.ListSubmissionByIDs(ids)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}

@@ -7,6 +7,7 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/theoremoon/kosenctfx/scoreserver/loader"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
@@ -41,7 +42,7 @@ func (r *submissionResolver) Challenge(ctx context.Context, obj *repository.Subm
 		return nil, nil
 	}
 
-	c, err := r.app.GetChallengeByID(*obj.ChallengeId)
+	c, err := loader.LoadChallenge(ctx, *obj.ChallengeId)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}

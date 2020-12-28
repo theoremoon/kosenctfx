@@ -10,6 +10,7 @@ import (
 
 type SubmissionRepository interface {
 	ListSubmissions(offset, limit int64) ([]*Submission, error)
+	ListSubmissionByIDs(ids []uint32) ([]*Submission, error)
 	ListValidSubmissions() ([]*model.ValidSubmission, error)
 	InsertSubmission(s *model.Submission) error
 	InsertValidableSubmission(s *model.Submission) (bool, error)
@@ -31,7 +32,23 @@ type Submission struct {
 }
 
 func (r *repository) ListSubmissions(offset, limit int64) ([]*Submission, error) {
-	rows, err := r.db.Model(&model.Submission{}).Order("created_at desc").Offset(int(offset)).Limit(int(offset)).Select("submissions.id AS id, submissions.team_id AS team_id, submissions.challenge_id AS challenge_id, submissions.flag AS flag, submissions.is_correct AS is_correct, (valid_submissions.is_valid IS NOT NULL) AS is_valid, submissions.created_at as submitted_at").Joins("left outer join").Rows()
+	rows, err := r.db.Model(&model.Submission{}).Order("submissions.created_at desc").Offset(int(offset)).Limit(int(offset)).Select("submissions.id AS id, submissions.team_id AS team_id, submissions.challenge_id AS challenge_id, submissions.flag AS flag, submissions.is_correct AS is_correct, (valid_submissions.id IS NOT NULL) AS is_valid, submissions.created_at as submitted_at").Joins("LEFT OUTER JOIN valid_submissions ON submissions.id = valid_submissions.submission_id").Rows()
+	defer rows.Close()
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	submissions := make([]*Submission, 0, 1000)
+	for rows.Next() {
+		var submission Submission
+		r.db.ScanRows(rows, &submission)
+		submissions = append(submissions, &submission)
+	}
+	return submissions, nil
+}
+
+func (r *repository) ListSubmissionByIDs(ids []uint32) ([]*Submission, error) {
+	rows, err := r.db.Model(&model.Submission{}).Order("submissions.created_at desc").Select("submissions.id AS id, submissions.team_id AS team_id, submissions.challenge_id AS challenge_id, submissions.flag AS flag, submissions.is_correct AS is_correct, (valid_submissions.id IS NOT NULL) AS is_valid, submissions.created_at as submitted_at").Joins("LEFT OUTER JOIN valid_submissions ON submissions.id = valid_submissions.submission_id").Where("submissions.id IN ?", ids).Rows()
 	defer rows.Close()
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)

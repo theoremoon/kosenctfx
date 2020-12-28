@@ -119,7 +119,7 @@ func (s *server) Start(addr string) error {
 	e.POST("/admin/get-presigned-url", s.getPresignedURLHandler(), s.adminMiddleware)
 
 	// GraphQL
-	e.POST("/query", s.graphQLHandler(), s.resolveLoginMiddleware)
+	e.POST("/query", s.graphQLHandler(), s.resolveLoginMiddleware, s.attachLoaderMiddleware)
 	e.GET("/playground", s.playgroundHandler())
 
 	return e.Start(addr)

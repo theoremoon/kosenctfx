@@ -29,3 +29,8 @@ sql:
 
 pass:
 	echo 'select token from configs;' | docker-compose exec -T db mysql -u kosenctfxuser -pkosenctfxpassword kosenctfx
+
+SIZE=20
+seed:
+	(docker-compose exec scoreserver go run cmd/seeder/main.go -size $(SIZE))
+

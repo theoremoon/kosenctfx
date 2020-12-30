@@ -42,6 +42,7 @@ type Challenge struct {
 
 type ChallengeApp interface {
 	GetChallengeByID(challengeID uint32) (*Challenge, error)
+	ListChallengeByIDs(ids []uint32) ([]*Challenge, error)
 	GetChallengeByName(name string) (*Challenge, error)
 	GetRawChallengeByID(challengeID uint32) (*model.Challenge, error)
 	GetRawChallengeByName(name string) (*model.Challenge, error)
@@ -60,20 +61,65 @@ type ChallengeApp interface {
 	CheckSubmittable(teamID uint32) (bool, error)
 }
 
-func (app *app) GetChallengeByID(challengeID uint32) (*Challenge, error) {
-	return nil, NewErrorMessage("not implemented")
-}
+func (app *app) rawChallengesToChallenges(cs []*model.Challenge) ([]*Challenge, error) {
+	ids := make([]uint32, len(cs))
+	for i, c := range cs {
+		ids[i] = c.ID
+	}
 
-func (app *app) GetChallengeByName(name string) (*Challenge, error) {
-	c, err := app.repo.GetChallengeByName(name)
+	tags, err := app.repo.ListTagsByChallengeIDs(ids)
 	if err != nil {
-		if xerrors.As(err, &repository.NotFoundError{}) {
-			return nil, NewErrorMessage("No such challenge")
-		}
 		return nil, xerrors.Errorf(": %w", err)
 	}
+
+	attachments, err := app.repo.ListAttachmentsByChallengeIDs(ids)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	tagMap := make(map[uint32][]string)
+	for _, id := range ids {
+		tagMap[id] = make([]string, 0)
+	}
+	for _, t := range tags {
+		tagMap[t.ChallengeId] = append(tagMap[t.ChallengeId], t.Tag)
+	}
+
+	attachmentMap := make(map[uint32][]Attachment)
+	for _, id := range ids {
+		attachmentMap[id] = make([]Attachment, 0)
+	}
+	for _, a := range attachments {
+		attachmentMap[a.ChallengeId] = append(attachmentMap[a.ChallengeId], Attachment{
+			Name: a.Name,
+			URL:  a.URL,
+		})
+	}
+
+	chals := make([]*Challenge, len(cs))
+	for i, c := range cs {
+		chals[i] = &Challenge{
+			ID:          c.ID,
+			Name:        c.Name,
+			Flag:        c.Flag,
+			Description: c.Description,
+			Author:      c.Author,
+			Score:       0,            //TODO
+			SolvedBy:    []SolvedBy{}, // TODO
+			IsOpen:      c.IsOpen,
+			IsRunning:   false, // TODO
+			IsSurvey:    c.IsSurvey,
+			Tags:        tagMap[c.ID],
+			Attachments: attachmentMap[c.ID],
+		}
+	}
+	return chals, nil
+}
+
+func (app *app) rawChallengeToChallenge(c *model.Challenge) (*Challenge, error) {
 	chal := Challenge{
 		ID:          c.ID,
+		Name:        c.Name,
 		Flag:        c.Flag,
 		Description: c.Description,
 		Author:      c.Author,
@@ -107,6 +153,34 @@ func (app *app) GetChallengeByName(name string) (*Challenge, error) {
 
 	// TODO
 	return &chal, nil
+}
+
+func (app *app) GetChallengeByID(challengeID uint32) (*Challenge, error) {
+	c, err := app.GetRawChallengeByID(challengeID)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return app.rawChallengeToChallenge(c)
+}
+
+func (app *app) ListChallengeByIDs(ids []uint32) ([]*Challenge, error) {
+	cs, err := app.repo.ListChallengeByIDs(ids)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	chals, err := app.rawChallengesToChallenges(cs)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return chals, nil
+}
+
+func (app *app) GetChallengeByName(name string) (*Challenge, error) {
+	c, err := app.GetRawChallengeByName(name)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return app.rawChallengeToChallenge(c)
 }
 
 func (app *app) GetRawChallengeByID(challengeID uint32) (*model.Challenge, error) {

@@ -11,6 +11,7 @@ import Ranking from "../views/Ranking.vue";
 import Admin from "../views/Admin.vue";
 import AdminConfig from "../views/admin/Config.vue";
 import AdminChallenges from "../views/admin/Challenges.vue";
+import AdminSubmissions from "../views/admin/Submissions.vue";
 
 Vue.use(VueRouter);
 
@@ -73,6 +74,10 @@ const routes = [
       {
         path: "challenges",
         component: AdminChallenges
+      },
+      {
+        path: "submissions",
+        component: AdminSubmissions
       }
     ]
   }

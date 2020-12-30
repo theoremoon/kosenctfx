@@ -16,6 +16,7 @@ type App interface {
 	TeamApp
 	ChallengeApp
 	CTFApp
+	SubmissionApp
 	ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Challenge, *Scoreboard, error)
 }
 

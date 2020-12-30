@@ -46,6 +46,7 @@ func run() error {
 		return err
 	}
 	defer rawdb.Close()
+	rawdb.SetMaxOpenConns(100)
 
 	opt, err := redis.ParseURL(conf.RedisAddr)
 	if err != nil {

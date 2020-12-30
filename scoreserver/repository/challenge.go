@@ -12,6 +12,8 @@ type ChallengeRepository interface {
 
 	ListAllChallenges() ([]*model.Challenge, error)
 	ListOpenedChallenges() ([]*model.Challenge, error)
+	ListChallengeByIDs(ids []uint32) ([]*model.Challenge, error)
+
 	ListAllTags() ([]*model.Tag, error)
 	ListAllAttachments() ([]*model.Attachment, error)
 	FindTagsByChallengeID(id uint32) ([]*model.Tag, error)
@@ -22,6 +24,8 @@ type ChallengeRepository interface {
 
 	AddChallengeAttachment(a *model.Attachment) error
 	AddChallengeTag(t *model.Tag) error
+	ListTagsByChallengeIDs(ids []uint32) ([]*model.Tag, error)
+	ListAttachmentsByChallengeIDs(ids []uint32) ([]*model.Attachment, error)
 	DeleteAttachmentByChallengeId(challengeId uint32) error
 	DeleteTagByChallengeId(challengeId uint32) error
 
@@ -57,6 +61,14 @@ func (r *repository) ListAllChallenges() ([]*model.Challenge, error) {
 func (r *repository) ListOpenedChallenges() ([]*model.Challenge, error) {
 	var challenges []*model.Challenge
 	if err := r.db.Where("is_open = ?", true).Find(&challenges).Error; err != nil {
+		return nil, err
+	}
+	return challenges, nil
+}
+
+func (r *repository) ListChallengeByIDs(ids []uint32) ([]*model.Challenge, error) {
+	var challenges []*model.Challenge
+	if err := r.db.Where("id IN ?", ids).Find(&challenges).Error; err != nil {
 		return nil, err
 	}
 	return challenges, nil
@@ -137,6 +149,22 @@ func (r *repository) AddChallengeTag(t *model.Tag) error {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
+}
+
+func (r *repository) ListTagsByChallengeIDs(ids []uint32) ([]*model.Tag, error) {
+	var tags []*model.Tag
+	if err := r.db.Order("challenge_id asc").Where("challenge_id IN ?", ids).Find(&tags).Error; err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return tags, nil
+}
+
+func (r *repository) ListAttachmentsByChallengeIDs(ids []uint32) ([]*model.Attachment, error) {
+	var attachments []*model.Attachment
+	if err := r.db.Order("challenge_id asc").Where("challenge_id IN ?", ids).Find(&attachments).Error; err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return attachments, nil
 }
 
 func (r *repository) DeleteAttachmentByChallengeId(challengeId uint32) error {

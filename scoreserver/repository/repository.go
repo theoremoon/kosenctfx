@@ -2,9 +2,9 @@ package repository
 
 import (
 	"github.com/go-sql-driver/mysql"
-	"gorm.io/gorm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"golang.org/x/xerrors"
+	"gorm.io/gorm"
 )
 
 type Repository interface {

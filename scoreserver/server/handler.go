@@ -650,6 +650,31 @@ func (s *server) getPresignedURLHandler() echo.HandlerFunc {
 	}
 }
 
+func (s *server) sqlHandler() echo.HandlerFunc {
+
+	return func(c echo.Context) error {
+		req := new(struct {
+			Query string `json:"query"`
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		if req.Query == "" {
+			req.Query = "SELECT * FROM information_schema.tables WHERE table_schema=database()"
+		}
+
+		cols, rows, err := s.doQuery(req.Query)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"columns": cols,
+			"rows":    rows,
+		})
+	}
+}
+
 func (s *server) getChallengesJSON() (string, error) {
 	r, err := s.redis.Get(challengesJSONKey).Result()
 	if err == redis.Nil {
@@ -698,4 +723,42 @@ func (s *server) setCacheInfo(challenges, ranking string) error {
 	}
 
 	return nil
+}
+
+func (s *server) doQuery(query string) ([]string, []map[string]interface{}, error) {
+	rows, err := s.db.Raw(query).Rows()
+	if err != nil {
+		return nil, nil, xerrors.Errorf(": %w", err)
+	}
+
+	cols, err := rows.Columns()
+	if err != nil {
+		return nil, nil, xerrors.Errorf(": %w", err)
+	}
+	result := make([]map[string]interface{}, 0)
+	for rows.Next() {
+		row := make([]interface{}, len(cols))
+		row_ptr := make([]interface{}, len(cols))
+		for i := 0; i < len(row); i++ {
+			row_ptr[i] = &row[i]
+		}
+		if err := rows.Scan(row_ptr...); err != nil {
+			return nil, nil, xerrors.Errorf(": %w", err)
+		}
+
+		result_row := make(map[string]interface{})
+		for i := 0; i < len(cols); i++ {
+			switch v := (*row_ptr[i].(*interface{})).(type) {
+			case nil:
+				result_row[cols[i]] = nil
+			case []byte:
+				result_row[cols[i]] = string(v)
+			default:
+				result_row[cols[i]] = v
+			}
+		}
+
+		result = append(result, result_row)
+	}
+	return cols, result, nil
 }

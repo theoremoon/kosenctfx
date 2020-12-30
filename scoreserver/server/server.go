@@ -18,6 +18,7 @@ import (
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"github.com/theoremoon/kosenctfx/scoreserver/webhook"
 	"golang.org/x/xerrors"
+	"gorm.io/gorm"
 )
 
 var (
@@ -60,6 +61,7 @@ type Server interface {
 }
 type server struct {
 	app           service.App
+	db            *gorm.DB
 	Token         string
 	SessionKey    string
 	FrontendURL   string
@@ -70,9 +72,10 @@ type server struct {
 	Bucket        bucket.Bucket
 }
 
-func New(app service.App, redis *redis.Client, frontendURL, token string) *server {
+func New(app service.App, db *gorm.DB, redis *redis.Client, frontendURL, token string) *server {
 	return &server{
 		app:           app,
+		db:            db,
 		SessionKey:    "kosenctfx",
 		Token:         token,
 		FrontendURL:   frontendURL,
@@ -119,8 +122,10 @@ func (s *server) Start(addr string) error {
 	e.POST("/admin/get-presigned-url", s.getPresignedURLHandler(), s.adminMiddleware)
 
 	// GraphQL
-	e.POST("/query", s.graphQLHandler(), s.resolveLoginMiddleware, s.attachLoaderMiddleware)
+	// e.POST("/query", s.graphQLHandler(), s.resolveLoginMiddleware, s.attachLoaderMiddleware)
 	e.GET("/playground", s.playgroundHandler())
+
+	e.POST("/admin/sql", s.sqlHandler(), s.adminMiddleware)
 
 	return e.Start(addr)
 }

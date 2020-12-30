@@ -102,7 +102,7 @@ func run() error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	srv := server.New(app, redis, conf.Front, ctfConf.Token)
+	srv := server.New(app, db, redis, conf.Front, ctfConf.Token)
 	if conf.AdminWebhookURL != "" {
 		srv.AdminWebhook = webhook.NewDiscord(conf.AdminWebhookURL)
 	}

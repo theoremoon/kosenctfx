@@ -5,7 +5,7 @@ up:
 	parallel --lb sh -c ::: 'docker-compose up --build' 'cd ui; yarn watch'
 
 down:
-	docker-compose down
+	docker-compose down --remove-orphans
 
 build-production:
 	mkdir -p production

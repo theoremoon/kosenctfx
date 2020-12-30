@@ -32,5 +32,14 @@ pass:
 
 SIZE=20
 seed:
-	(docker-compose exec scoreserver go run cmd/seeder/main.go -size $(SIZE))
+	(docker-compose exec scoreserver go run cmd/seeder/main.go -size $(SIZE) -all)
+
+seed-challenges:
+	(docker-compose exec scoreserver go run cmd/seeder/main.go -size $(SIZE) -challenge)
+
+seed-submissions:
+	(docker-compose exec scoreserver go run cmd/seeder/main.go -size $(SIZE) -submission)
+
+seed-teams:
+	(docker-compose exec scoreserver go run cmd/seeder/main.go -size $(SIZE) -team)
 

@@ -82,6 +82,7 @@ type Submission struct {
 	TeamId      uint32
 	IsCorrect   bool
 	Flag        string
+	IPAddress   string
 }
 
 type ValidSubmission struct {

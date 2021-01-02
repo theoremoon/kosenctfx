@@ -288,7 +288,7 @@ func (s *server) submitHandler() echo.HandlerFunc {
 
 		// flag submission
 		flag := strings.Trim(req.Flag, " ")
-		challenge, correct, valid, err := s.app.SubmitFlag(lc.Team, flag, ctfStatus == service.CTFRunning)
+		challenge, correct, valid, err := s.app.SubmitFlag(lc.Team, lc.RealIP(), flag, ctfStatus == service.CTFRunning)
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}

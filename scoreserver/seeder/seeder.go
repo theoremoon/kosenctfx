@@ -71,7 +71,7 @@ func (s *seeder) Submission(t *model.Team, c *model.Challenge) (bool, error) {
 		flag = faker.Hacker().IngVerb()
 	}
 
-	_, _, is_correct, err := s.app.SubmitFlag(t, flag, true)
+	_, _, is_correct, err := s.app.SubmitFlag(t, faker.Internet().IpV4Address(), flag, true)
 	if err != nil {
 		return false, xerrors.Errorf(": %w", err)
 	}

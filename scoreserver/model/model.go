@@ -100,6 +100,13 @@ type SubmissionLock struct {
 	Until  int64
 }
 
+type Message struct {
+	Model
+
+	Key   string `gorm:"unique"`
+	Value string
+}
+
 type Config struct {
 	Model
 

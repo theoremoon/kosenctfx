@@ -12,6 +12,7 @@ type Repository interface {
 	ChallengeRepository
 	SubmissionRepository
 	ConfigRepository
+	MessageRepository
 	Migrate()
 }
 
@@ -36,6 +37,7 @@ func (r *repository) Migrate() {
 		&model.Submission{},
 		&model.ValidSubmission{},
 		&model.SubmissionLock{},
+		&model.Message{},
 		&model.Config{},
 	)
 }

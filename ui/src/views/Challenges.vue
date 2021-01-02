@@ -85,6 +85,12 @@ export default Vue.extend({
       message(this, "Login required / There are no challenges");
       this.$router.push("/");
     }
+    if (localStorage.filter) {
+      this.filter = localStorage.filter;
+    }
+    if (localStorage.showsolved) {
+      this.showsolved = localStorage.showsolved;
+    }
   },
   methods: {
     submit() {
@@ -149,6 +155,14 @@ export default Vue.extend({
           }
           return false;
         });
+    }
+  },
+  watch: {
+    filter(newFilter) {
+      localStorage.filter = newFilter;
+    },
+    showsolved(newShowsolved) {
+      localStorage.showsolved = newShowsolved;
     }
   }
 });

@@ -2,11 +2,9 @@
   <div class="my-4 mx-8">
     <h2 class="text-2xl">Current Challenges</h2>
     <div>
-      <input
-        type="button"
-        value="Open / Close Challenges"
-        @click="openCloseChallenges"
-      />
+      <button @click="openCloseChallenges" class="button">
+        Open / Close Challenges
+      </button>
     </div>
     <div class="mx-4">
       <table class="w-full challenges">

@@ -185,6 +185,7 @@ input[type="password"] {
   margin: 0.25rem;
   padding: 0.25rem 0;
 }
+
 input[type="submit"],
 .button {
   text-decoration: none;

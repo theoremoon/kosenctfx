@@ -9,9 +9,6 @@
       <router-link to="/admin/challenges" class="inline-block mr-2"
         >Challenges</router-link
       >
-      <router-link to="/admin/submissions" class="inline-block mr-2"
-        >Submissions</router-link
-      >
       <router-link to="/admin/sql" class="inline-block mr-2">SQL</router-link>
     </div>
     <router-view></router-view>

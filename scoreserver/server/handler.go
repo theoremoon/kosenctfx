@@ -461,9 +461,8 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 		status := service.CalcCTFStatus(conf)
 		if status == service.CTFRunning {
 			s.SystemWebhook.Post(fmt.Sprintf(ChallengeOpenSystemMessage, chal.Name))
-		} else {
-			s.AdminWebhook.Post(fmt.Sprintf(ChallengeOpenAdminMessage, chal.Name))
 		}
+		s.AdminWebhook.Post(fmt.Sprintf(ChallengeOpenAdminMessage, chal.Name))
 		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeOpenTemplate, chal.Name))
 	}
 }

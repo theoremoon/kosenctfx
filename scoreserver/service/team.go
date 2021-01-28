@@ -34,7 +34,7 @@ func (app *app) RegisterTeam(teamname, password, email, countryCode string) (*mo
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	if password == "" {
-		return nil, xerrors.Errorf(": %w", NewErrorMessage("password is required"))
+		return nil, xerrors.Errorf(": %w", NewErrorMessage(passwordRequiredMessage))
 	}
 	if err := app.validateEmail(email); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -91,7 +91,7 @@ func (app *app) GetTeamByID(teamID uint32) (*model.Team, error) {
 func (app *app) GetLoginTeam(token string) (*model.Team, error) {
 	team, err := app.repo.GetTeamByLoginToken(token)
 	if err != nil && xerrors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, NewErrorMessage("invalid token")
+		return nil, NewErrorMessage(tokenInvalidMessage)
 	} else if err != nil {
 		return nil, err
 	}
@@ -101,12 +101,12 @@ func (app *app) GetLoginTeam(token string) (*model.Team, error) {
 func (app *app) Login(teamname, password, ipaddress string) (*model.LoginToken, error) {
 	t, err := app.repo.GetTeamByName(teamname)
 	if err != nil && xerrors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, NewErrorMessage("no such team")
+		return nil, NewErrorMessage(teamNotfoundMessage)
 	} else if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	if !checkPassword(password, []byte(t.PasswordHash)) {
-		return nil, NewErrorMessage("password mismatch")
+		return nil, NewErrorMessage(wrongPasswordMessage)
 	}
 
 	token := model.LoginToken{
@@ -125,7 +125,7 @@ func (app *app) PasswordResetRequest(email string) error {
 	t, err := app.repo.GetTeamByEmail(email)
 	if err != nil {
 		if xerrors.As(err, &repository.NotFoundError{}) {
-			return NewErrorMessage("invalid email")
+			return NewErrorMessage(emailNotfoundMessage)
 		}
 		return err
 	}
@@ -139,7 +139,7 @@ func (app *app) PasswordResetRequest(email string) error {
 		return err
 	}
 
-	if err := app.mailer.Send(email, "password reset token", fmt.Sprintf("your password reset token is: %s", token.Token)); err != nil {
+	if err := app.mailer.Send(email, passwordResetMailTitle, fmt.Sprintf(passwordResetMailBody, token.Token)); err != nil {
 		return err
 	}
 	return nil
@@ -147,13 +147,13 @@ func (app *app) PasswordResetRequest(email string) error {
 
 func (app *app) PasswordReset(token, newpassword string) error {
 	if newpassword == "" {
-		return NewErrorMessage("password is required")
+		return NewErrorMessage(passwordRequiredMessage)
 	}
 
 	t, err := app.repo.GetTeamByPasswordResetToken(token)
 	if err != nil {
 		if xerrors.As(err, &repository.NotFoundError{}) {
-			return NewErrorMessage("token is invalid or expired")
+			return NewErrorMessage(passwordResetTokenInvalidMessage)
 		}
 		return xerrors.Errorf(": %w", err)
 	}
@@ -172,7 +172,7 @@ func (app *app) PasswordReset(token, newpassword string) error {
 
 func (app *app) PasswordUpdate(team *model.Team, newpassword string) error {
 	if newpassword == "" {
-		return NewErrorMessage("password is required")
+		return NewErrorMessage(passwordRequiredMessage)
 	}
 	if err := app.repo.UpdateTeamPassword(team, hashPassword(newpassword)); err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -182,7 +182,7 @@ func (app *app) PasswordUpdate(team *model.Team, newpassword string) error {
 
 func (app *app) UpdateTeamname(team *model.Team, newTeamname string) error {
 	if newTeamname == "" {
-		return NewErrorMessage("teamname is required")
+		return NewErrorMessage(teamnameRequiredMessage)
 	}
 	if err := app.repo.UpdateTeamname(team, newTeamname); err != nil {
 		if xerrors.As(err, &repository.DuplicatedError{}) {
@@ -195,7 +195,7 @@ func (app *app) UpdateTeamname(team *model.Team, newTeamname string) error {
 
 func (app *app) UpdateCountry(team *model.Team, newCountryCode string) error {
 	if newCountryCode == "" {
-		return NewErrorMessage("countrycode is required")
+		return NewErrorMessage(countrycodeRequiredMessage)
 	}
 
 	country, err := validateCountryCode(newCountryCode)
@@ -211,14 +211,14 @@ func (app *app) UpdateCountry(team *model.Team, newCountryCode string) error {
 
 func (app *app) validateTeamname(teamname string) error {
 	if teamname == "" {
-		return NewErrorMessage("teamname is required")
+		return NewErrorMessage(teamnameRequiredMessage)
 	}
 	if len(teamname) >= 128 {
-		return NewErrorMessage("teamname should be shorter than 128")
+		return NewErrorMessage(teamnameTooLongMessage)
 	}
 
 	if _, err := app.repo.GetTeamByName(teamname); err == nil {
-		return NewErrorMessage("teamname already used")
+		return NewErrorMessage(teamnameDuplicatedMessage)
 	} else if err != nil && !xerrors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
@@ -227,14 +227,14 @@ func (app *app) validateTeamname(teamname string) error {
 
 func (app *app) validateEmail(email string) error {
 	if email == "" {
-		return NewErrorMessage("email is required")
+		return NewErrorMessage(emailRequiredMessage)
 	}
 	if len(email) >= 127 {
-		return NewErrorMessage("email should be shorter than 128")
+		return NewErrorMessage(emailTooLongMessage)
 	}
 
 	if _, err := app.repo.GetTeamByEmail(email); err == nil {
-		return NewErrorMessage("email already used")
+		return NewErrorMessage(emailDuplicatedMessage)
 	} else if err != nil && !xerrors.As(err, &repository.NotFoundError{}) {
 		log.Printf("%v\n", err)
 		log.Printf("%v\n", xerrors.As(err, &repository.NotFoundError{}))
@@ -264,7 +264,7 @@ func validateCountryCode(countryCode string) (string, error) {
 	q := gountries.New()
 	c, err := q.FindCountryByAlpha(countryCode)
 	if err != nil {
-		return "", NewErrorMessage("invalid country code. please follow ISO 3166-1 alpha-2")
+		return "", NewErrorMessage(countrycodeInvalidMessage)
 	}
 	return c.Alpha2, nil
 }

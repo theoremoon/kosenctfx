@@ -277,7 +277,7 @@ func (s *server) submitHandler() echo.HandlerFunc {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		if !submittable {
-			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage("Your submission is currently locked")))
+			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage(SubmissionLockedMessage)))
 		}
 
 		conf, err := s.app.GetCTFConfig()
@@ -295,25 +295,25 @@ func (s *server) submitHandler() echo.HandlerFunc {
 
 		if valid {
 			s.SystemWebhook.Post(fmt.Sprintf(
-				"`%s` solved `%s` :100:",
+				ValidSubmissionSystemMessage,
 				lc.Team.Teamname,
 				challenge.Name,
 			))
 			s.AdminWebhook.Post(fmt.Sprintf(
-				"`%s` solved `%s` :100:, `%s`",
+				ValidSubmissionAdminMessage,
 				lc.Team.Teamname,
 				challenge.Name,
 				req.Flag,
 			))
-			return messageHandle(c, fmt.Sprintf("correct! solved `%s` and got score", challenge.Name))
+			return messageHandle(c, fmt.Sprintf(ValidSubmissionMessage, challenge.Name))
 		} else if correct {
 			s.AdminWebhook.Post(fmt.Sprintf(
-				"`%s` solved `%s`: `%s`",
+				CorrectSubmissionAdminMessage,
 				lc.Team.Teamname,
 				challenge.Name,
 				req.Flag,
 			))
-			return messageHandle(c, fmt.Sprintf("correct. solved `%s`", challenge.Name))
+			return messageHandle(c, fmt.Sprintf(CorrectSubmissionMessage, challenge.Name))
 		} else {
 			// wrong count
 			count, err := s.app.GetWrongCount(lc.Team.ID, time.Duration(conf.LockDuration)*time.Second)
@@ -327,11 +327,11 @@ func (s *server) submitHandler() echo.HandlerFunc {
 			}
 
 			s.AdminWebhook.Post(fmt.Sprintf(
-				"`%s` submit flag `%s`, but wrong.",
+				WrongSubmissionAdminMessage,
 				lc.Team.Teamname,
 				req.Flag,
 			))
-			return errorHandle(c, service.NewErrorMessage("wrong flag"))
+			return errorHandle(c, service.NewErrorMessage(WrongSubmissionMessage))
 		}
 	}
 }
@@ -344,7 +344,7 @@ func (s *server) scoreEmulateHandler() echo.HandlerFunc {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		if maxCount < 0 {
-			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage("maxCount should be larger than 0")))
+			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage(ScoreEmulateMaxCountTooSmallMessage)))
 		}
 
 		expr := c.QueryParam("expr")
@@ -460,9 +460,9 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 
 		status := service.CalcCTFStatus(conf)
 		if status == service.CTFRunning {
-			s.SystemWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
+			s.SystemWebhook.Post(fmt.Sprintf(ChallengeOpenSystemMessage, chal.Name))
 		} else {
-			s.AdminWebhook.Post(fmt.Sprintf("Challenge `%s` opened!", chal.Name))
+			s.AdminWebhook.Post(fmt.Sprintf(ChallengeOpenAdminMessage, chal.Name))
 		}
 		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeOpenTemplate, chal.Name))
 	}
@@ -487,7 +487,7 @@ func (s *server) closeChallengeHandler() echo.HandlerFunc {
 		if err := s.app.CloseChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		s.SystemWebhook.Post(fmt.Sprintf("Challenge `%s` closed!", chal.Name))
+		s.SystemWebhook.Post(fmt.Sprintf(ChallengeClosedAdminMessage, chal.Name))
 		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeCloseTemplate, chal.Name))
 	}
 }
@@ -613,9 +613,9 @@ func (s *server) setChallengeStatusHandler() echo.HandlerFunc {
 		}
 
 		if req.Result {
-			s.SolveWebhook.Post(fmt.Sprintf(":heavy_check_mark: Solvability Checked: `%s`", chal.Name))
+			s.SolveWebhook.Post(fmt.Sprintf(SolvabilityCheckedSolveMessage, chal.Name))
 		} else {
-			s.SystemWebhook.Post(fmt.Sprintf(":warning: failed to solve: `%s`", chal.Name))
+			s.SystemWebhook.Post(fmt.Sprintf(SolvabilityFailedSystemMessage, chal.Name))
 		}
 		return c.NoContent(http.StatusOK)
 	}
@@ -630,11 +630,11 @@ func (s *server) getPresignedURLHandler() echo.HandlerFunc {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		if req.Key == "" {
-			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage("Key is required")))
+			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage(PresignedURLKeyRequiredMessage)))
 		}
 
 		if s.Bucket == nil {
-			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage("Bucket information is not registered to the server")))
+			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage(BucketNullMessage)))
 		}
 
 		key := uuid.New().String() + "/" + req.Key

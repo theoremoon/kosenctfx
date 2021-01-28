@@ -187,7 +187,7 @@ func (app *app) GetRawChallengeByID(challengeID uint32) (*model.Challenge, error
 	chal, err := app.repo.GetChallengeByID(challengeID)
 	if err != nil {
 		if xerrors.As(err, &repository.NotFoundError{}) {
-			return nil, NewErrorMessage("No such challenge")
+			return nil, NewErrorMessage(challengeNotfoundMessage)
 		}
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -198,7 +198,7 @@ func (app *app) GetRawChallengeByName(name string) (*model.Challenge, error) {
 	chal, err := app.repo.GetChallengeByName(name)
 	if err != nil {
 		if xerrors.As(err, &repository.NotFoundError{}) {
-			return nil, NewErrorMessage("No such challenge")
+			return nil, NewErrorMessage(challengeNotfoundMessage)
 		}
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -233,7 +233,7 @@ func (app *app) AddChallenge(c *Challenge) error {
 	err := app.repo.AddChallenge(&chal)
 	if err != nil {
 		if xerrors.As(err, &repository.DuplicatedError{}) {
-			return NewErrorMessage("challenge is duplicated: " + chal.Name)
+			return NewErrorMessage(fmt.Sprintf(challengeDuplicatedMessage, c.Name))
 		}
 		return xerrors.Errorf(": %w", err)
 	}
@@ -407,6 +407,6 @@ func CalcChallengeScore(solveCount int, scoreExpr string) (int, error) {
 	case uint64:
 		return int(v), nil
 	default:
-		return 0, xerrors.Errorf(": %w", NewErrorMessage(fmt.Sprintf("score calculation returns invalid type: %T", r)))
+		return 0, xerrors.Errorf("score calculation returns invalid type: %T", r)
 	}
 }

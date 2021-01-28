@@ -12,6 +12,27 @@ import (
 	"golang.org/x/xerrors"
 )
 
+const (
+	challengeNotfoundMessage = "no such challenge"
+	challengeDuplicatedMessage = "Challenge %s is already exist"
+	countrycodeInvalidMessage = "invalid country code. please follow ISO 3166-1 alpha-2"
+	countrycodeRequiredMessage = "countrycode is required"
+	emailDuplicatedMessage = "email already used"
+	emailNotfoundMessage = "invalid email address"
+	emailRequiredMessage = "email is required"
+	emailTooLongMessage = "email should be shorter than 128 bytes"
+	passwordRequiredMessage = "password is required"
+	passwordResetMailBody = "Your password reset token is: %s"
+	passwordResetMailTitle = "Password reset token"
+	passwordResetTokenInvalidMessage = "password reset token is invalid"
+	teamNotfoundMessage = "no such team"
+	teamnameDuplicatedMessage = "teamname already used"
+	teamnameRequiredMessage = "teamname is required"
+	teamnameTooLongMessage = "teamname should be shorter than 128 bytes"
+	tokenInvalidMessage = "invalid token"
+	wrongPasswordMessage = "password mismatch"
+)
+
 type App interface {
 	TeamApp
 	ChallengeApp

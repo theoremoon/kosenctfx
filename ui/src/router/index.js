@@ -49,6 +49,10 @@ const routes = [
   },
   {
     path: "/challenges",
+    component: Challenges
+  },
+  {
+    path: "/challenges/:id",
     name: "Challenges",
     component: Challenges
   },

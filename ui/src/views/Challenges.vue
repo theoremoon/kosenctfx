@@ -19,16 +19,18 @@
       </div>
     </div>
 
-    <div v-if="focus">
-      <div class="focus-background" @click="focus = null"></div>
-      <challenge-dialog :c="focus" />
+    <div v-if="focusedchallenge">
+      <router-link tag="div" class="focus-background" to="/challenges"></router-link>
+      <challenge-dialog :c="focusedchallenge" />
     </div>
 
     <div
       class="challenges mt-4 grid gap-4 sm:grid-cols-1 md:grid-cols-3 xl:grid-cols-5"
       v-else
     >
-      <div
+      <router-link
+        :to="'/challenges/' + c.id"
+        tag="div"
         class="challenge"
         v-for="c in list_challenges"
         :class="{
@@ -40,7 +42,6 @@
             c.solved_by.map(e => e.team_name).includes($store.teamname)
         }"
         :key="c.name"
-        @click="focus = c"
       >
         <p class="challenge-name">{{ c.name }}</p>
         <div class="flex justify-around">
@@ -58,7 +59,7 @@
             tag
           }}</span>
         </div>
-      </div>
+      </router-link>
     </div>
   </div>
 </template>
@@ -76,7 +77,6 @@ export default Vue.extend({
     return {
       flag: "",
       filter: "",
-      focus: null,
       showsolved: false
     };
   },
@@ -119,8 +119,9 @@ export default Vue.extend({
   },
   computed: {
     focusedchallenge() {
+      const id = this.$route.params.id;
       for (const c of this.$store.challenges) {
-        if (c.name == this.focus) {
+        if (c.id == id) {
           return c;
         }
       }

@@ -20,7 +20,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="t in orderedTeams" :key="t.team_id">
+        <tr v-for="t in orderedTeams" :key="t.team_id" :class="{myteam: t.team_id === $store.teamid}">
           <td class="text-center">{{ t.pos }}</td>
           <td>
             <router-link :to="'/team/' + t.team_id">{{ t.team }}</router-link>
@@ -200,5 +200,9 @@ export default Vue.extend({
   }
 
   white-space: pre;
+}
+
+.myteam {
+  background-color: rgba(#ffffff, 0.25);
 }
 </style>

@@ -186,6 +186,15 @@ export default Vue.extend({
     border-bottom: 1px solid $fg-color;
   }
 
+  th {
+    vertical-align: bottom;
+  }
+
+  td {
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+  }
+
   th:nth-child(-n + 3),
   td:nth-child(-n + 3) {
     padding-right: 0.5rem;
@@ -198,7 +207,7 @@ export default Vue.extend({
     transform: rotate(-30deg);
     width: 2em;
   }
-
+  padding-top: 25%;
   white-space: pre;
 }
 

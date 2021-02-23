@@ -6,19 +6,12 @@ CTF Scoreserver for InterKosenCTF 2020
 
 ```
 .
-├── ansible
-│   └── docker.yml           -- ansible scripts for installing docker
 ├── docker-compose.yml
+├── docker-compose.prod.yml
 ├── Dockerfile
-├── envfile_example
 ├── Makefile
 ├── README.md
 ├── scoreserver              -- backend (golang)
-├── solvability_check        -- toy script for solvability check
-├── tool                     -- ctf management tool (python)
-│   ├── ctf_config.yml
-│   ├── config.ini_example
-│   └── tool.py
 └── ui                       -- frontend (vue)
 ```
 

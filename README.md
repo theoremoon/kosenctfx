@@ -11,6 +11,7 @@ CTF Scoreserver for InterKosenCTF 2020
 ├── Dockerfile
 ├── Makefile
 ├── README.md
+├── schema                   -- GraphQL Schema (currently not use)
 ├── scoreserver              -- backend (golang)
 └── ui                       -- frontend (vue)
 ```
@@ -19,17 +20,7 @@ CTF Scoreserver for InterKosenCTF 2020
 
 up database / redis / file storate
 ```
-$ docker-compose up
-```
-
-run scoreserver
-```
-$ make run
-```
-
-run frontend
-```
-$ cd ui; yarn serve
+$ make up
 ```
 
 ## Note

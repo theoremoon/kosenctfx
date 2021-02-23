@@ -13,7 +13,7 @@ build-production:
 
 build: generate
 	mkdir -p bin
-	(cd scoreserver; go build -o ../bin)
+	(cd scoreserver; go build -o ../bin; go build -o ../bin ./cmd/...)
 
 build-ui:
 	(cd ui; yarn build)

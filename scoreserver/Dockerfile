@@ -13,5 +13,5 @@ COPY --from=builder /wayt /wayt
 COPY --from=builder /go/src/github.com/theoremoon/kosenctfx/scoreserver/scoreserver /scoreserver
 
 
-ENTRYPOINT sh -c '/wayt sql -dsn "$DBDSN" && /scoreserver'
+CMD sh -c '/wayt sql -dsn "$DBDSN" && /scoreserver'
 

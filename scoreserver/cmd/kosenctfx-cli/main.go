@@ -12,6 +12,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
@@ -67,6 +69,32 @@ func setChallenge(url, token string, taskInfo TaskYaml) error {
 	return nil
 }
 
+func loadTaskYaml(path string) (*TaskYaml, error) {
+	// load task.yml
+	taskb, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var tasky TaskYaml
+	if err := yaml.Unmarshal(taskb, &tasky); err != nil {
+		return nil, err
+	}
+
+	hostStr := ""
+	if tasky.Host != nil {
+		hostStr = *tasky.Host
+	}
+	portStr := ""
+	if tasky.Port != nil {
+		portStr = strconv.FormatInt(int64(*tasky.Port), 10)
+	}
+
+	r := strings.NewReplacer("{host}", hostStr, "{port}", portStr)
+	tasky.Description = r.Replace(tasky.Description)
+	return &tasky, nil
+}
+
 func run() error {
 	var url, token, dir, hashfile string
 	flag.StringVar(&url, "url", "", "An endpoint of scoreserver")
@@ -82,6 +110,7 @@ func run() error {
 		flag.Usage()
 		return nil
 	}
+	url = strings.TrimSuffix(url, "/") // remove trailing /
 
 	hash_entries := make(map[string]string)
 
@@ -104,14 +133,8 @@ func run() error {
 		if info.Name() != "task.yml" {
 			return nil
 		}
-		// load task.yml
-		taskb, err := ioutil.ReadFile(path)
+		tasky, err := loadTaskYaml(path)
 		if err != nil {
-			return err
-		}
-
-		var tasky TaskYaml
-		if err := yaml.Unmarshal(taskb, &tasky); err != nil {
 			return err
 		}
 
@@ -121,7 +144,7 @@ func run() error {
 		h2, exist := hash_entries[tasky.Name]
 		if !exist || h1 != h2 {
 			hash_entries[tasky.Name] = h1
-			targets[dirpath] = &tasky
+			targets[dirpath] = tasky
 
 		} else {
 			log.Printf("[+] SKIP: %s\n", tasky.Name)

@@ -66,9 +66,8 @@ func (b *s3Bucket) CreateBucket() error {
 	})
 	if aerr, ok := err.(awserr.Error); ok && (aerr.Code() == s3.ErrCodeBucketAlreadyExists || aerr.Code() == s3.ErrCodeBucketAlreadyOwnedByYou) {
 		// すでにbucketがある場合は何もしない
-		return nil
-	}
-	if err != nil {
+		// return nil
+	} else if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 

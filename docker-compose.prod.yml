@@ -16,8 +16,9 @@ services:
   minio:
     image: minio/minio
     ports:
-      - "9000:9000"
-      - "8000:80"
+      - "9000:9000" # minio
+      - "8000:80"   # ui
+      - "5000:5000" # scoreserver
     environment:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: minio123

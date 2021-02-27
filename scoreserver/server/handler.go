@@ -486,7 +486,7 @@ func (s *server) closeChallengeHandler() echo.HandlerFunc {
 		if err := s.app.CloseChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		s.SystemWebhook.Post(fmt.Sprintf(ChallengeClosedAdminMessage, chal.Name))
+		s.AdminWebhook.Post(fmt.Sprintf(ChallengeClosedAdminMessage, chal.Name))
 		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeCloseTemplate, chal.Name))
 	}
 }

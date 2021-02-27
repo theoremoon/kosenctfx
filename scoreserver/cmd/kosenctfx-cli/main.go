@@ -158,13 +158,16 @@ func run() error {
 	}
 
 	for d, tasky := range targets {
+		taskID := filepath.Base(d)
 		attachments := make([]service.Attachment, 0, 10)
 		err = func() error {
 			distdir := filepath.Join(d, "distfiles")
 			if _, err := os.Stat(distdir); err != nil {
 				return nil
 			}
-			cmd := exec.Command("sh", "-c", "find . -type f | tar cz --files-from=- --to-stdout  --sort=name")
+
+			transform := fmt.Sprintf(" --transform 's:^\\./:./%s/:'", taskID)
+			cmd := exec.Command("sh", "-c", "find . -type f | tar cz --files-from=- --to-stdout  --sort=name"+transform)
 			cmd.Dir = distdir
 			tardata, err := cmd.Output()
 			if err != nil {
@@ -172,7 +175,7 @@ func run() error {
 				return nil
 			}
 			md5sum := md5.Sum(tardata)
-			filename := fmt.Sprintf("%s_%s.tar.gz", filepath.Base(d), hex.EncodeToString(md5sum[:]))
+			filename := fmt.Sprintf("%s_%s.tar.gz", taskID, hex.EncodeToString(md5sum[:]))
 			dlUrl, err := uploadFile(url, token, filename, tardata)
 			if err != nil {
 				return err

@@ -30,7 +30,7 @@ type TaskYaml struct {
 	Attachments []service.Attachment
 	Host        *string
 	Port        *int
-	IsSurvey    bool `yaml:"is_survey"`
+	IsSurvey    bool `yaml:"is_survey" json:"is_survey"`
 }
 
 func uploadFile(url, token, filename string, blob []byte) (string, error) {

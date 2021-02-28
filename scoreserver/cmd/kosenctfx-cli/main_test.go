@@ -36,3 +36,13 @@ func TestMakeDistFiles(t *testing.T) {
 		t.Errorf("expected:\n%s\n\noutput:\n%s", expected, output)
 	}
 }
+
+func TeetLoadTaskYaml(t *testing.T) {
+	y, err := loadTaskYaml("./testdata/survey/survey/task.yml")
+	if err != nil {
+		t.Errorf("%+v\n", err)
+	}
+	if !y.IsSurvey {
+		t.Error("IsSurvey should be true\n")
+	}
+}

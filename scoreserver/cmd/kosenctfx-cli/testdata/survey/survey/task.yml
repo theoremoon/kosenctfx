@@ -1,0 +1,10 @@
+---
+name: "Survey"
+description: >
+  <p>Please give us feedback <a href="https://example.com/?flag=zer0pts{thank_you_and_see_you_next_time}">here</a></p>
+  <small>As for the survey task, when you solve is not affects to the last submission time. You don't need to hurry up to submit the flag. Please give us detailed feedbask as possible as you can!</small>
+flag: "zer0pts{thank_you_and_see_you_next_time}"
+author: zer0pts
+tags:
+    - survey
+is_survey: true

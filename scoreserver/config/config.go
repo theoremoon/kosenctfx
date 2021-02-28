@@ -6,22 +6,22 @@ import (
 )
 
 type Config struct {
-	Dbdsn                string
-	Addr                 string
-	RedisAddr            string
-	Front                string
-	Email                string
-	MailServer           string
-	MailPassword         string
-	AdminWebhookURL      string
-	SolveCheckWebhookURL string
-	SystemWebhookURL     string
-	BucketEndpoint       string
-	BucketRegion         string
-	BucketAccessKey      string
-	BucketSecretKey      string
-	BucketName           string
-	InsecureBucket       bool
+	Dbdsn              string
+	Addr               string
+	RedisAddr          string
+	Front              string
+	Email              string
+	MailServer         string
+	MailPassword       string
+	AdminWebhookURL    string
+	SolveLogWebhookURL string
+	TaskOpenWebhookURL string
+	BucketEndpoint     string
+	BucketRegion       string
+	BucketAccessKey    string
+	BucketSecretKey    string
+	BucketName         string
+	InsecureBucket     bool
 }
 
 func getEnv(name string) (string, error) {
@@ -70,8 +70,8 @@ func Load() (*Config, error) {
 	}
 
 	adminWebhookURL, _ := getEnv("ADMIN_WEBHOOK")
-	solveCheckWebhookURL, _ := getEnv("SOLVE_WEBHOOK")
-	systemWebhookURL, _ := getEnv("SYSTEM_WEBHOOK")
+	solveLogWebhookURL, _ := getEnv("SOLVE_WEBHOOK")
+	taskOpenWebhookURL, _ := getEnv("TASK_OPEN_WEBHOOK")
 
 	bucketEndpoint, _ := getEnv("BUCKET_ENDPOINT")
 	bucketRegion, _ := getEnv("BUCKET_REGION")
@@ -84,21 +84,21 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		Dbdsn:                dbdsn,
-		Addr:                 addr,
-		RedisAddr:            redisAddr,
-		Front:                front,
-		Email:                mailaccount,
-		MailServer:           mailserver,
-		MailPassword:         mailpassword,
-		AdminWebhookURL:      adminWebhookURL,
-		SolveCheckWebhookURL: solveCheckWebhookURL,
-		SystemWebhookURL:     systemWebhookURL,
-		BucketEndpoint:       bucketEndpoint,
-		BucketRegion:         bucketRegion,
-		BucketAccessKey:      bucketAccessKey,
-		BucketSecretKey:      bucketSecretKey,
-		BucketName:           bucketName,
-		InsecureBucket:       insecureBucket,
+		Dbdsn:              dbdsn,
+		Addr:               addr,
+		RedisAddr:          redisAddr,
+		Front:              front,
+		Email:              mailaccount,
+		MailServer:         mailserver,
+		MailPassword:       mailpassword,
+		AdminWebhookURL:    adminWebhookURL,
+		SolveLogWebhookURL: solveLogWebhookURL,
+		TaskOpenWebhookURL: taskOpenWebhookURL,
+		BucketEndpoint:     bucketEndpoint,
+		BucketRegion:       bucketRegion,
+		BucketAccessKey:    bucketAccessKey,
+		BucketSecretKey:    bucketSecretKey,
+		BucketName:         bucketName,
+		InsecureBucket:     insecureBucket,
 	}, nil
 }

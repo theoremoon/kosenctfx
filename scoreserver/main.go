@@ -106,11 +106,11 @@ func run() error {
 	if conf.AdminWebhookURL != "" {
 		srv.AdminWebhook = webhook.NewDiscord(conf.AdminWebhookURL)
 	}
-	if conf.SystemWebhookURL != "" {
-		srv.SystemWebhook = webhook.NewDiscord(conf.SystemWebhookURL)
+	if conf.TaskOpenWebhookURL != "" {
+		srv.TaskOpenWebhook = webhook.NewDiscord(conf.TaskOpenWebhookURL)
 	}
-	if conf.SolveCheckWebhookURL != "" {
-		srv.SolveWebhook = webhook.NewDiscord(conf.SolveCheckWebhookURL)
+	if conf.SolveLogWebhookURL != "" {
+		srv.SolveLogWebhook = webhook.NewDiscord(conf.SolveLogWebhookURL)
 	}
 	if conf.BucketName != "" {
 		b := bucket.NewS3Bucket(

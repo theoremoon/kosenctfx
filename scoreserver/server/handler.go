@@ -294,7 +294,7 @@ func (s *server) submitHandler() echo.HandlerFunc {
 		}
 
 		if valid {
-			s.SystemWebhook.Post(fmt.Sprintf(
+			s.SolveLogWebhook.Post(fmt.Sprintf(
 				ValidSubmissionSystemMessage,
 				lc.Team.Teamname,
 				challenge.Name,
@@ -460,7 +460,7 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 
 		status := service.CalcCTFStatus(conf)
 		if status == service.CTFRunning {
-			s.SystemWebhook.Post(fmt.Sprintf(ChallengeOpenSystemMessage, chal.Name))
+			s.TaskOpenWebhook.Post(fmt.Sprintf(ChallengeOpenSystemMessage, chal.Name))
 		}
 		s.AdminWebhook.Post(fmt.Sprintf(ChallengeOpenAdminMessage, chal.Name))
 		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeOpenTemplate, chal.Name))
@@ -590,33 +590,6 @@ func (s *server) listChallengesHandler() echo.HandlerFunc {
 			"challenges": challenges,
 			"ranking":    ranking,
 		})
-	}
-}
-
-func (s *server) setChallengeStatusHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		req := new(struct {
-			Name   string `json:"name"`
-			Result bool   `json:"result"`
-		})
-		if err := c.Bind(req); err != nil {
-			return errorHandle(c, xerrors.Errorf(": %w", err))
-		}
-
-		chal, err := s.app.GetRawChallengeByName(req.Name)
-		if err != nil {
-			return errorHandle(c, xerrors.Errorf(": %w", err))
-		}
-		if !chal.IsOpen {
-			return c.NoContent(http.StatusOK)
-		}
-
-		if req.Result {
-			s.SolveWebhook.Post(fmt.Sprintf(SolvabilityCheckedSolveMessage, chal.Name))
-		} else {
-			s.SystemWebhook.Post(fmt.Sprintf(SolvabilityFailedSystemMessage, chal.Name))
-		}
-		return c.NoContent(http.StatusOK)
 	}
 }
 

@@ -22,45 +22,45 @@ import (
 )
 
 var (
-	AdminUnauthorizedMessage      = "you are not the admin"
-	AlreadyAuthorizedMessage      = "you are already login"
-	BucketNullMessage = "Bucket information is not registered to the server"
-	CTFAlreadyStartedMessage = "CTF has already started"
-	CTFClosedMessage          = "Competition is closed now"
-	CTFNotRunningMessage     = "CTF not running"
-	CTFNotStartedMessage     = "CTF has not started yet"
-	ChallengeAddTemplate           = "Add challenge: `%s`"
-	ChallengeAlreadyClosedTemplate = "`%s` is already closed"
-	ChallengeAlreadyOpenedTemplate = "`%s` is already opened"
-	ChallengeCloseTemplate         = "`%s` is closed"
-	ChallengeClosedAdminMessage = "Challenge `%s` closed"
-	ChallengeOpenAdminMessage = "Challenge `%s` opened!"
-	ChallengeOpenSystemMessage = "Challenge `%s` opened!"
-	ChallengeOpenTemplate          = "`%s` is opened"
-	ChallengeUpdateTemplate        = "Updated the challenge: `%s`"
-	ConfigUpdateMessage = "Config is Updated"
-	CorrectSubmissionAdminMessage = "`%s` solved `%s`: `%s`"
-	CorrectSubmissionMessage = "correct. solved `%s`"
-	InvalidRequestMessage         = "invalid request"
-	LoginMessage                  = "logged in"
-	LogoutMessage                 = "logged out"
-	NotImplementedMessage = "Not Implemented"
-	PasswordResetEmailSentMessage = "password reset email has been sent"
-	PasswordUpdateMessage         = "password is successfully reset"
-	PresignedURLKeyRequiredMessage = "Key is required"
-	ProfileUpdateMessage          = "team profile is successfully updated"
-	RegisteredMessage             = "registered"
-	RegistrationClosedMessage = "Registraction is closed now"
+	AdminUnauthorizedMessage            = "you are not the admin"
+	AlreadyAuthorizedMessage            = "you are already login"
+	BucketNullMessage                   = "Bucket information is not registered to the server"
+	CTFAlreadyStartedMessage            = "CTF has already started"
+	CTFClosedMessage                    = "Competition is closed now"
+	CTFNotRunningMessage                = "CTF not running"
+	CTFNotStartedMessage                = "CTF has not started yet"
+	ChallengeAddTemplate                = "Add challenge: `%s`"
+	ChallengeAlreadyClosedTemplate      = "`%s` is already closed"
+	ChallengeAlreadyOpenedTemplate      = "`%s` is already opened"
+	ChallengeCloseTemplate              = "`%s` is closed"
+	ChallengeClosedAdminMessage         = "Challenge `%s` closed"
+	ChallengeOpenAdminMessage           = "Challenge `%s` opened!"
+	ChallengeOpenSystemMessage          = "Challenge `%s` opened!"
+	ChallengeOpenTemplate               = "`%s` is opened"
+	ChallengeUpdateTemplate             = "Updated the challenge: `%s`"
+	ConfigUpdateMessage                 = "Config is Updated"
+	CorrectSubmissionAdminMessage       = "`%s` solved `%s`: `%s`"
+	CorrectSubmissionMessage            = "correct. solved `%s`"
+	InvalidRequestMessage               = "invalid request"
+	LoginMessage                        = "logged in"
+	LogoutMessage                       = "logged out"
+	NotImplementedMessage               = "Not Implemented"
+	PasswordResetEmailSentMessage       = "password reset email has been sent"
+	PasswordUpdateMessage               = "password is successfully reset"
+	PresignedURLKeyRequiredMessage      = "Key is required"
+	ProfileUpdateMessage                = "team profile is successfully updated"
+	RegisteredMessage                   = "registered"
+	RegistrationClosedMessage           = "Registraction is closed now"
 	ScoreEmulateMaxCountTooSmallMessage = "maxCount should be larger than 0"
-	SolvabilityCheckedSolveMessage = ":heavy_check_mark: Solvability Checked: `%s`"
-	SolvabilityFailedSystemMessage = ":warning: failed to solve: `%s`"
-	SubmissionLockedMessage = "Your submission is currently locked"
-	UnauthorizedMessage           = "login required"
-	ValidSubmissionAdminMessage = "`%s` solved `%s` :100:, `%s`"
-	ValidSubmissionMessage = "correct! solved `%s` and got score"
-	ValidSubmissionSystemMessage = "`%s` solved `%s` :100:"
-	WrongSubmissionAdminMessage = "`%s` submit flag `%s`, but wrong."
-	WrongSubmissionMessage = "wrong flag"
+	SolvabilityCheckedSolveMessage      = ":heavy_check_mark: Solvability Checked: `%s`"
+	SolvabilityFailedSystemMessage      = ":warning: failed to solve: `%s`"
+	SubmissionLockedMessage             = "Your submission is currently locked"
+	UnauthorizedMessage                 = "login required"
+	ValidSubmissionAdminMessage         = "`%s` solved `%s` :100:, `%s`"
+	ValidSubmissionMessage              = "correct! solved `%s` and got score"
+	ValidSubmissionSystemMessage        = "`%s` solved `%s` :100:"
+	WrongSubmissionAdminMessage         = "`%s` submit flag `%s`, but wrong."
+	WrongSubmissionMessage              = "wrong flag"
 )
 
 const (
@@ -71,29 +71,29 @@ type Server interface {
 	Start(addr string) error
 }
 type server struct {
-	app           service.App
-	db            *gorm.DB
-	Token         string
-	SessionKey    string
-	FrontendURL   string
-	redis         *redis.Client
-	AdminWebhook  webhook.Webhook
-	SolveWebhook  webhook.Webhook
-	SystemWebhook webhook.Webhook
-	Bucket        bucket.Bucket
+	app             service.App
+	db              *gorm.DB
+	Token           string
+	SessionKey      string
+	FrontendURL     string
+	redis           *redis.Client
+	AdminWebhook    webhook.Webhook
+	SolveLogWebhook webhook.Webhook
+	TaskOpenWebhook webhook.Webhook
+	Bucket          bucket.Bucket
 }
 
 func New(app service.App, db *gorm.DB, redis *redis.Client, frontendURL, token string) *server {
 	return &server{
-		app:           app,
-		db:            db,
-		SessionKey:    "kosenctfx",
-		Token:         token,
-		FrontendURL:   frontendURL,
-		redis:         redis,
-		AdminWebhook:  webhook.Dummy("ADMIN"),
-		SystemWebhook: webhook.Dummy("SYSTEM"),
-		SolveWebhook:  webhook.Dummy("SOLVE"),
+		app:             app,
+		db:              db,
+		SessionKey:      "kosenctfx",
+		Token:           token,
+		FrontendURL:     frontendURL,
+		redis:           redis,
+		AdminWebhook:    webhook.Dummy("ADMIN"),
+		TaskOpenWebhook: webhook.Dummy("TASK OPEN"),
+		SolveLogWebhook: webhook.Dummy("SOLVE"),
 	}
 }
 
@@ -129,7 +129,6 @@ func (s *server) Start(addr string) error {
 	e.POST("/admin/new-challenge", s.newChallengeHandler(), s.adminMiddleware)
 	// e.POST("/admin/new-notification", s.newNotificationHandler(), s.adminMiddleware)
 	e.GET("/admin/list-challenges", s.listChallengesHandler(), s.adminMiddleware)
-	e.POST("/admin/set-challenge-status", s.setChallengeStatusHandler(), s.adminMiddleware)
 	e.POST("/admin/get-presigned-url", s.getPresignedURLHandler(), s.adminMiddleware)
 
 	// GraphQL

@@ -234,6 +234,13 @@ pre {
   border-radius: 0.25rem;
   background-color: rgba($accent-color, 0.2);
 }
+
+code {
+  display: inline-block;
+  padding: 0 0.25rem;
+  border-radius: 0.25rem;
+  background-color: rgba($accent-color, 0.2);
+}
 </style>
 
 <style lang="scss" scoped>

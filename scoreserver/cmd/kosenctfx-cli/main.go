@@ -95,6 +95,17 @@ func loadTaskYaml(path string) (*TaskYaml, error) {
 	return &tasky, nil
 }
 
+func makeDistfiles(dir, name string) ([]byte, error) {
+	transform := fmt.Sprintf(" --transform 's:^\\./:./%s/:'", name)
+	cmd := exec.Command("sh", "-c", "find . -type f | tar cz --files-from=- --to-stdout  --sort=name"+transform)
+	cmd.Dir = dir
+	tardata, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+	return tardata, nil
+}
+
 func run() error {
 	var url, token, dir, hashfile string
 	flag.StringVar(&url, "url", "", "An endpoint of scoreserver")
@@ -165,15 +176,7 @@ func run() error {
 			if _, err := os.Stat(distdir); err != nil {
 				return nil
 			}
-
-			transform := fmt.Sprintf(" --transform 's:^\\./:./%s/:'", taskID)
-			cmd := exec.Command("sh", "-c", "find . -type f | tar cz --files-from=- --to-stdout  --sort=name"+transform)
-			cmd.Dir = distdir
-			tardata, err := cmd.Output()
-			if err != nil {
-				log.Printf("%+v\n", err)
-				return nil
-			}
+			tardata, err := makeDistfiles(distdir, taskID)
 			md5sum := md5.Sum(tardata)
 			filename := fmt.Sprintf("%s_%s.tar.gz", taskID, hex.EncodeToString(md5sum[:]))
 			dlUrl, err := uploadFile(url, token, filename, tardata)

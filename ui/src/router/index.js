@@ -4,6 +4,7 @@ import Index from "../views/Index.vue";
 import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
 import Team from "../views/Team.vue";
+import Diploma from "../views/Diploma.vue";
 import ResetRequest from "../views/ResetRequest.vue";
 import Reset from "../views/Reset.vue";
 import Challenges from "../views/Challenges.vue";
@@ -36,7 +37,11 @@ const routes = [
     name: "Team",
     component: Team
   },
-
+  {
+    path: "/team/:id/diploma",
+    name: "Diploma",
+    component: Diploma
+  },
   {
     path: "/reset-request",
     name: "ResetRequest",

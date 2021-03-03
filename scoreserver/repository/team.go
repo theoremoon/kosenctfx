@@ -130,7 +130,7 @@ func (r *repository) NewPasswordResetToken(token *model.PasswordResetToken) erro
 }
 
 func (r *repository) RevokeTeamPasswordResetToken(teamID uint32) error {
-	if err := r.db.Where("taem_id = ?", teamID).Delete(model.PasswordResetToken{}).Error; err != nil {
+	if err := r.db.Where("team_id = ?", teamID).Delete(model.PasswordResetToken{}).Error; err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil

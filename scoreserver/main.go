@@ -104,13 +104,13 @@ func run() error {
 
 	srv := server.New(app, db, redis, conf.Front, ctfConf.Token)
 	if conf.AdminWebhookURL != "" {
-		srv.AdminWebhook = webhook.NewDiscord(conf.AdminWebhookURL)
+		srv.AdminWebhook = webhook.NewDiscord(conf.AdminWebhookURL, 1*time.Second)
 	}
 	if conf.TaskOpenWebhookURL != "" {
-		srv.TaskOpenWebhook = webhook.NewDiscord(conf.TaskOpenWebhookURL)
+		srv.TaskOpenWebhook = webhook.NewDiscord(conf.TaskOpenWebhookURL, 1*time.Second)
 	}
 	if conf.SolveLogWebhookURL != "" {
-		srv.SolveLogWebhook = webhook.NewDiscord(conf.SolveLogWebhookURL)
+		srv.SolveLogWebhook = webhook.NewDiscord(conf.SolveLogWebhookURL, 1*time.Second)
 	}
 	if conf.BucketName != "" {
 		b := bucket.NewS3Bucket(

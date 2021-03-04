@@ -2,11 +2,14 @@ package webhook
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sync"
+	"time"
 )
 
 type Webhook interface {
@@ -29,19 +32,64 @@ func (w *dummyWebhook) Post(message string) error {
 }
 
 type discordWebhook struct {
-	url string
+	sync.Mutex
+	url            string
+	cancel         context.CancelFunc
+	waitDuration   time.Duration
+	currentMessage string
 }
 
-func NewDiscord(url string) Webhook {
+func NewDiscord(url string, waitDuration time.Duration) Webhook {
 	return &discordWebhook{
-		url: url,
+		url:          url,
+		waitDuration: waitDuration,
 	}
 }
 
 func (w *discordWebhook) Post(message string) error {
+	w.Lock()
+	if w.cancel != nil {
+		w.cancel()
+	}
+	w.Unlock()
+
+	if w.currentMessage != "" {
+		w.currentMessage += "\n" + message
+	} else {
+		w.currentMessage = message
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	w.cancel = cancel
+	go w.waitAndPost(ctx)
+
+	return nil
+}
+
+func (w *discordWebhook) waitAndPost(ctx context.Context) {
+	defer func() {
+		w.Lock()
+		w.cancel = nil
+		w.Unlock()
+	}()
+
+	select {
+	case <-time.After(w.waitDuration):
+		if err := w.doPost(); err != nil {
+		}
+	case <-ctx.Done():
+	}
+}
+
+func (w *discordWebhook) doPost() error {
+	if w.currentMessage == "" {
+		return nil
+	}
+
 	payload, err := json.Marshal(map[string]interface{}{
-		"content": message,
+		"content": w.currentMessage,
 	})
+	w.currentMessage = ""
 	if err != nil {
 		return err
 	}

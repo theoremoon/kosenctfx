@@ -15,6 +15,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
+	"github.com/theoremoon/kosenctfx/scoreserver/util"
 )
 
 const (
@@ -296,22 +297,22 @@ func (s *server) submitHandler() echo.HandlerFunc {
 		if valid {
 			s.SolveLogWebhook.Post(fmt.Sprintf(
 				ValidSubmissionSystemMessage,
-				lc.Team.Teamname,
+				util.DiscordString(lc.Team.Teamname),
 				challenge.Name,
 			))
 			s.AdminWebhook.Post(fmt.Sprintf(
 				ValidSubmissionAdminMessage,
-				lc.Team.Teamname,
+				util.DiscordString(lc.Team.Teamname),
 				challenge.Name,
-				req.Flag,
+				util.DiscordString(req.Flag),
 			))
 			return messageHandle(c, fmt.Sprintf(ValidSubmissionMessage, challenge.Name))
 		} else if correct {
 			s.AdminWebhook.Post(fmt.Sprintf(
 				CorrectSubmissionAdminMessage,
-				lc.Team.Teamname,
+				util.DiscordString(lc.Team.Teamname),
 				challenge.Name,
-				req.Flag,
+				util.DiscordString(req.Flag),
 			))
 			return messageHandle(c, fmt.Sprintf(CorrectSubmissionMessage, challenge.Name))
 		} else {
@@ -328,8 +329,8 @@ func (s *server) submitHandler() echo.HandlerFunc {
 
 			s.AdminWebhook.Post(fmt.Sprintf(
 				WrongSubmissionAdminMessage,
-				lc.Team.Teamname,
-				req.Flag,
+				util.DiscordString(lc.Team.Teamname),
+				util.DiscordString(req.Flag),
 			))
 			return errorHandle(c, service.NewErrorMessage(WrongSubmissionMessage))
 		}

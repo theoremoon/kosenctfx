@@ -72,7 +72,7 @@ import { dateFormat } from "../dateformat";
 export default Vue.extend({
   data() {
     return {
-      now: new Date().valueOf() / 1000
+      now: new Date().valueOf() / 1000,
     };
   },
   mounted() {
@@ -83,7 +83,7 @@ export default Vue.extend({
   methods: {
     dateFormat(t) {
       return dateFormat(t);
-    }
+    },
   },
   computed: {
     startTime() {
@@ -111,7 +111,42 @@ export default Vue.extend({
       const minutes = ("" + Math.floor((d % (60 * 60)) / 60)).padStart(2, 0);
       const seconds = ("" + Math.floor(d % 60)).padStart(2, 0);
       return days + "d " + hours + ":" + minutes + ":" + seconds;
-    }
-  }
+    },
+  },
 });
 </script>
+
+
+<style lang="scss" scoped>
+.sponsors {
+  padding-bottom: 20px;
+  text-align: center;
+}
+.sponsors a {
+  display: inline-block;
+  margin-right: 1.5rem;
+  margin-top: 0.5rem;
+  text-align: center;
+  font-weight: bold;
+
+}
+.sponsors img {
+  width: 12rem;
+  max-width: 100%;
+  border-radius: 5px;
+}
+ul, ol {
+  list-style-position: inside;
+}
+ol {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+}
+.ml-4 {
+  margin-left: 2rem;
+}
+p, ul li {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+</style>

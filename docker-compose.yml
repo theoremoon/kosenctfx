@@ -41,7 +41,8 @@ services:
       MAIL_SERVER: 'smtp.gmail.com:587'
       MAIL_PASSWORD: 'XXXXXXXXXXXXXXXXXX'
       ADMIN_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
-      SYSTEM_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
+      SOLVE_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
+      TASK_OPEN_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
       BUCKET_ENDPOINT: "localhost:9000"
       BUCKET_REGION: "us-east-1"
       BUCKET_ACCESS_KEY: "minio"

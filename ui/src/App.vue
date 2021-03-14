@@ -1,43 +1,36 @@
 <template>
   <div class="h-full app">
     <header>
-      <nav class="flex w-full p-4 navbar-border">
-        <div class="flex text-lg mr-6">
-          <img src="./assets/neko.png" class="brand" />
-          <router-link to="/">
-            {{ $store.ctfName }}
-          </router-link>
+      <nav class="w-full p-4">
+        <div class="nav-item">
+          <router-link to="/"><img src="./assets/piyo_hiyoko.png" class="brand">{{ $store.ctfName }}</router-link>
         </div>
-
-        <div class="flex flex-grow">
-          <div class="mr-4">
-            <router-link to="/challenges">CHALLENGES</router-link>
+        <div class="nav-item">
+          <router-link to="/challenges">CHALLENGES</router-link>
+        </div>
+        <div class="nav-item">
+          <router-link to="/ranking">RANKING</router-link>
+        </div>
+        <div class="expandable">
+        </div>
+        <template v-if="$store.teamname != null">
+          <div class="nav-item">
+            <router-link :to="'/team/' + $store.teamid">{{
+              $store.teamname
+            }}</router-link>
           </div>
-          <div class="mr-4">
-            <router-link to="/ranking">RANKING</router-link>
+          <div class="nav-item">
+            <button @click="logout">LOGOUT</button>
           </div>
-        </div>
-
-        <div class="flex flex-0">
-          <template v-if="$store.teamname != null">
-            <div class="mr-4">
-              <router-link :to="'/team/' + $store.teamid">{{
-                $store.teamname
-              }}</router-link>
-            </div>
-            <div class="mr-4">
-              <button @click="logout">LOGOUT</button>
-            </div>
-          </template>
-          <template v-else>
-            <div class="mr-4">
-              <router-link to="/login">LOGIN</router-link>
-            </div>
-            <div class="mr-4">
-              <router-link to="/register">REGISTER</router-link>
-            </div>
-          </template>
-        </div>
+        </template>
+        <template v-else>
+          <div class="nav-item">
+            <router-link to="/login">LOGIN</router-link>
+          </div>
+          <div class="nav-item">
+            <router-link to="/register">REGISTER</router-link>
+          </div>
+        </template>
       </nav>
     </header>
     <main class="container mx-auto h-full">
@@ -153,11 +146,14 @@ export default Vue.extend({
 @import "./assets/vars.scss";
 @import "./assets/tailwind.css";
 
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap');
+
 html,
 body {
   @extend .bg-bg-color;
   color: $fg-color;
   height: 100%;
+  font-family: 'Open Sans', sans-serif;
 }
 .app a {
   color: $accent-color;
@@ -245,17 +241,44 @@ code {
 
 <style lang="scss" scoped>
 @import "./assets/vars.scss";
+
 .brand {
   height: 1.5em;
   width: auto;
+  margin-right: 0.5em;
+  display: inline;
+}
+
+nav {
+  border-bottom: 1px solid $accent-color;
+  display: flex;
+}
+
+nav .nav-item {
+  margin-right: 1rem;
+}
+
+nav .expandable {
+  flex-grow: 1;
+}
+
+@media (max-width: 39rem) {
+  nav {
+    display: block;
+  }
+
+  nav .nav-item {
+    margin-right: 0;
+    text-align: center;
+  }
+
+  nav .expandable {
+    display: none;
+  }
 }
 
 nav a {
   color: $fg-color;
-}
-
-.navbar-border {
-  border-bottom: 1px solid $accent-color;
 }
 
 .messages {
@@ -274,10 +297,12 @@ nav a {
 
   border-radius: 0.25rem;
 }
+
 .message.error {
   border: 1px solid $warn-color;
   background-color: rgba($warn-color, 0.6);
 }
+
 .message:hover {
   cursor: pointer;
 }

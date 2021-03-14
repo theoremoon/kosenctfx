@@ -35,7 +35,8 @@ services:
       MAIL_SERVER: 'smtp.gmail.com:587'
       MAIL_PASSWORD: 'XXXXXXXXXXXXXXXXXX'
       ADMIN_WEBHOOK: ''
-      SYSTEM_WEBHOOK: ''
+      SOLVE_WEBHOOK: ''
+      TASK_OPEN_WEBHOOK: ''
       BUCKET_ENDPOINT: "localhost:9000"
       BUCKET_REGION: "us-east-1"
       BUCKET_ACCESS_KEY: "minio"

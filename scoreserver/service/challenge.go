@@ -325,7 +325,7 @@ func (app *app) SubmitFlag(team *model.Team, ipaddress string, flag string, ctfR
 		Flag:      flag,
 		IPAddress: ipaddress,
 	}
-	if chal == nil {
+	if chal == nil || !chal.IsOpen {
 		// wrong
 		if err := app.repo.InsertSubmission(s); err != nil {
 			return nil, false, false, xerrors.Errorf(": %w", err)

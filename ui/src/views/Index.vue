@@ -1,67 +1,62 @@
 <template>
   <div class="my-4 mx-8">
-    <h1 class="text-4xl">{{ $store.ctfName }}</h1>
-    <div class="ml-4">
-      <p>{{ startTime }} 〜 {{ endTime }}</p>
-      <p v-if="willHold">CTF will start in {{ countDown }}</p>
-      <p v-else-if="nowRunning">CTF now running!</p>
-      <p v-else-if="hasEnd">CTF is over. Thanks for playing!</p>
-    </div>
 
     <div class="mt-4 justify-center flex">
-      <img src="../assets/neko.png" />
+      <img src="../assets/piyo.png">
+    </div>
+
+    <h1 class="text-4xl text-center">{{ $store.ctfName }}</h1>
+    <div class="text-center">
+      <p>{{ startTime }} &ndash; {{ endTime }}</p>
+      <p v-if="willHold">CTF will start in {{ countDown }}.</p>
+      <p v-else-if="nowRunning">CTF is now running!</p>
+      <p v-else-if="hasEnd">CTF is over. Thanks for playing!</p>
     </div>
 
     <div class="mt-4">
       <h2 class="text-2xl">[ About ]</h2>
-      <p class="ml-4">TBD</p>
+      <p class="ml-4">We provide many fun challenges of varying difficulty and categories, none of them requiring any guessing skill.</p>
     </div>
+
     <div class="mt-4">
       <h2 class="text-2xl">[ Contact ]</h2>
-      <p class="ml-4">TBD</p>
+      <p class="ml-4">
+        Discord:
+      </p>
     </div>
+
     <div class="mt-4">
       <h2 class="text-2xl">[ Rules ]</h2>
       <div class="ml-4">
-        <ul class="list-disc">
-          <li>
-            There is no restriction on the team size, your age nationality. It
-            is unrelated whether you are in the Kosen or not.
-          </li>
-          <li>
-            The team who earns more points will be placed higher. If two teams
-            have the same amount of points, the team who reached the score
-            earlier will win (except for the survey*).
-          </li>
-          <li>
-            Sharing solutions or hints with other teams during the competition
-            is forbidden.
-          </li>
-          <li>
-            Attacking the score server is forbidden. We may disqualify and ban
-            the team which attacks the score server. Attacking other teams is
-            forbidden as well.
-          </li>
-          <li>
-            You are not allowed to brute-force the flag. The form will be locked
-            for a while if you submit wrong flags 5 times successively.
-          </li>
-          <li>You may not play the CTF in multiple teams.</li>
-          <li>
-            You may not have multiple accounts. In case you can't log in to your
-            account, please contact us in Discord.
-          </li>
+        <ul class="list-disc list-inside">
+          <li>Your team can be of any size.</li>
+          <li>Anyone is allowed to participate: no restriction on age or nationality.</li>
+          <li>Your position on the scoreboard depends on 2 things: 1) your total number of points (higher is better); 2) the timestamp of your last solved challenge (lower is better).</li>
+          <li>The survey challenge is special: it does award you some points, but it doesn't update your "last solved challenge" timestamp. You can't get ahead simply by solving the survey faster.</li>
+          <li>You can't brute-force flags. If you submit 5 incorrect flags in a short succession, the flag submission form will get locked for 5 minutes.</li>
+          <li>One person can participate in only one team.</li>
+          <li>Sharing solutions, hints or flags with other teams during the competition is strictly forbidden.</li>
+          <li>You are not allowed to attack the scoreserver.</li>
+          <li>You are not allowed to attack other teams.</li>
+          <li>You are not allowed to have multiple accounts. If you can't log in to your account, please contact us on Discord.</li>
+          <li>We reserve the right to ban and disqualify any team that chooses to break any of these rules.</li>
+          <li>The flag format is <code>flag\{[\x20-\x7e]+\}</code>, unless specified otherwise.</li>
+          <li>Most importantly: good luck and have fun!</li>
         </ul>
-        <p class="text-sm">
-          *In the late of the competition we will open a survey as a challenge,
-          which has points as well as other challenges. However, even if the
-          lower-ranked team among those who have the same amount of points
-          solves the survey earlier, the originally higher-ranked teams will be
-          placed higher as long as they solve the survey during the competition.
-          Be noticed this is an exception to give the participants enough time
-          to answer the survey while encouraging them to submit it.
-        </p>
       </div>
+
+    <div class="mt-4">
+      <h2 class="text-2xl">[ Prizes ]</h2>
+      <p class="ml-4">TBD</p>
+    </div>
+
+    <div class="mt-4">
+      <h2 class="text-2xl">[ Sponsors ]</h2>
+      <div class="sponsors ml-4">
+      <p class="ml-4">TBD</p>
+      </div>
+    </div>
+
     </div>
   </div>
 </template>
@@ -72,7 +67,7 @@ import { dateFormat } from "../dateformat";
 export default Vue.extend({
   data() {
     return {
-      now: new Date().valueOf() / 1000
+      now: new Date().valueOf() / 1000,
     };
   },
   mounted() {
@@ -83,7 +78,7 @@ export default Vue.extend({
   methods: {
     dateFormat(t) {
       return dateFormat(t);
-    }
+    },
   },
   computed: {
     startTime() {
@@ -111,7 +106,42 @@ export default Vue.extend({
       const minutes = ("" + Math.floor((d % (60 * 60)) / 60)).padStart(2, 0);
       const seconds = ("" + Math.floor(d % 60)).padStart(2, 0);
       return days + "d " + hours + ":" + minutes + ":" + seconds;
-    }
-  }
+    },
+  },
 });
 </script>
+
+
+<style lang="scss" scoped>
+.sponsors {
+  padding-bottom: 20px;
+  text-align: center;
+}
+.sponsors a {
+  display: inline-block;
+  margin-right: 1.5rem;
+  margin-top: 0.5rem;
+  text-align: center;
+  font-weight: bold;
+
+}
+.sponsors img {
+  width: 12rem;
+  max-width: 100%;
+  border-radius: 5px;
+}
+ul, ol {
+  list-style-position: inside;
+}
+ol {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+}
+.ml-4 {
+  margin-left: 2rem;
+}
+p, ul li {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+</style>

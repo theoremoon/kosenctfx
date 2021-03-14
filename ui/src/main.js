@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import countryFlag from "country-code-emoji";
 import VueApollo from "vue-apollo";
 import { apolloClient } from "./apollo";
+import VueWorker from 'vue-worker';
 
 library.add(faFlag);
 
@@ -19,6 +20,7 @@ Vue.config.productionTip = false;
 Vue.use(eventHub);
 Vue.use(store);
 Vue.use(VueApollo);
+Vue.use(VueWorker);
 
 const apolloProvider = new VueApollo({
   defaultClient: apolloClient

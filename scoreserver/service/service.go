@@ -71,7 +71,7 @@ type ScoreFeedEntry struct {
 	Pos            int                  `json:"pos"`
 	Teamname       string               `json:"team"`
 	Country        string               `json:"country"`
-	Score          int                  `json:"points"`
+	Score          int                  `json:"score"`
 	TaskStats      map[string]*TaskStat `json:"taskStats"`
 	TeamID         uint32               `json:"team_id"`
 	LastSubmission int64                `json:"last_submission"`

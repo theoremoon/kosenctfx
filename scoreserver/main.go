@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"github.com/google/uuid"
 	"golang.org/x/xerrors"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -56,33 +55,32 @@ func run() error {
 
 	repo := repository.New(db)
 	repo.Migrate()
-	mailer, err := mailer.New(conf.MailServer, conf.Email, conf.MailPassword)
-	if err != nil {
-		return err
+
+	var mailSender mailer.Mailer
+	if conf.MailFake {
+		mailSender = mailer.NewFakeMailer()
+	} else {
+		mailSender, err = mailer.New(conf.MailServer, conf.Email, conf.MailPassword)
+		if err != nil {
+			return err
+		}
 	}
 
-	app := service.New(repo, mailer)
+	app := service.New(repo, mailSender)
 
 	// admin ユーザを自動生成して適当なCTF情報を入れる
 	if _, err := app.GetAdminTeam(); err != nil {
-		password := uuid.New().String()
-		t, err := app.RegisterTeam("admin", password, conf.Email, "")
+		t, err := app.RegisterTeam("admin", conf.AdminToken, conf.Email, "")
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 		if err := app.MakeTeamAdmin(t); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		token := password
-		log.Printf("---[ADMIN]---\n")
-		log.Printf(" team: admin\n")
-		log.Printf(" email: %s\n", conf.Email)
-		log.Printf(" password: %s", password)
-		log.Printf(" token: %s", token)
 
 		err = app.SetCTFConfig(&model.Config{
 			CTFName:      "KosenCTF X",
-			Token:        token,
+			Token:        conf.AdminToken,
 			StartAt:      time.Now().Unix(),
 			EndAt:        time.Now().Unix(),
 			RegisterOpen: false,

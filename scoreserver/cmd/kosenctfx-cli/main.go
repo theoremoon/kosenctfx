@@ -18,6 +18,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"golang.org/x/mod/sumdb/dirhash"
+	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -25,6 +26,7 @@ type TaskYaml struct {
 	Name        string
 	Description string
 	Flag        string
+	Category    string
 	Author      string
 	Tags        []string
 	Attachments []service.Attachment
@@ -45,14 +47,14 @@ func uploadFile(url, token, filename string, blob []byte) (string, error) {
 		SetResult(&data).
 		Post(url + "/admin/get-presigned-url")
 	if err != nil {
-		return "", err
+		return "", xerrors.Errorf(": %w", err)
 	}
 
 	_, err = resty.New().R().
 		SetBody(blob).
 		Put(data.PresignedURL)
 	if err != nil {
-		return "", err
+		return "", xerrors.Errorf(": %w", err)
 	}
 
 	return data.DownloadURL, nil
@@ -64,7 +66,7 @@ func setChallenge(url, token string, taskInfo TaskYaml) error {
 		SetBody(taskInfo).
 		Post(url + "/admin/new-challenge")
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }
@@ -73,12 +75,12 @@ func loadTaskYaml(path string) (*TaskYaml, error) {
 	// load task.yml
 	taskb, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 
 	var tasky TaskYaml
 	if err := yaml.Unmarshal(taskb, &tasky); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 
 	hostStr := ""
@@ -101,7 +103,7 @@ func makeDistfiles(dir, name string) ([]byte, error) {
 	cmd.Dir = dir
 	tardata, err := cmd.Output()
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	return tardata, nil
 }
@@ -121,17 +123,17 @@ func run() error {
 		flag.Usage()
 		return nil
 	}
-	url = strings.TrimSuffix(url, "/") // remove trailing /
+	url = strings.TrimSuffix(url, "/")
 
 	hash_entries := make(map[string]string)
 
 	if _, err := os.Stat(hashfile); err == nil {
 		data, err := ioutil.ReadFile(hashfile)
 		if err != nil {
-			return err
+			return xerrors.Errorf(": %w", err)
 		}
 		if err := json.Unmarshal(data, &hash_entries); err != nil {
-			return err
+			return xerrors.Errorf(": %w", err)
 		}
 	}
 
@@ -139,14 +141,14 @@ func run() error {
 	// walk tasks directory
 	err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			return err
+			return xerrors.Errorf(": %w", err)
 		}
 		if info.Name() != "task.yml" {
 			return nil
 		}
 		tasky, err := loadTaskYaml(path)
 		if err != nil {
-			return err
+			return xerrors.Errorf(": %w", err)
 		}
 
 		// hash tableに乗っていない OR 更新されていたらtargetsに乗せる
@@ -165,7 +167,7 @@ func run() error {
 		return filepath.SkipDir
 	})
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 
 	for d, tasky := range targets {
@@ -181,7 +183,7 @@ func run() error {
 			filename := fmt.Sprintf("%s_%s.tar.gz", taskID, hex.EncodeToString(md5sum[:]))
 			dlUrl, err := uploadFile(url, token, filename, tardata)
 			if err != nil {
-				return err
+				return xerrors.Errorf(": %w", err)
 			}
 			attachments = append(attachments, service.Attachment{
 				URL:  dlUrl,
@@ -190,7 +192,7 @@ func run() error {
 			return nil
 		}()
 		if err != nil {
-			return err
+			return xerrors.Errorf(": %w", err)
 		}
 
 		err = func() error {
@@ -200,7 +202,7 @@ func run() error {
 			}
 			err := filepath.Walk(rawDistdir, func(path string, info fs.FileInfo, err error) error {
 				if err != nil {
-					return err
+					return xerrors.Errorf(": %w", err)
 				}
 				if info.IsDir() {
 					return nil
@@ -212,7 +214,7 @@ func run() error {
 
 				dlUrl, err := uploadFile(url, token, info.Name(), blob)
 				if err != nil {
-					return err
+					return xerrors.Errorf(": %w", err)
 				}
 				attachments = append(attachments, service.Attachment{
 					URL:  dlUrl,
@@ -221,16 +223,16 @@ func run() error {
 				return nil
 			})
 			if err != nil {
-				return err
+				return xerrors.Errorf(": %w", err)
 			}
 			return nil
 		}()
 		if err != nil {
-			return err
+			return xerrors.Errorf(": %w", err)
 		}
 		tasky.Attachments = attachments
 		if err := setChallenge(url, token, *tasky); err != nil {
-			return err
+			return xerrors.Errorf(": %w", err)
 		}
 
 		log.Printf("[+] %s\n", tasky.Name)
@@ -239,10 +241,10 @@ func run() error {
 	// save
 	hashb, err := json.Marshal(hash_entries)
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	if err := ioutil.WriteFile(hashfile, hashb, 0755); err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 
 	return nil
@@ -250,6 +252,6 @@ func run() error {
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v\n", err)
 	}
 }

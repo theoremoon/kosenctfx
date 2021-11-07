@@ -1,3 +1,4 @@
-node_modules
-dist
-Dckerfile
+node_modules/
+dist/
+.next/
+out/

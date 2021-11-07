@@ -1,0 +1,23 @@
+- name: create docker group
+  group:
+    name: docker
+    state: present
+
+- name: create sudoers group
+  group:
+    name: sudo
+    state: present
+
+- name: install packages
+  apt:
+    name: "{{ packages }}"
+    update_cache: yes
+  vars:
+    packages: ["zsh", "vim", "curl", "python3-pip", "git"]
+
+- name: sudo without password
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: "^%sudo"
+    line: "%sudo ALL=(ALL) NOPASSWD: ALL"

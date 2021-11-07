@@ -3,25 +3,33 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"golang.org/x/xerrors"
+	"gorm.io/gorm"
 
 	"github.com/go-redis/redis"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"github.com/theoremoon/kosenctfx/scoreserver/util"
 )
 
 const (
-	cacheDuration     = 1 * time.Minute
-	challengesJSONKey = "challengesJSONKey"
-	rankingJSONKey    = "rankingJSONKey"
+	cacheDuration         = 1 * time.Minute
+	challengesJSONKey     = "challengesJSONKey"
+	rankingJSONKey        = "rankingJSONKey"
+	ClientSeriesMaxTeams  = 20
+	sessionSetKey         = "sessionSetKey"
+	sessionActiveDuration = 10 * time.Minute
 )
 
 func (s *server) registerHandler() echo.HandlerFunc {
@@ -63,7 +71,14 @@ func (s *server) loginHandler() echo.HandlerFunc {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		c.SetCookie(s.tokenCookie(token))
-		return messageHandle(c, LoginMessage)
+
+		team, _ := s.app.GetLoginTeam(token.Token)
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message":  LoginMessage,
+			"teamname": team.Teamname,
+			"team_id":  team.ID,
+			"country":  team.CountryCode,
+		})
 	}
 }
 
@@ -74,104 +89,140 @@ func (s *server) logoutHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) infoHandler() echo.HandlerFunc {
+func (s *server) accountHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		ret := make(map[string]interface{})
-		team, _ := s.getLoginTeam(c)
-		if team != nil {
-			ret["teamname"] = team.Teamname
-			ret["teamid"] = team.ID
+		team, err := s.getLoginTeam(c)
+		if err != nil {
+			return c.JSON(http.StatusOK, nil)
 		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"teamname": team.Teamname,
+			"team_id":  team.ID,
+			"country":  team.CountryCode,
+			"is_admin": team.IsAdmin,
+		})
+	}
+}
+
+func (s *server) ctfHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
 		conf, err := s.app.GetCTFConfig()
 		if err != nil {
 			return errorHandle(c, err)
 		}
-		ret["ctf_start"] = conf.StartAt
-		ret["ctf_end"] = conf.EndAt
-		ret["ctf_name"] = conf.CTFName
-
-		return c.JSON(http.StatusOK, ret)
+		status := service.CalcCTFStatus(conf)
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"start_at":      conf.StartAt,
+			"end_at":        conf.EndAt,
+			"register_open": conf.RegisterOpen,
+			"is_open":       conf.CTFOpen,
+			"is_running":    status == service.CTFRunning,
+			"is_over":       status == service.CTFEnded,
+		})
 	}
 }
 
-/// ログインしているかどうか、CTF開催中かどうかで挙動が変わる
-/// ログインしていない -> notificationとrankingを返す
-/// ログインしている   -> 問題情報も返す
-/// CTF開催中          -> ranking / 問題情報は redisにcacheしておいて、expiredになったら計算してcacheし直す
-/// CTF開催中でない    -> 毎回計算する
-func (s *server) infoUpdateHandler() echo.HandlerFunc {
+func (s *server) scoreboardHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		t, _ := s.getLoginTeam(c)
-		refresh := c.QueryParam("refresh")
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
 
+		scoreboard, err := s.getScoreboard(conf)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		return c.JSON(http.StatusOK, scoreboard)
+	}
+}
+
+func (s *server) tasksHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
 		conf, err := s.app.GetCTFConfig()
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		status := service.CalcCTFStatus(conf)
 
-		ret := make(map[string]interface{})
+		// CTF始まってないとき問題見せない
+		if status == service.CTFNotStarted {
+			return errorMessageHandle(c, http.StatusForbidden, CTFNotStartedMessage)
+		}
 
-		// TODO notification
-		// cache を使う
-		if refresh == "" && status == service.CTFRunning {
-			challenges, ranking, err := s.getCacheInfo()
+		// CTFがnow-runningでloginしてないとき、non sensitiveな情報しかみせない
+		t, _ := s.getLoginTeam(c)
+		if status == service.CTFRunning && t == nil {
+			challenges, err := s.getNonsensitiveChallenges(conf)
 			if err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
-
-			if challenges != "" && ranking != "" {
-				var cs []*service.Challenge
-				var scoreboard *service.Scoreboard
-				err1 := json.Unmarshal([]byte(challenges), &cs)
-				err2 := json.Unmarshal([]byte(ranking), &scoreboard)
-				if err1 == nil && err2 == nil {
-					ret["challenges"] = cs
-					ret["ranking"] = scoreboard
-				}
-			}
+			return c.JSON(http.StatusOK, challenges)
 		}
 
-		_, exist1 := ret["challenges"]
-		_, exist2 := ret["ranking"]
-		if !exist1 || !exist2 {
-			// CTF開催中またはCTF終了後なら、公開されている問題を読み込むが、そうでない（invalid or 開催前）なら読み込まない
-			chals := make([]*model.Challenge, 0)
-			if status == service.CTFRunning || status == service.CTFEnded {
-				chals, err = s.app.ListOpenedRawChallenges()
-				if err != nil {
-					return errorHandle(c, xerrors.Errorf(": %w", err))
+		challenges, err := s.getChallenges(conf)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		return c.JSON(http.StatusOK, challenges)
+	}
+}
+
+/// チームの点数のグラフ出すやつ
+/// 長くなりうる配列パラメータを受け取るためにPOST
+func (s *server) seriesHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		req := new(struct {
+			Teams []string `json:"teams"`
+		})
+		if err := c.Bind(req); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]interface{}{
+				"message": InvalidRequestMessage,
+			})
+		}
+
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		scoreboard, err := s.getScoreboard(conf)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		// 通常のクライアントにはClientSeriesMaxTeams個までしかエントリを返さない
+		topTeamSeries := make([]TeamScoreSeries, 0, ClientSeriesMaxTeams)
+		for i, t := range req.Teams {
+			if i >= ClientSeriesMaxTeams {
+				break
+			}
+			team_idx := -1
+			for idx, team := range scoreboard {
+				if team.Teamname == t {
+					team_idx = idx
+					break
 				}
 			}
-			teams, err := s.app.ListTeams()
+			if team_idx == -1 {
+				continue
+			}
+
+			series, err := s.getTeamSeries(conf, scoreboard[team_idx].TeamID)
 			if err != nil {
+				if xerrors.Is(err, redis.Nil) {
+					topTeamSeries = append(topTeamSeries, TeamScoreSeries{})
+					continue
+				}
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
-
-			challenges, ranking, err := s.app.ScoreFeed(chals, teams)
-			if err != nil {
-				return errorHandle(c, xerrors.Errorf(": %w", err))
-			}
-			for i := range challenges {
-				challenges[i].Flag = ""
-			}
-			ret["challenges"] = challenges
-			ret["ranking"] = ranking
-
-			// cacheする
-			if status == service.CTFRunning {
-				bytes1, err1 := json.Marshal(challenges)
-				bytes2, err2 := json.Marshal(ranking)
-				if err1 == nil && err2 == nil {
-					s.setCacheInfo(string(bytes1), string(bytes2))
-				}
-			}
+			topTeamSeries = append(topTeamSeries, series)
 		}
 
-		if t == nil || status == service.CTFNotStarted {
-			delete(ret, "challenges")
-		}
-		return c.JSON(http.StatusOK, ret)
+		return c.JSON(http.StatusOK, topTeamSeries)
 	}
 }
 
@@ -231,10 +282,8 @@ func (s *server) profileUpdateHandler() echo.HandlerFunc {
 			}
 		}
 
-		if req.CountryCode != "" {
-			if err := s.app.UpdateCountry(lc.Team, req.CountryCode); err != nil {
-				return errorHandle(c, xerrors.Errorf(": %w", err))
-			}
+		if err := s.app.UpdateCountry(lc.Team, req.CountryCode); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 		return messageHandle(c, ProfileUpdateMessage)
 	}
@@ -254,7 +303,7 @@ func (s *server) teamHandler() echo.HandlerFunc {
 
 		res := map[string]interface{}{
 			"teamname": team.Teamname,
-			"teamid":   team.ID,
+			"team_id":  team.ID,
 			"country":  team.CountryCode,
 		}
 
@@ -289,7 +338,7 @@ func (s *server) submitHandler() echo.HandlerFunc {
 
 		// flag submission
 		flag := strings.Trim(req.Flag, " ")
-		challenge, correct, valid, err := s.app.SubmitFlag(lc.Team, lc.RealIP(), flag, ctfStatus == service.CTFRunning)
+		challenge, correct, valid, err := s.app.SubmitFlag(lc.Team, lc.RealIP(), flag, ctfStatus == service.CTFRunning, time.Now().Unix())
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
@@ -306,6 +355,22 @@ func (s *server) submitHandler() echo.HandlerFunc {
 				challenge.Name,
 				util.DiscordString(req.Flag),
 			))
+
+			// 非同期である必要はないが非同期でもいいし、
+			// エラーの扱いが楽になるので非同期にしている
+			go func() {
+				// time seriesを更新する
+				_, scoreboard, err := s.refreshCache(conf)
+				if err != nil {
+					log.Printf("%+v\n", err)
+					return
+				}
+				if err := s.appendScoreSeries(conf, scoreboard, time.Now()); err != nil {
+					log.Printf("%+v\n", err)
+					return
+				}
+			}()
+
 			return messageHandle(c, fmt.Sprintf(ValidSubmissionMessage, challenge.Name))
 		} else if correct {
 			s.AdminWebhook.Post(fmt.Sprintf(
@@ -393,7 +458,7 @@ func (s *server) getConfigHandler() echo.HandlerFunc {
 func (s *server) ctfConfigHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
-			Name         string `json:"name"`
+			Name         string `json:"ctf_name"`
 			StartAt      int64  `json:"start_at"`
 			EndAt        int64  `json:"end_at"`
 			RegisterOpen bool   `json:"register_open"`
@@ -429,7 +494,9 @@ func (s *server) ctfConfigHandler() echo.HandlerFunc {
 		if err := s.app.SetCTFConfig(conf); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		return c.JSON(http.StatusOK, ConfigUpdateMessage)
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": ConfigUpdateMessage,
+		})
 	}
 }
 
@@ -464,7 +531,10 @@ func (s *server) openChallengeHandler() echo.HandlerFunc {
 			s.TaskOpenWebhook.Post(fmt.Sprintf(ChallengeOpenSystemMessage, chal.Name))
 		}
 		s.AdminWebhook.Post(fmt.Sprintf(ChallengeOpenAdminMessage, chal.Name))
-		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeOpenTemplate, chal.Name))
+		s.refreshCache(conf)
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": fmt.Sprintf(ChallengeOpenTemplate, chal.Name),
+		})
 	}
 }
 
@@ -487,8 +557,16 @@ func (s *server) closeChallengeHandler() echo.HandlerFunc {
 		if err := s.app.CloseChallenge(chal.ID); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
+
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		s.refreshCache(conf)
 		s.AdminWebhook.Post(fmt.Sprintf(ChallengeClosedAdminMessage, chal.Name))
-		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeCloseTemplate, chal.Name))
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": fmt.Sprintf(ChallengeCloseTemplate, chal.Name),
+		})
 	}
 }
 
@@ -498,6 +576,7 @@ func (s *server) updateChallengeHandler() echo.HandlerFunc {
 			ID          uint32
 			Name        string
 			Flag        string
+			Category    string
 			Description string
 			Author      string
 			IsSurvey    bool `json:"is_survey"`
@@ -512,6 +591,7 @@ func (s *server) updateChallengeHandler() echo.HandlerFunc {
 			&service.Challenge{
 				Name:        req.Name,
 				Flag:        req.Flag,
+				Category:    req.Category,
 				Description: req.Description,
 				Author:      req.Author,
 				IsSurvey:    req.IsSurvey,
@@ -521,6 +601,12 @@ func (s *server) updateChallengeHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, err)
 		}
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			log.Printf("%+v\n", err)
+			return errorHandle(c, err)
+		}
+		s.refreshCache(conf)
 		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeUpdateTemplate, req.Name))
 	}
 }
@@ -530,6 +616,7 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 		req := new(struct {
 			Name        string
 			Flag        string
+			Category    string
 			Description string
 			Author      string
 			IsSurvey    bool `json:"is_survey"`
@@ -545,6 +632,7 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 			if err := s.app.UpdateChallenge(chal.ID, &service.Challenge{
 				Name:        req.Name,
 				Flag:        req.Flag,
+				Category:    req.Category,
 				Description: req.Description,
 				Author:      req.Author,
 				IsSurvey:    req.IsSurvey,
@@ -554,12 +642,19 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 			}); err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
+			conf, err := s.app.GetCTFConfig()
+			if err != nil {
+				log.Printf("%+v\n", err)
+				return xerrors.Errorf(": %w", err)
+			}
+			s.refreshCache(conf)
 			return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeUpdateTemplate, req.Name))
 		} else {
 			// ADD
 			if err := s.app.AddChallenge(&service.Challenge{
 				Name:        req.Name,
 				Flag:        req.Flag,
+				Category:    req.Category,
 				Description: req.Description,
 				Author:      req.Author,
 				IsSurvey:    req.IsSurvey,
@@ -583,14 +678,147 @@ func (s *server) listChallengesHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		challenges, ranking, err := s.app.ScoreFeed(chals, teams)
+		submissions, err := s.app.ListValidSubmissions()
+
+		challenges, _, err := s.app.ScoreFeed(chals, teams, submissions)
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"challenges": challenges,
-			"ranking":    ranking,
+		return c.JSON(http.StatusOK, challenges)
+	}
+}
+
+func (s *server) adminTeamHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		teamName := c.QueryParam("team")
+		team, err := s.app.GetTeamByName(teamName)
+		if err != nil && xerrors.Is(err, gorm.ErrRecordNotFound) {
+			return errorHandle(c, service.NewErrorMessage(NoSuchTeamMessage))
+		} else if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		// get team submissions
+		submissions, err := s.app.ListTeamSubmissions(team.ID)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		res := map[string]interface{}{
+			"teamname":    team.Teamname,
+			"team_id":     team.ID,
+			"email":       team.Email,
+			"country":     team.CountryCode,
+			"submissions": submissions,
+		}
+
+		return c.JSON(http.StatusOK, res)
+	}
+}
+
+func (s *server) listTeamHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		teams, err := s.app.ListAllTeams()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		return c.JSON(http.StatusOK, teams)
+	}
+}
+
+func (s *server) updateTeamEmail() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		req := new(struct {
+			ID    uint32 `json:"id"`
+			Email string `json:"email"`
 		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		team, err := s.app.GetTeamByID(req.ID)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		if err := s.app.UpdateEmail(team, req.Email); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		return messageHandle(c, ProfileUpdateMessage)
+	}
+}
+
+// こんなところにロジックを書くなんてと思いつつ書く
+func (s *server) recalcSeries() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// valid submissions を全部拾ってきて順番に適用していく
+		chals, err := s.app.ListAllRawChallenges()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		teams, err := s.app.ListTeams()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		submissions, err := s.app.ListValidSubmissions()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		// submitを提出順にsort
+		sort.Slice(submissions, func(i, j int) bool {
+			return submissions[i].SubmittedAt < submissions[j].SubmittedAt
+		})
+
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		// 既存のseries全部消す
+		if err := s.removeAllSeries(conf); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		// series全部計算し直す（めっちゃおもそう……
+		for i := 0; i < len(submissions); i++ {
+			_, scoreboard, err := s.app.ScoreFeed(chals, teams, submissions[:i+1])
+			if err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+			if err := s.appendScoreSeries(conf, scoreboard, time.Unix(submissions[i].SubmittedAt, 0)); err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+		}
+
+		return messageHandle(c, "Recalc Score")
+	}
+}
+
+func (s *server) allTeamSeries() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		teams, err := s.app.ListTeams() // ここでは順位表にのるチームだけでいい
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		topTeamSeries := make(map[string]TeamScoreSeries)
+		for _, t := range teams {
+			series, err := s.getTeamSeries(conf, t.ID)
+			if err != nil {
+				if xerrors.Is(err, redis.Nil) {
+					continue
+				}
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+			topTeamSeries[t.Teamname] = series
+		}
+		return c.JSON(http.StatusOK, topTeamSeries)
 	}
 }
 
@@ -648,55 +876,112 @@ func (s *server) sqlHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) getChallengesJSON() (string, error) {
-	r, err := s.redis.Get(challengesJSONKey).Result()
-	if err == redis.Nil {
-		return "", nil
-	} else if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+// metricsHandler はprometheus exporterとしてのエンドポイント
+// CTFに関する集計された値を返す
+// sensitiveな情報を扱うのでadmin only
+func (s *server) metricsHandler() echo.HandlerFunc {
+	reg := prometheus.NewRegistry()
+
+	// 計測する物一覧（先に箱を作って、あとで実際の値を取る）
+	flagCounter := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "number_of_submitted_flags",
+	})
+	reg.MustRegister(flagCounter)
+
+	validFlagCounter := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "number_of_valid_flags",
+	})
+	reg.MustRegister(validFlagCounter)
+
+	teamsCounter := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "number_of_registered_teams",
+	})
+	reg.MustRegister(teamsCounter)
+
+	activeSessionCounter := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "number_of_active_sessions",
+	})
+	reg.MustRegister(activeSessionCounter)
+
+	solveCollector := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "solve",
+	}, []string{
+		"name",
+		"category",
+	})
+	reg.MustRegister(solveCollector)
+
+	// 別にmetricsとして見たいかと言われればそうでもないので
+	// scoreCollector := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	// 	Name: "score",
+	// }, []string{
+	// 	"team",
+	// 	"country",
+	// })
+	// reg.MustRegister(scoreCollector)
+
+	h := promhttp.HandlerFor(reg, promhttp.HandlerOpts{
+		EnableOpenMetrics: true,
+	})
+
+	return func(c echo.Context) error {
+		numofSubmissions, err := s.app.CountSubmissions()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		flagCounter.Set(float64(numofSubmissions))
+
+		numofValidSubmissions, err := s.app.CountValidSubmissions()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		validFlagCounter.Set(float64(numofValidSubmissions))
+
+		numofTeams, err := s.app.CountTeams()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		teamsCounter.Set(float64(numofTeams))
+
+		numofSessions, err := s.countActiveSessions()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		activeSessionCounter.Set(float64(numofSessions))
+
+		solves, err := s.app.TaskSolves()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+		for chal, count := range solves {
+			solveCollector.With(prometheus.Labels{
+				"name":     chal.Name,
+				"category": chal.Category,
+			}).Set(float64(count))
+		}
+
+		// conf, err := s.app.GetCTFConfig()
+		// if err != nil {
+		// 	return errorHandle(c, xerrors.Errorf(": %w", err))
+		// }
+		// scoreboard, err := s.getScoreboard(conf)
+		// if err != nil {
+		// 	return errorHandle(c, xerrors.Errorf(": %w", err))
+		// }
+		// for _, t := range scoreboard {
+		// 	scoreCollector.With(prometheus.Labels{
+		// 		"team":    t.Teamname,
+		// 		"country": t.Country,
+		// 	}).Set(float64(t.Score))
+		// }
+
+		// serve by promhttp and wrap
+		h.ServeHTTP(c.Response(), c.Request())
+		return nil
 	}
-	return r, nil
 }
 
-func (s *server) setChallngesJSON(value string) error {
-	err := s.redis.Set(challengesJSONKey, value, cacheDuration).Err()
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	return nil
-}
-
-func (s *server) getCacheInfo() (string, string, error) {
-	c, err := s.redis.Get(challengesJSONKey).Result()
-	if err == redis.Nil {
-		return "", "", nil
-	} else if err != nil {
-		return "", "", xerrors.Errorf(": %w", err)
-	}
-
-	r, err := s.redis.Get(rankingJSONKey).Result()
-	if err == redis.Nil {
-		return "", "", nil
-	} else if err != nil {
-		return "", "", xerrors.Errorf(": %w", err)
-	}
-
-	return c, r, nil
-}
-
-func (s *server) setCacheInfo(challenges, ranking string) error {
-	err := s.redis.Set(challengesJSONKey, challenges, cacheDuration).Err()
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-
-	err = s.redis.Set(rankingJSONKey, ranking, cacheDuration).Err()
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-
-	return nil
-}
+// ---
 
 func (s *server) doQuery(query string) ([]string, []map[string]interface{}, error) {
 	rows, err := s.db.Raw(query).Rows()
@@ -734,4 +1019,224 @@ func (s *server) doQuery(query string) ([]string, []map[string]interface{}, erro
 		result = append(result, result_row)
 	}
 	return cols, result, nil
+}
+
+func (s *server) refreshCache(config *model.Config) ([]*service.Challenge, []*service.ScoreFeedEntry, error) {
+	var chals []*model.Challenge
+	var err error
+	if service.CalcCTFStatus(config) == service.CTFNotStarted {
+		chals = []*model.Challenge{}
+	} else {
+		chals, err = s.app.ListOpenedRawChallenges()
+	}
+	if err != nil {
+		return nil, nil, xerrors.Errorf(": %w", err)
+	}
+	teams, err := s.app.ListTeams()
+	if err != nil {
+		return nil, nil, xerrors.Errorf(": %w", err)
+	}
+
+	submissions, err := s.app.ListValidSubmissions()
+	if err != nil {
+		return nil, nil, xerrors.Errorf(": %w", err)
+	}
+
+	challenges, scoreboard, err := s.app.ScoreFeed(chals, teams, submissions)
+	if err != nil {
+		return nil, nil, xerrors.Errorf(": %w", err)
+	}
+	if err := s.setChallenges(config, challenges); err != nil {
+		return nil, nil, xerrors.Errorf(": %w", err)
+	}
+	if err := s.setScoreboard(config, scoreboard); err != nil {
+		return nil, nil, xerrors.Errorf(": %w", err)
+	}
+	return challenges, scoreboard, nil
+}
+
+func (s *server) setChallenges(config *model.Config, challenges []*service.Challenge) error {
+	challengesJson, err := json.Marshal(challenges)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	key := challengesKey(config.CTFName)
+
+	if err := s.redis.Set(key, string(challengesJson), cacheDuration).Err(); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (s *server) getRawChallenges(config *model.Config) ([]*service.Challenge, error) {
+	key := challengesKey(config.CTFName)
+	challengesStr, err := s.redis.Get(key).Result()
+
+	if err != nil {
+		// nilのときrefreshする
+		if xerrors.Is(err, redis.Nil) {
+			challenges, _, err := s.refreshCache(config)
+			if err != nil {
+				return nil, xerrors.Errorf(": %w", err)
+			}
+			return challenges, nil
+		}
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	var challenges []*service.Challenge
+	if err := json.Unmarshal([]byte(challengesStr), &challenges); err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return challenges, nil
+}
+
+/// 非ログインユーザ向けに色々を消したchallengesを渡す
+func (s *server) getNonsensitiveChallenges(config *model.Config) ([]*service.Challenge, error) {
+	challenges, err := s.getRawChallenges(config)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	for i := 0; i < len(challenges); i++ {
+		challenges[i].Description = ""
+		challenges[i].Tags = []string{}
+		challenges[i].Flag = ""
+		challenges[i].Author = ""
+		challenges[i].Attachments = []service.Attachment{}
+	}
+	return challenges, nil
+}
+
+/// ユーザ向けにflagを消したchallengesを渡す
+func (s *server) getChallenges(config *model.Config) ([]*service.Challenge, error) {
+	challenges, err := s.getRawChallenges(config)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	for i := 0; i < len(challenges); i++ {
+		challenges[i].Flag = ""
+	}
+	return challenges, nil
+}
+
+func challengesKey(ctfname string) string {
+	return fmt.Sprintf("%s_challenges", ctfname)
+}
+
+func (s *server) setScoreboard(config *model.Config, scoreboard []*service.ScoreFeedEntry) error {
+	scoreboardJson, err := json.Marshal(scoreboard)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	key := scoreboardKey(config.CTFName)
+	if err := s.redis.Set(key, string(scoreboardJson), cacheDuration).Err(); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (s *server) getScoreboard(config *model.Config) ([]*service.ScoreFeedEntry, error) {
+	key := scoreboardKey(config.CTFName)
+	scoreboardStr, err := s.redis.Get(key).Result()
+	if err != nil {
+		// nilのときrefreshする
+		if xerrors.Is(err, redis.Nil) {
+			_, scoreboard, err := s.refreshCache(config)
+			if err != nil {
+				return nil, xerrors.Errorf(": %w", err)
+			}
+			return scoreboard, nil
+		}
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	var scoreboard []*service.ScoreFeedEntry
+	if err := json.Unmarshal([]byte(scoreboardStr), &scoreboard); err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return scoreboard, nil
+}
+
+func scoreboardKey(ctfname string) string {
+	return fmt.Sprintf("%s_scorefeed", ctfname)
+}
+
+type TeamScoreSeriesEntry struct {
+	Teamname string `json:"teamname"`
+	Score    int    `json:"score"`
+	Pos      int    `json:"pos"`
+	Time     int64  `json:"time"`
+}
+
+type TeamScoreSeries []*TeamScoreSeriesEntry
+
+/// チーム毎に時系列ランキングを更新
+func (s *server) appendScoreSeries(config *model.Config, standings []*service.ScoreFeedEntry, now time.Time) error {
+	for _, team := range standings {
+		series := TeamScoreSeriesEntry{
+			Teamname: team.Teamname,
+			Score:    team.Score,
+			Pos:      team.Pos,
+			Time:     now.Unix(),
+		}
+		seriesJson, err := json.Marshal(series)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+
+		key := rankingSeriesKey(config.CTFName, team.TeamID)
+		err = s.redis.RPush(key, string(seriesJson)).Err()
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *server) getTeamSeries(config *model.Config, teamID uint32) (TeamScoreSeries, error) {
+	key := rankingSeriesKey(config.CTFName, teamID)
+	seriesStr, err := s.redis.LRange(key, 0, -1).Result()
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	var series []*TeamScoreSeriesEntry
+	if err := json.Unmarshal([]byte("["+strings.Join(seriesStr, ",")+"]"), &series); err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return series, nil
+}
+
+func (s *server) removeAllSeries(config *model.Config) error {
+	keys, err := s.redis.Keys(fmt.Sprintf("%s_rankingseries_*", config.CTFName)).Result()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	if err := s.redis.Del(keys...).Err(); err != nil {
+	}
+	return nil
+}
+
+func rankingSeriesKey(ctfname string, team uint32) string {
+	return fmt.Sprintf("%s_rankingseries_%d", ctfname, team)
+}
+
+func (s *server) countActiveSessions() (int64, error) {
+	now := time.Now().Unix()
+	nowStr := strconv.FormatInt(now, 10)
+	// expiredなセッションを消す
+	if err := s.redis.ZRemRangeByScore(sessionSetKey, "0", nowStr).Err(); err != nil {
+		return 0, xerrors.Errorf(": %w", err)
+	}
+
+	cnt, err := s.redis.ZCount(sessionSetKey, nowStr, "inf").Result()
+	if err != nil {
+		return 0, xerrors.Errorf(": %w", err)
+	}
+	return cnt, nil
 }

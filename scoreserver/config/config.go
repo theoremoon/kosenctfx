@@ -10,6 +10,7 @@ type Config struct {
 	Addr               string
 	RedisAddr          string
 	Front              string
+	MailFake           bool
 	Email              string
 	MailServer         string
 	MailPassword       string
@@ -22,6 +23,7 @@ type Config struct {
 	BucketSecretKey    string
 	BucketName         string
 	InsecureBucket     bool
+	AdminToken         string
 }
 
 func getEnv(name string) (string, error) {
@@ -37,7 +39,7 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	dbdsn += "?parseTime=true"
+	dbdsn += "?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin"
 
 	addr, err := getEnv("ADDR")
 	if err != nil {
@@ -58,15 +60,17 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	mailserver, err := getEnv("MAIL_SERVER")
 	if err != nil {
 		return nil, err
 	}
-
 	mailpassword, err := getEnv("MAIL_PASSWORD")
 	if err != nil {
 		return nil, err
+	}
+	mailFake := false
+	if _, err := getEnv("MAIL_FAKE"); err == nil {
+		mailFake = true
 	}
 
 	adminWebhookURL, _ := getEnv("ADMIN_WEBHOOK")
@@ -82,12 +86,14 @@ func Load() (*Config, error) {
 	if _, err := getEnv("BUCKET_INSECURE"); err == nil {
 		insecureBucket = true
 	}
+	adminToken, _ := getEnv("ADMIN_TOKEN")
 
 	return &Config{
 		Dbdsn:              dbdsn,
 		Addr:               addr,
 		RedisAddr:          redisAddr,
 		Front:              front,
+		MailFake:           mailFake,
 		Email:              mailaccount,
 		MailServer:         mailserver,
 		MailPassword:       mailpassword,
@@ -100,5 +106,6 @@ func Load() (*Config, error) {
 		BucketSecretKey:    bucketSecretKey,
 		BucketName:         bucketName,
 		InsecureBucket:     insecureBucket,
+		AdminToken:         adminToken,
 	}, nil
 }

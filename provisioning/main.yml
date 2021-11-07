@@ -1,0 +1,10 @@
+- hosts: all
+  become: yes
+  roles:
+    - common
+    - user
+    - docker
+  vars:
+    username: kosenctfx
+
+

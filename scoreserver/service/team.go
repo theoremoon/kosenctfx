@@ -18,15 +18,27 @@ type TeamApp interface {
 	Login(teamname, password, ipaddress string) (*model.LoginToken, error)
 	RegisterTeam(teamname, password, email, countryCode string) (*model.Team, error)
 	ListTeams() ([]*model.Team, error)
+	ListAllTeams() ([]*model.Team, error)
+	CountTeams() (int64, error)
 	GetAdminTeam() (*model.Team, error)
 	MakeTeamAdmin(t *model.Team) error
 	GetTeamByID(teamID uint32) (*model.Team, error)
+	GetTeamByName(teamName string) (*model.Team, error)
 	GetLoginTeam(token string) (*model.Team, error)
 	PasswordResetRequest(email string) error
 	PasswordReset(token, newpassword string) error
 	PasswordUpdate(team *model.Team, newpassword string) error
 	UpdateTeamname(team *model.Team, newTeamname string) error
+	UpdateEmail(team *model.Team, newEmail string) error
 	UpdateCountry(team *model.Team, newCountryCode string) error
+}
+
+var (
+	gountry_query *gountries.Query
+)
+
+func init() {
+	gountry_query = gountries.New()
 }
 
 func (app *app) RegisterTeam(teamname, password, email, countryCode string) (*model.Team, error) {
@@ -65,6 +77,22 @@ func (app *app) ListTeams() ([]*model.Team, error) {
 	return teams, nil
 }
 
+func (app *app) ListAllTeams() ([]*model.Team, error) {
+	teams, err := app.repo.AdminListAllTeams()
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return teams, nil
+}
+
+func (app *app) CountTeams() (int64, error) {
+	cnt, err := app.repo.CountTeams()
+	if err != nil {
+		return 0, xerrors.Errorf(": %w", err)
+	}
+	return cnt, nil
+}
+
 func (app *app) GetAdminTeam() (*model.Team, error) {
 	t, err := app.repo.GetAdminTeam()
 	if err != nil {
@@ -84,6 +112,14 @@ func (app *app) GetTeamByID(teamID uint32) (*model.Team, error) {
 	team, err := app.repo.GetTeamByID(teamID)
 	if err != nil {
 		return nil, err
+	}
+	return team, nil
+}
+
+func (app *app) GetTeamByName(teamName string) (*model.Team, error) {
+	team, err := app.repo.GetTeamByName(teamName)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	return team, nil
 }
@@ -193,11 +229,20 @@ func (app *app) UpdateTeamname(team *model.Team, newTeamname string) error {
 	return nil
 }
 
-func (app *app) UpdateCountry(team *model.Team, newCountryCode string) error {
-	if newCountryCode == "" {
-		return NewErrorMessage(countrycodeRequiredMessage)
+func (app *app) UpdateEmail(team *model.Team, newEmail string) error {
+	if err := app.validateEmail(newEmail); err != nil {
+		return xerrors.Errorf(": %w", err)
 	}
+	if err := app.repo.UpdateEmail(team, newEmail); err != nil {
+		if xerrors.As(err, &repository.DuplicatedError{}) {
+			return xerrors.Errorf(": %w", NewErrorMessage("that email is already used"))
+		}
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
 
+func (app *app) UpdateCountry(team *model.Team, newCountryCode string) error {
 	country, err := validateCountryCode(newCountryCode)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -261,8 +306,7 @@ func validateCountryCode(countryCode string) (string, error) {
 	if countryCode == "" {
 		return "", nil
 	}
-	q := gountries.New()
-	c, err := q.FindCountryByAlpha(countryCode)
+	c, err := gountry_query.FindCountryByAlpha(countryCode)
 	if err != nil {
 		return "", NewErrorMessage(countrycodeInvalidMessage)
 	}

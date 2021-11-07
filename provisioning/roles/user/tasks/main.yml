@@ -1,0 +1,32 @@
+- name: create staff user
+  user:
+    name: "{{ username }}"
+    createhome: yes
+    shell: "/usr/bin/zsh"
+    groups: ["sudo", "docker"]
+    state: present
+
+- name: "create staff user's ssh directory"
+  file:
+    path: "/home/{{ username }}/.ssh"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: 0700
+
+- name: "place staff user's authorized_keys"
+  authorized_key:
+    user: "{{ username }}"
+    key: "{{ lookup('file', item) }}"
+    state: present
+    manage_dir: yes
+  with_fileglob:
+    - "*.pub"
+
+- name: "use grml.org's zshrc by default"
+  get_url:
+    url: "https://git.grml.org/f/grml-etc-core/etc/zsh/zshrc"
+    dest: "/home/{{ username }}/.zshrc"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: 0755

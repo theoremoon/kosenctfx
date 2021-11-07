@@ -13,24 +13,24 @@ import (
 )
 
 const (
-	challengeNotfoundMessage = "no such challenge"
-	challengeDuplicatedMessage = "Challenge %s is already exist"
-	countrycodeInvalidMessage = "invalid country code. please follow ISO 3166-1 alpha-2"
-	countrycodeRequiredMessage = "countrycode is required"
-	emailDuplicatedMessage = "email already used"
-	emailNotfoundMessage = "invalid email address"
-	emailRequiredMessage = "email is required"
-	emailTooLongMessage = "email should be shorter than 128 bytes"
-	passwordRequiredMessage = "password is required"
-	passwordResetMailBody = "Your password reset token is: %s"
-	passwordResetMailTitle = "Password reset token"
-	passwordResetTokenInvalidMessage = "password reset token is invalid"
-	teamNotfoundMessage = "no such team"
-	teamnameDuplicatedMessage = "teamname already used"
-	teamnameRequiredMessage = "teamname is required"
-	teamnameTooLongMessage = "teamname should be shorter than 128 bytes"
-	tokenInvalidMessage = "invalid token"
-	wrongPasswordMessage = "password mismatch"
+	challengeNotfoundMessage         = "No such challenge"
+	challengeDuplicatedMessage       = "Challenge %s exists"
+	countrycodeInvalidMessage        = "Invalid country code (Not valid as ISO 3166-1 alpha-2)"
+	countrycodeRequiredMessage       = "Country code is required"
+	emailDuplicatedMessage           = "This email address is already used"
+	emailNotfoundMessage             = "Invalid email address"
+	emailRequiredMessage             = "Email is required"
+	emailTooLongMessage              = "Maximum length of email is 128"
+	passwordRequiredMessage          = "Password is required"
+	passwordResetMailBody            = "Your password reset token is: %s"
+	passwordResetMailTitle           = "Password Reset Token"
+	passwordResetTokenInvalidMessage = "Password reset token is invalid"
+	teamNotfoundMessage              = "No such team"
+	teamnameDuplicatedMessage        = "This team name has already been taken"
+	teamnameRequiredMessage          = "Team name is required"
+	teamnameTooLongMessage           = "Maximum length of your team name is 128"
+	tokenInvalidMessage              = "Invalid token"
+	wrongPasswordMessage             = "Wrong password"
 )
 
 type App interface {
@@ -38,7 +38,8 @@ type App interface {
 	ChallengeApp
 	CTFApp
 	SubmissionApp
-	ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Challenge, *Scoreboard, error)
+	ScoreFeed(chals []*model.Challenge, teams []*model.Team, submissions []*model.Submission) ([]*Challenge, []*ScoreFeedEntry, error)
+	TaskSolves() (map[*model.Challenge]int64, error)
 }
 
 type app struct {
@@ -67,6 +68,8 @@ type TaskStat struct {
 	Score    uint32 `json:"points"`
 	SolvedAt int64  `json:"time"`
 }
+
+/// jsonの名前めちゃくちゃに見えるけどctftimeに沿ってるはず
 type ScoreFeedEntry struct {
 	Pos            int                  `json:"pos"`
 	Teamname       string               `json:"team"`
@@ -76,12 +79,8 @@ type ScoreFeedEntry struct {
 	TeamID         uint32               `json:"team_id"`
 	LastSubmission int64                `json:"last_submission"`
 }
-type Scoreboard struct {
-	Tasks     []string          `json:"tasks"`
-	Standings []*ScoreFeedEntry `json:"standings"`
-}
 
-func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Challenge, *Scoreboard, error) {
+func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team, submissions []*model.Submission) ([]*Challenge, []*ScoreFeedEntry, error) {
 	conf, err := app.repo.GetConfig()
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
@@ -93,12 +92,6 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}
 	attachments, err := app.repo.ListAllAttachments()
-	if err != nil {
-		return nil, nil, xerrors.Errorf(": %w", err)
-	}
-
-	// list valid submissions
-	submissions, err := app.repo.ListValidSubmissions()
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}
@@ -133,10 +126,10 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 		solvedByMap[c.ID] = make([]SolvedBy, 0)
 	}
 	for _, s := range submissions {
-		solvedByMap[s.ChallengeId] = append(solvedByMap[s.ChallengeId], SolvedBy{
+		solvedByMap[*s.ChallengeId] = append(solvedByMap[*s.ChallengeId], SolvedBy{
 			TeamName: teamMap[s.TeamId],
 			TeamID:   s.TeamId,
-			SolvedAt: s.CreatedAt,
+			SolvedAt: s.SubmittedAt,
 		})
 	}
 
@@ -151,6 +144,7 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 			ID:          c.ID,
 			Name:        c.Name,
 			Flag:        c.Flag,
+			Category:    c.Category,
 			Description: c.Description,
 			Author:      c.Author,
 			Score:       uint32(score),
@@ -162,12 +156,6 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 		}
 	}
 
-	// tasksをchallengesと別に作っているのは、challengesはnot logged inなuserには見せてないから
-	tasks := make([]string, len(challenges))
-	for i, c := range challenges {
-		tasks[i] = c.Name
-	}
-
 	// ----
 
 	chalMap := make(map[uint32]*Challenge)
@@ -175,9 +163,9 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 		chalMap[c.ID] = c
 	}
 
-	teamSubmissions := make(map[uint32][]*model.ValidSubmission)
+	teamSubmissions := make(map[uint32][]*model.Submission)
 	for _, t := range teams {
-		teamSubmissions[t.ID] = make([]*model.ValidSubmission, 0)
+		teamSubmissions[t.ID] = make([]*model.Submission, 0)
 	}
 	for _, s := range submissions {
 		teamSubmissions[s.TeamId] = append(teamSubmissions[s.TeamId], s)
@@ -191,12 +179,12 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 		var lastSubmission int64 = 0
 
 		for _, s := range teamSubmissions[teams[i].ID] {
-			c, exist := chalMap[s.ChallengeId]
+			c, exist := chalMap[*s.ChallengeId]
 			if !exist {
 				continue //?
 			}
 			score += c.Score
-			solvedAt := s.CreatedAt
+			solvedAt := s.SubmittedAt
 			taskStats[c.Name] = &TaskStat{
 				Score:    c.Score,
 				SolvedAt: solvedAt,
@@ -233,8 +221,43 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team) ([]*Cha
 		}
 	}
 
-	return challenges, &Scoreboard{
-		Tasks:     tasks,
-		Standings: scoreFeed,
-	}, nil
+	lastTeam := len(scoreFeed)
+	// CTF開催からは0点のチームは表示しない
+	if CalcCTFStatus(conf) != CTFNotStarted {
+		for i := 0; i < len(scoreFeed); i++ {
+			if scoreFeed[i].Score <= 0 {
+				lastTeam = i
+				break
+			}
+		}
+	}
+
+	return challenges, scoreFeed[:lastTeam], nil
+}
+
+/// どの問題が何回解かれたかを見る
+func (app *app) TaskSolves() (map[*model.Challenge]int64, error) {
+	chals, err := app.ListOpenedRawChallenges()
+	if err != nil {
+		return nil, err
+	}
+	chalMap := make(map[uint32]*model.Challenge)
+	for _, c := range chals {
+		chalMap[c.ID] = c
+	}
+
+	solves := make(map[*model.Challenge]int64)
+	for _, c := range chals {
+		solves[c] = 0
+	}
+
+	submissions, err := app.ListValidSubmissions()
+	if err != nil {
+		return nil, err
+	}
+	for _, s := range submissions {
+		// valid submissionでnilということはなかろう
+		solves[chalMap[*s.ChallengeId]]++
+	}
+	return solves, nil
 }

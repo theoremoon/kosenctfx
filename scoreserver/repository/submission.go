@@ -9,63 +9,50 @@ import (
 )
 
 type SubmissionRepository interface {
-	ListSubmissions(offset, limit int64) ([]*Submission, error)
-	ListSubmissionByIDs(ids []uint32) ([]*Submission, error)
+	ListSubmissions(offset, limit int64) ([]*model.Submission, error)
+	ListSubmissionByIDs(ids []uint32) ([]*model.Submission, error)
 	ListValidSubmissions() ([]*model.ValidSubmission, error)
+	ListTeamSubmissions(teamID uint32) ([]*model.Submission, error)
 	InsertSubmission(s *model.Submission) error
 	InsertValidableSubmission(s *model.Submission) (bool, error)
+	MarkSubmissionValid(id uint32) error
 	CountSubmissions() (int64, error)
+	CountValidSubmissions() (int64, error)
 
 	GetWrongCount(teamID uint32, duration time.Duration) (int64, error)
 	LockSubmission(teamID uint32, duration time.Duration) error
 	CheckSubmittable(teamID uint32) (bool, error)
 }
 
-type Submission struct {
-	ID          uint32  `gorm:"column:id"`
-	TeamId      uint32  `gorm:"column:team_id"`
-	ChallengeId *uint32 `gorm:"column:challenge_id"`
-	Flag        string  `gorm:"column:flag"`
-	IsCorrect   bool    `gorm:"column:is_correct"`
-	IsValid     bool    `gorm:"column:is_valid"`
-	SubmittedAt int64   `gorm:"column:submitted_at"`
-}
-
-func (r *repository) ListSubmissions(offset, limit int64) ([]*Submission, error) {
-	rows, err := r.db.Model(&model.Submission{}).Order("submissions.created_at desc").Offset(int(offset)).Limit(int(offset)).Select("submissions.id AS id, submissions.team_id AS team_id, submissions.challenge_id AS challenge_id, submissions.flag AS flag, submissions.is_correct AS is_correct, (valid_submissions.id IS NOT NULL) AS is_valid, submissions.created_at as submitted_at").Joins("LEFT OUTER JOIN valid_submissions ON submissions.id = valid_submissions.submission_id").Rows()
-	defer rows.Close()
-	if err != nil {
+func (r *repository) ListSubmissions(offset, limit int64) ([]*model.Submission, error) {
+	var submissions []*model.Submission
+	if err := r.db.Order("submissions.created_at desc").Offset(int(offset)).Limit(int(offset)).Find(&submissions).Error; err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	submissions := make([]*Submission, 0, 1000)
-	for rows.Next() {
-		var submission Submission
-		r.db.ScanRows(rows, &submission)
-		submissions = append(submissions, &submission)
-	}
 	return submissions, nil
 }
 
-func (r *repository) ListSubmissionByIDs(ids []uint32) ([]*Submission, error) {
-	rows, err := r.db.Model(&model.Submission{}).Order("submissions.created_at desc").Select("submissions.id AS id, submissions.team_id AS team_id, submissions.challenge_id AS challenge_id, submissions.flag AS flag, submissions.is_correct AS is_correct, (valid_submissions.id IS NOT NULL) AS is_valid, submissions.created_at as submitted_at").Joins("LEFT OUTER JOIN valid_submissions ON submissions.id = valid_submissions.submission_id").Where("submissions.id IN ?", ids).Rows()
-	defer rows.Close()
-	if err != nil {
+func (r *repository) ListSubmissionByIDs(ids []uint32) ([]*model.Submission, error) {
+	var submissions []*model.Submission
+	if err := r.db.Order("submissions.created_at desc").Where("submissions.id IN ?", ids).Find(&submissions).Error; err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	submissions := make([]*Submission, 0, 1000)
-	for rows.Next() {
-		var submission Submission
-		r.db.ScanRows(rows, &submission)
-		submissions = append(submissions, &submission)
-	}
 	return submissions, nil
 }
 
 func (r *repository) ListValidSubmissions() ([]*model.ValidSubmission, error) {
 	var submissions []*model.ValidSubmission
 	if err := r.db.Find(&submissions).Error; err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return submissions, nil
+}
+
+func (r *repository) ListTeamSubmissions(teamID uint32) ([]*model.Submission, error) {
+	var submissions []*model.Submission
+	if err := r.db.Where("team_id = ?", teamID).Find(&submissions).Error; err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	return submissions, nil
@@ -122,9 +109,24 @@ func (r *repository) InsertValidableSubmission(s *model.Submission) (bool, error
 	return valid, nil
 }
 
+func (r *repository) MarkSubmissionValid(id uint32) error {
+	if err := r.db.Model(&model.Submission{}).Where("id = ?", id).Update("is_valid", true).Error; err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
 func (r *repository) CountSubmissions() (int64, error) {
 	var count int64
 	if err := r.db.Model(&model.Submission{}).Count(&count).Error; err != nil {
+		return 0, xerrors.Errorf(": %w", err)
+	}
+	return count, nil
+}
+
+func (r *repository) CountValidSubmissions() (int64, error) {
+	var count int64
+	if err := r.db.Model(&model.ValidSubmission{}).Count(&count).Error; err != nil {
 		return 0, xerrors.Errorf(": %w", err)
 	}
 	return count, nil

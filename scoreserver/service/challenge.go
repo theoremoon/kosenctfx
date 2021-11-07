@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/labstack/gommon/log"
 	"github.com/mattn/anko/core"
 	"github.com/mattn/anko/env"
 	_ "github.com/mattn/anko/packages"
@@ -28,6 +29,7 @@ type Challenge struct {
 	ID          uint32       `json:"id"`
 	Name        string       `json:"name"`
 	Flag        string       `json:"flag"`
+	Category    string       `json:"category"`
 	Description string       `json:"description"`
 	Author      string       `json:"author"`
 	Score       uint32       `json:"score"`
@@ -54,7 +56,7 @@ type ChallengeApp interface {
 	CloseChallenge(challengeID uint32) error
 	UpdateChallenge(challengeID uint32, c *Challenge) error
 
-	SubmitFlag(team *model.Team, ipaddress string, flag string, ctfRunning bool) (*model.Challenge, bool, bool, error)
+	SubmitFlag(team *model.Team, ipaddress string, flag string, ctfRunning bool, submitted_at int64) (*model.Challenge, bool, bool, error)
 
 	GetWrongCount(teamID uint32, duration time.Duration) (int64, error)
 	LockSubmission(teamID uint32, duration time.Duration) error
@@ -225,6 +227,7 @@ func (app *app) AddChallenge(c *Challenge) error {
 	chal := model.Challenge{
 		Name:        c.Name,
 		Flag:        c.Flag,
+		Category:    c.Category,
 		Description: c.Description,
 		Author:      c.Author,
 		IsOpen:      false,
@@ -274,6 +277,7 @@ func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
 	chal := model.Challenge{
 		Name:        c.Name,
 		Flag:        c.Flag,
+		Category:    c.Category,
 		Description: c.Description,
 		Author:      c.Author,
 		IsSurvey:    c.IsSurvey,
@@ -313,17 +317,19 @@ func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
 }
 
 /// 返り値は 解いたchallenge（is_correctがfalseならnil)、 is_correct, is_valid, error
-func (app *app) SubmitFlag(team *model.Team, ipaddress string, flag string, ctfRunning bool) (*model.Challenge, bool, bool, error) {
+func (app *app) SubmitFlag(team *model.Team, ipaddress string, flag string, ctfRunning bool, submitted_at int64) (*model.Challenge, bool, bool, error) {
 	chal, err := app.repo.GetChallengeByFlag(flag)
 	if err != nil && !xerrors.As(err, &repository.NotFoundError{}) {
 		return nil, false, false, xerrors.Errorf(": %w", err)
 	}
 
 	s := &model.Submission{
-		TeamId:    team.ID,
-		IsCorrect: false, //とりあえずfalseを入れておいてあとからtrueで上書きする
-		Flag:      flag,
-		IPAddress: ipaddress,
+		TeamId:      team.ID,
+		IsCorrect:   false, //とりあえずfalseを入れておいてあとからtrueで上書きする
+		IsValid:     false, // とりあえずfalseを入れておいてあとからtrueで上書きする
+		Flag:        flag,
+		IPAddress:   ipaddress,
+		SubmittedAt: submitted_at,
 	}
 	if chal == nil || !chal.IsOpen {
 		// wrong
@@ -341,6 +347,13 @@ func (app *app) SubmitFlag(team *model.Team, ipaddress string, flag string, ctfR
 			valid, err := app.repo.InsertValidableSubmission(s)
 			if err != nil {
 				return nil, false, false, xerrors.Errorf(": %w", err)
+			}
+
+			if valid {
+				// validなときsubmissionにvalidフラグ立てておく
+				if err := app.repo.MarkSubmissionValid(s.ID); err != nil {
+					log.Errorf("%+v\n", err) // XXX
+				}
 			}
 			return chal, true, valid, nil
 		} else {

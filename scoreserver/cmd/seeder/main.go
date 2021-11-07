@@ -79,6 +79,8 @@ func run() error {
 	}
 
 	if *all || *submission {
+		now := time.Now().Unix()
+
 		n := rand.Intn(*size)
 		teams, err := app.ListTeams()
 		if err != nil {
@@ -93,15 +95,17 @@ func run() error {
 			is_correct := rand.Intn(2)
 			tid := rand.Intn(len(teams))
 			cid := rand.Intn(len(challenges))
-			if is_correct == 0 { // correct
-				if _, err := s.Submission(teams[tid], challenges[cid]); err != nil {
+			if is_correct != 0 { // correct
+				if _, err := s.Submission(teams[tid], challenges[cid], now); err != nil {
 					return xerrors.Errorf(": %w", err)
 				}
 			} else { // wrong
-				if _, err := s.Submission(teams[tid], nil); err != nil {
+				if _, err := s.Submission(teams[tid], nil, now); err != nil {
 					return xerrors.Errorf(": %w", err)
 				}
 			}
+
+			now += int64(rand.Intn(3600))
 		}
 	}
 	return nil

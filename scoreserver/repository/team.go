@@ -13,6 +13,8 @@ type TeamRepository interface {
 	MakeTeamAdmin(t *model.Team) error
 	GetAdminTeam() (*model.Team, error)
 	ListAllTeams() ([]*model.Team, error)
+	CountTeams() (int64, error)
+	AdminListAllTeams() ([]*model.Team, error)
 	GetTeamByID(teamId uint32) (*model.Team, error)
 	GetTeamByLoginToken(token string) (*model.Team, error)
 	GetTeamByName(teamname string) (*model.Team, error)
@@ -23,7 +25,9 @@ type TeamRepository interface {
 	RevokeTeamPasswordResetToken(teamID uint32) error
 	UpdateTeamPassword(team *model.Team, passwordHash string) error
 	UpdateTeamname(team *model.Team, teamname string) error
+	UpdateEmail(team *model.Team, email string) error
 	UpdateCountry(team *model.Team, country string) error
+	UpdatePrizeEligible(team *model.Team, eligible bool) error
 }
 
 func (r *repository) RegisterTeam(t *model.Team) error {
@@ -51,6 +55,22 @@ func (r *repository) GetAdminTeam() (*model.Team, error) {
 func (r *repository) ListAllTeams() ([]*model.Team, error) {
 	var teams []*model.Team
 	if err := r.db.Where("is_admin = ?", false).Find(&teams).Error; err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return teams, nil
+}
+
+func (r *repository) CountTeams() (int64, error) {
+	var count int64
+	if err := r.db.Model(&model.Team{}).Where("is_admin = ?", false).Count(&count).Error; err != nil {
+		return 0, xerrors.Errorf(": %w", err)
+	}
+	return count, nil
+}
+
+func (r *repository) AdminListAllTeams() ([]*model.Team, error) {
+	var teams []*model.Team
+	if err := r.db.Find(&teams).Error; err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	return teams, nil
@@ -153,8 +173,25 @@ func (r *repository) UpdateTeamname(team *model.Team, teamname string) error {
 	return nil
 }
 
+func (r *repository) UpdateEmail(team *model.Team, email string) error {
+	if err := r.db.Model(team).Update("email", email).Error; err != nil {
+		if isDuplicatedError(err) {
+			return xerrors.Errorf(": %w", Duplicated("email"))
+		}
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
 func (r *repository) UpdateCountry(team *model.Team, country string) error {
 	if err := r.db.Model(team).Update("country_code", country).Error; err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (r *repository) UpdatePrizeEligible(team *model.Team, eligible bool) error {
+	if err := r.db.Model(team).Update("is_prize_eligible", eligible).Error; err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil

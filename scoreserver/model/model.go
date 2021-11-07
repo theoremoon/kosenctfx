@@ -51,6 +51,7 @@ type Challenge struct {
 	Name        string  `gorm:"unique" json:"name"`
 	Flag        string  `gorm:"unique" json:"flag"`
 	Description string  `gorm:"size:10000" json:"description"`
+	Category    string  `json:"category"`
 	Author      string  `json:"author"`
 	Host        *string `json:"host"`
 	Port        *int    `json:"port"`
@@ -81,8 +82,10 @@ type Submission struct {
 	ChallengeId *uint32
 	TeamId      uint32
 	IsCorrect   bool
+	IsValid     bool
 	Flag        string
 	IPAddress   string
+	SubmittedAt int64
 }
 
 type ValidSubmission struct {

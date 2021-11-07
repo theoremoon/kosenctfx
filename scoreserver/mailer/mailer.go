@@ -3,6 +3,7 @@ package mailer
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/smtp"
 	"strings"
 )
@@ -43,5 +44,24 @@ func (m *mailer) Send(to, subject, body string) error {
 		fmt.Errorf("%w", err)
 	}
 
+	return nil
+}
+
+type fakeMailer struct{}
+
+func NewFakeMailer() Mailer {
+	return &fakeMailer{}
+}
+
+func (m *fakeMailer) Send(to, subject, body string) error {
+	log.Println(struct {
+		To      string
+		Subject string
+		Body    string
+	}{
+		To:      to,
+		Subject: subject,
+		Body:    body,
+	})
 	return nil
 }

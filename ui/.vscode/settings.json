@@ -1,0 +1,17 @@
+{
+  "eslint.alwaysShowStatus": true,
+  "eslint.format.enable": true,
+  "eslint.packageManager": "yarn",
+  "editor.defaultFormatter": "svipas.prettier-plus",
+  "scssFormatter.singleQuote": true,
+  "eslint.run": "onSave",
+  "prettier.vueIndentScriptAndStyle": true,
+  "editor.formatOnSave": true,
+  "html.format.endWithNewline": true,
+  "html.format.indentInnerHtml": true,
+  "html.format.indentHandlebars": true,
+  "editor.codeActionsOnSave": [
+    "source.organizeImports",
+    "source.addMissingImports"
+  ]
+}

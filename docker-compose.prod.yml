@@ -11,18 +11,7 @@ services:
     command: mysqld --general-log=1 --general-log-file=/var/lib/mysql/general-query.log
 
   redis:
-    image: redis:5.0.7-alpine
-
-  minio:
-    image: minio/minio
-    ports:
-      - "9000:9000" # minio
-      - "80:8000"   # ui
-      - "5000:5000" # scoreserver
-    environment:
-      MINIO_ACCESS_KEY: minio
-      MINIO_SECRET_KEY: minio123
-    command: ["server", "/data"]
+    image: redis:6
 
   scoreserver:
     build:
@@ -30,27 +19,30 @@ services:
     environment:
       DBDSN: 'kosenctfxuser:kosenctfxpassword@tcp(db:3306)/kosenctfx'
       REDIS: 'redis://redis:6379'
-      FRONT: 'http://localhost:8080'
+      FRONT: 'http://localhost:1/'
       MAIL: 'kosenctf@example.com'
       MAIL_SERVER: 'smtp.gmail.com:587'
       MAIL_PASSWORD: 'XXXXXXXXXXXXXXXXXX'
       ADMIN_WEBHOOK: ''
       SOLVE_WEBHOOK: ''
       TASK_OPEN_WEBHOOK: ''
-      BUCKET_ENDPOINT: "localhost:9000"
+      BUCKET_ENDPOINT: "minio:9000"
       BUCKET_REGION: "us-east-1"
       BUCKET_ACCESS_KEY: "minio"
-      BUCKET_SECRET_KEY: "minio123"
+      BUCKET_SECRET_KEY: "kosenctfx"
       BUCKET_NAME: "kosenctfx-challenges"
       BUCKET_INSECURE: "1"
-    depends_on:
-      - minio
-    network_mode: "service:minio"
-
+      ADMIN_TOKEN: "admin"
+  
   ui:
     build:
-      context: ui
-    network_mode: "service:minio"
-    depends_on:
-      - minio
+      context: ui2
+      dockerfile: Dockerfile.prod
+
+  nginx:
+    build:
+      context: nginx
+      dockerfile: Dockerfile.prod
+    ports:
+      - "8000:80"
 

@@ -26,7 +26,8 @@ services:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: minio123
     command: ["server", "/data"]
-    network_mode: "service:scoreserver"
+    ports:
+      - "9000:9000"  # minio
 
   scoreserver:
     build:
@@ -43,7 +44,7 @@ services:
       ADMIN_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
       SOLVE_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
       TASK_OPEN_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
-      BUCKET_ENDPOINT: "localhost:9000"
+      BUCKET_ENDPOINT: "minio:9000"
       BUCKET_REGION: "us-east-1"
       BUCKET_ACCESS_KEY: "minio"
       BUCKET_SECRET_KEY: "minio123"
@@ -56,7 +57,6 @@ services:
       - ./scoreserver:/scoreserver
     ports:
       - "5000:5000"  # scoreserver
-      - "9000:9000"  # minio
   
   nginx:
     image: nginx
@@ -87,3 +87,11 @@ services:
       - ./grafana/dashboard.json:/var/lib/grafana//dashboards/dashboard.json
     ports:
       - 3000:3000
+
+  etchosts:
+    build:
+      context: hosts
+    volumes:
+      - /etc/hosts:/etc/hosts
+    command: 'sh /script.sh'
+

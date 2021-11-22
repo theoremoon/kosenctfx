@@ -1,16 +1,13 @@
-import {
-  Box,
-  Button,
-  Flex,
-  FormControl,
-  FormLabel,
-  Input,
-  useToast,
-  VStack,
-} from "@chakra-ui/react";
+import { useToast } from "@chakra-ui/react";
 import { api, ErrorResponse } from "lib/api";
 import { useRouter } from "next/router";
 import { SubmitHandler, useForm } from "react-hook-form";
+import FormWrapper from "../components/formwrapper";
+import FormItem from "../components/formitem";
+import Input from "../components/input";
+import Label from "../components/label";
+import Right from "../components/right";
+import Button from "../components/button";
 
 type ResetRequestParams = {
   email: string;
@@ -43,25 +40,20 @@ const ResetRequest = () => {
     }
   };
   return (
-    <Box w="sm" mx="auto" mt="10">
+    <FormWrapper>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack>
-          <FormControl isInvalid={errors.email !== undefined}>
-            <FormLabel htmlFor="email">email</FormLabel>
-            <Input
-              id="email"
-              variant="flushed"
-              {...register("email", { required: true })}
-            ></Input>
-          </FormControl>
-          <FormControl>
-            <Flex w="100%" direction="row-reverse">
-              <Button type="submit">Send Email</Button>
-            </Flex>
-          </FormControl>
-        </VStack>
+        <FormItem>
+          <Label htmlFor="email">email</Label>
+          <Input id="email" {...register("email", { required: true })} />
+        </FormItem>
+
+        <FormItem>
+          <Right>
+            <Button type="submit">Send Email</Button>
+          </Right>
+        </FormItem>
       </form>
-    </Box>
+    </FormWrapper>
   );
 };
 

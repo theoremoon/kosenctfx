@@ -1,7 +1,7 @@
 package server
 
 import (
-	"log"
+	"errors"
 	"net/http"
 	"time"
 
@@ -12,7 +12,6 @@ import (
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"github.com/theoremoon/kosenctfx/scoreserver/webhook"
-	"golang.org/x/xerrors"
 	"gorm.io/gorm"
 )
 
@@ -132,8 +131,9 @@ func (s *server) Start(addr string) error {
 	e.POST("/admin/update-email", s.updateTeamEmail(), s.adminMiddleware)
 	e.POST("/admin/recalc-series", s.recalcSeries(), s.adminMiddleware)
 	e.GET("/admin/all-team-series", s.allTeamSeries(), s.adminMiddleware)
-	e.POST("/admin/get-presigned-url", s.getPresignedURLHandler(), s.adminMiddleware)
 	e.POST("/admin/sql", s.sqlHandler(), s.adminMiddleware)
+	e.GET("/admin/get-bucket", s.getBucketHandler(), s.adminMiddleware)
+	e.POST("/admin/set-bucket", s.setBucketHandler(), s.adminMiddleware)
 
 	// prometheus exporter
 	e.GET("/admin/metrics", s.metricsHandler(), s.adminMiddleware)
@@ -142,23 +142,28 @@ func (s *server) Start(addr string) error {
 }
 
 func errorHandle(c echo.Context, err error) error {
-	var errMsg service.ErrorMessage
-	if xerrors.As(err, &errMsg) {
-		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"message": errMsg.Error(),
-		})
+	if errors.As(err, &service.ErrorMessage{}) {
+		return errorMessageHandle(c, err.Error())
 	}
 
-	log.Printf("%+v\n", err)
-	c.Logger().Error(err)
-	return c.NoContent(http.StatusInternalServerError)
+	return serverErrorHandle(c, err)
 }
 
-func errorMessageHandle(c echo.Context, status int, msg string) error {
-	return c.JSON(status, map[string]interface{}{
+/// errorMessageHandle はユーザに見せるエラーメッセージを返すためのハンドラ
+func errorMessageHandle(c echo.Context, msg string) error {
+	return c.JSON(http.StatusBadRequest, map[string]interface{}{
 		"message": msg,
 	})
 }
+
+/// serverErrorHandle はユーザは悪くないけどなんかシステム的にエラーになってしまったときのハンドラ
+func serverErrorHandle(c echo.Context, err error) error {
+	c.Logger().Errorf("%+v\n", err)
+	return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		"message": "Internal Server Error",
+	})
+}
+
 func messageHandle(c echo.Context, msg string) error {
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": msg,

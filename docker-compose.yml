@@ -44,12 +44,6 @@ services:
       ADMIN_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
       SOLVE_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
       TASK_OPEN_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
-      BUCKET_ENDPOINT: "minio:9000"
-      BUCKET_REGION: "us-east-1"
-      BUCKET_ACCESS_KEY: "minio"
-      BUCKET_SECRET_KEY: "minio123"
-      BUCKET_NAME: "kosenctfx-challenges"
-      BUCKET_INSECURE: "1"
       ADMIN_TOKEN: "admin"
     command: >
       reflex -r '\.go$$' -s -- sh -c '/wayt sql -dsn "$$DBDSN" && go run main.go'

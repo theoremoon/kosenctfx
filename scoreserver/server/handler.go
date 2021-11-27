@@ -14,7 +14,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/go-redis/redis"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -149,7 +148,7 @@ func (s *server) tasksHandler() echo.HandlerFunc {
 
 		// CTF始まってないとき問題見せない
 		if status == service.CTFNotStarted {
-			return errorMessageHandle(c, http.StatusForbidden, CTFNotStartedMessage)
+			return messageHandleWithStatus(c, http.StatusForbidden, CTFNotStartedMessage)
 		}
 
 		// CTFがnow-runningでloginしてないとき、non sensitiveな情報しかみせない
@@ -822,35 +821,6 @@ func (s *server) allTeamSeries() echo.HandlerFunc {
 	}
 }
 
-func (s *server) getPresignedURLHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		req := new(struct {
-			Key string `json:"key"`
-		})
-		if err := c.Bind(req); err != nil {
-			return errorHandle(c, xerrors.Errorf(": %w", err))
-		}
-		if req.Key == "" {
-			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage(PresignedURLKeyRequiredMessage)))
-		}
-
-		if s.Bucket == nil {
-			return errorHandle(c, xerrors.Errorf(": %w", service.NewErrorMessage(BucketNullMessage)))
-		}
-
-		key := uuid.New().String() + "/" + req.Key
-		presignedURL, downloadURL, err := s.Bucket.GeneratePresignedURL(key)
-		if err != nil {
-			return errorHandle(c, xerrors.Errorf(": %w", err))
-		}
-
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"presignedURL": presignedURL,
-			"downloadURL":  downloadURL,
-		})
-	}
-}
-
 func (s *server) sqlHandler() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
@@ -873,6 +843,56 @@ func (s *server) sqlHandler() echo.HandlerFunc {
 			"columns": cols,
 			"rows":    rows,
 		})
+	}
+}
+
+func (s *server) getBucketHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ctfConf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return serverErrorHandle(c, err)
+		}
+
+		bucketConfig, err := s.app.GetBucketConfig(ctfConf)
+		if err != nil {
+			return errorHandle(c, err)
+		}
+
+		return c.JSON(http.StatusOK, bucketConfig)
+	}
+}
+func (s *server) setBucketHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		req := new(struct {
+			Endpoint   string `json:"endpoint"`
+			Region     string `json:"region"`
+			BucketName string `json:"bucketName"`
+			AccessKey  string `json:"accessKey"`
+			SecretKey  string `json:"secretKey"`
+			HTTPS      bool   `json:"https"`
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		ctfConf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return serverErrorHandle(c, err)
+		}
+
+		err = s.app.SetBucketConfig(ctfConf, &model.BucketConfig{
+			Endpoint:   req.Endpoint,
+			Region:     req.Region,
+			BucketName: req.BucketName,
+			AccessKey:  req.AccessKey,
+			SecretKey:  req.SecretKey,
+			HTTPS:      req.HTTPS,
+		})
+		if err != nil {
+			return errorMessageHandle(c, err.Error())
+		}
+
+		return messageHandle(c, "saved bucket settings")
 	}
 }
 

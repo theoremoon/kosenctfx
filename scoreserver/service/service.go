@@ -38,6 +38,7 @@ type App interface {
 	ChallengeApp
 	CTFApp
 	SubmissionApp
+	BucketApp
 	ScoreFeed(chals []*model.Challenge, teams []*model.Team, submissions []*model.Submission) ([]*Challenge, []*ScoreFeedEntry, error)
 	TaskSolves() (map[*model.Challenge]int64, error)
 }

@@ -17,12 +17,6 @@ type Config struct {
 	AdminWebhookURL    string
 	SolveLogWebhookURL string
 	TaskOpenWebhookURL string
-	BucketEndpoint     string
-	BucketRegion       string
-	BucketAccessKey    string
-	BucketSecretKey    string
-	BucketName         string
-	InsecureBucket     bool
 	AdminToken         string
 }
 
@@ -76,16 +70,6 @@ func Load() (*Config, error) {
 	adminWebhookURL, _ := getEnv("ADMIN_WEBHOOK")
 	solveLogWebhookURL, _ := getEnv("SOLVE_WEBHOOK")
 	taskOpenWebhookURL, _ := getEnv("TASK_OPEN_WEBHOOK")
-
-	bucketEndpoint, _ := getEnv("BUCKET_ENDPOINT")
-	bucketRegion, _ := getEnv("BUCKET_REGION")
-	bucketAccessKey, _ := getEnv("BUCKET_ACCESS_KEY")
-	bucketSecretKey, _ := getEnv("BUCKET_SECRET_KEY")
-	bucketName, _ := getEnv("BUCKET_NAME")
-	insecureBucket := false
-	if _, err := getEnv("BUCKET_INSECURE"); err == nil {
-		insecureBucket = true
-	}
 	adminToken, _ := getEnv("ADMIN_TOKEN")
 
 	return &Config{
@@ -100,12 +84,6 @@ func Load() (*Config, error) {
 		AdminWebhookURL:    adminWebhookURL,
 		SolveLogWebhookURL: solveLogWebhookURL,
 		TaskOpenWebhookURL: taskOpenWebhookURL,
-		BucketEndpoint:     bucketEndpoint,
-		BucketRegion:       bucketRegion,
-		BucketAccessKey:    bucketAccessKey,
-		BucketSecretKey:    bucketSecretKey,
-		BucketName:         bucketName,
-		InsecureBucket:     insecureBucket,
 		AdminToken:         adminToken,
 	}, nil
 }

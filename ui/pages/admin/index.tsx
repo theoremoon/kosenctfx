@@ -1,16 +1,3 @@
-import {
-  Box,
-  Button,
-  Divider,
-  FormControl,
-  FormLabel,
-  Input,
-  Stack,
-  Switch,
-  Textarea,
-  Wrap,
-  WrapItem,
-} from "@chakra-ui/react";
 import { ErrorMessage } from "@hookform/error-message";
 import InlineFormControl from "components/inlineformcontrol";
 import Loading from "components/loading";
@@ -24,6 +11,14 @@ import { api } from "../../lib/api";
 import useConfig, { Config } from "../../lib/api/admin/config";
 import useScoreboard from "../../lib/api/scoreboard";
 import { dateFormat, parseDateString } from "../../lib/date";
+import FormWrapper from "../../components/formwrapper";
+import FormItem from "../../components/formitem";
+import Label from "../../components/label";
+import Input from "../../components/input";
+import InlineLabel from "../../components/inlinelabel";
+import InlineInput from "../../components/inlineinput";
+import Button from "../../components/button";
+import Divider from "../../components/divider";
 
 type ConfigParams = {
   start_at: string;
@@ -121,64 +116,71 @@ const AdminConfigImpl = ({ data }: AdminConfigImplProps) => {
   };
 
   return (
-    <Stack w="lg" mx="auto" mt="10">
+    <div className="w-min md:w-2/3 mx-auto mt-10">
       <form onSubmit={handleSubmit(onSubmit)}>
         <ErrorMessage errors={errors} name="Error" />
-        <InlineFormControl isInvalid={errors.start_at !== undefined}>
-          <FormLabel htmlFor="start_at">CTF Starts at</FormLabel>
-          <Input
+
+        <FormItem>
+          <InlineLabel htmlFor="start_at">CTF Starts at</InlineLabel>
+          <InlineInput
             id="start_at"
+            type="text"
             {...register("start_at", {
               required: true,
               validate: (value: string) => parseDateString(value) !== null,
             })}
-          ></Input>
-        </InlineFormControl>
+          />
+        </FormItem>
 
-        <InlineFormControl isInvalid={errors.end_at !== undefined}>
-          <FormLabel htmlFor="end_at">CTF Ends at</FormLabel>
-          <Input
+        <FormItem>
+          <InlineLabel htmlFor="end_at">CTF Ends at</InlineLabel>
+          <InlineInput
             id="end_at"
+            type="text"
             {...register("end_at", {
               required: true,
               validate: (value: string) => parseDateString(value) !== null,
             })}
-          ></Input>
-        </InlineFormControl>
+          />
+        </FormItem>
 
-        <InlineFormControl isInvalid={errors.ctf_open !== undefined}>
-          <FormLabel htmlFor="ctf_open">CTF is open</FormLabel>
-          <Switch id="ctf_open" {...register("ctf_open")} />
-        </InlineFormControl>
+        <FormItem>
+          <InlineLabel htmlFor="ctf_open">CTF is open</InlineLabel>
+          <input
+            {...register("ctf_open")}
+            type="checkbox"
+            className="w-6 h-6 text-pink-600"
+          />
 
-        <InlineFormControl isInvalid={errors.register_open !== undefined}>
-          <FormLabel htmlFor="register_open">Registration is open</FormLabel>
-          <Switch id="register_open" {...register("register_open")} />
-        </InlineFormControl>
+          <InlineLabel htmlFor="register_open">
+            Registration is open
+          </InlineLabel>
+          <input
+            {...register("register_open")}
+            type="checkbox"
+            className="w-6 h-6 text-pink-600"
+          />
+        </FormItem>
 
-        <Box>
-          Submission is locked for
-          <Input w="2em" type="number" {...register("lock_second")} /> seconds
-          when
-          <Input w="2em" type="number" {...register("lock_count")} /> wrong
-          flags submitted in
-          <Input w="2em" type="number" {...register("lock_duration")} />{" "}
-          seconds.
-        </Box>
+        <FormItem>
+          <InlineLabel>Submission lock second</InlineLabel>
+          <InlineInput type="number" {...register("lock_second")} />
 
-        <FormControl mt={5}>
-          <FormLabel htmlFor="score_expr">Score Expr</FormLabel>
-          <Textarea {...register("score_expr")} />
-        </FormControl>
+          <InlineLabel>Lock trigger count</InlineLabel>
+          <InlineInput type="number" {...register("lock_count")} />
+
+          <InlineLabel>Lock trigger duration</InlineLabel>
+          <InlineInput type="number" {...register("lock_duration")} />
+        </FormItem>
 
         <Area>
-          <InlineFormControl>
-            <FormLabel htmlFor="end_at">Max Solves</FormLabel>
-            <Input
+          <FormItem>
+            <InlineLabel htmlFor="end_at">Max Solves</InlineLabel>
+            <InlineInput
               value={numberOfSolves}
               onChange={(e) => setNumberOfSolves(Number(e.target.value))}
             />
-          </InlineFormControl>
+          </FormItem>
           <Right>
             <Button onClick={scoreEmulate}>Draw Graph</Button>
           </Right>
@@ -208,41 +210,35 @@ const AdminConfigImpl = ({ data }: AdminConfigImplProps) => {
           />
         </Area>
 
-        <FormControl>
+        <FormItem>
           <Right>
             <Button type="submit">Apply Changes</Button>
           </Right>
-        </FormControl>
+        </FormItem>
       </form>
 
       <Divider />
 
-      <Wrap>
-        <WrapItem>
-          <Button
-            onClick={() => {
-              getScoreboard();
-            }}
-          >
-            Scoreboard for CTFtime
-          </Button>
-        </WrapItem>
+      <div className="grid grid-cols-3 gap-x-4">
+        <Button
+          onClick={() => {
+            getScoreboard();
+          }}
+        >
+          Scoreboard for CTFtime
+        </Button>
 
-        <WrapItem>
-          <Button onClick={() => {}}>Scoreboard for CTF-ratings</Button>
-        </WrapItem>
+        <Button onClick={() => {}}>Scoreboard for CTF-ratings</Button>
 
-        <WrapItem>
-          <Button
-            onClick={() => {
-              recalc();
-            }}
-          >
-            Recalc All Score Series
-          </Button>
-        </WrapItem>
-      </Wrap>
-    </Stack>
+        <Button
+          onClick={() => {
+            recalc();
+          }}
+        >
+          Recalc All Score Series
+        </Button>
+      </div>
+    </div>
   );
 };
 

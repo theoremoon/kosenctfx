@@ -1,6 +1,5 @@
 import {
   Box,
-  Divider,
   HStack,
   LinkBox,
   LinkOverlay,
@@ -28,6 +27,7 @@ import React, { useEffect, useState } from "react";
 import useAccount from "../lib/api/account";
 import useCTF, { CTF } from "../lib/api/ctf";
 import Loading from "./loading";
+import Divider from "./divider";
 
 interface MenuLinkProps {
   label: string;
@@ -37,26 +37,14 @@ interface MenuLinkProps {
 
 const MenuLink = ({ label, href, icon }: MenuLinkProps) => {
   return (
-    <LinkBox
-      css={{
-        padding: "0.75em",
-        paddingLeft: "1em",
-        filter: "brightness(0.7)",
-      }}
-      _hover={{
-        filter: "brightness(1)",
-        textShadow: "0 0 1px #ffffff",
-      }}
-    >
-      <NextLink href={href} passHref>
-        <LinkOverlay>
-          <HStack>
-            <FontAwesomeIcon icon={icon} />
-            <Text fontSize="xl">{label}</Text>
-          </HStack>
-        </LinkOverlay>
-      </NextLink>
-    </LinkBox>
+    <NextLink href={href}>
+      <div className="px-4 cursor-pointer mb-2 opacity-40 hover:opacity-100 overflow-clip">
+        <div className="inline-block w-6">
+          <FontAwesomeIcon icon={icon} />
+        </div>
+        <p className="text-xl inline-block ml-2 text-white">{label}</p>
+      </div>
+    </NextLink>
   );
 };
 
@@ -98,63 +86,53 @@ const Menu = ({ ctf }: MenuProps) => {
   useInterval(calcProgress, 1000);
 
   return (
-    <Box
-      sx={{
-        minWidth: "150px",
-        minHeight: "100vh",
-        height: "100%",
-        borderRightColor: "#EDFDFD33",
-        borderRightStyle: "solid",
-        borderRightWidth: "1px",
-      }}
-    >
-      <Stack>
-        <Box maxW="150px">
-          {!ctf.is_open && <Text fontSize="sm">CTF is closed now</Text>}
-          {!ctf.is_open && now < ctf.start_at && (
-            <Text fontSize="sm">CTF will start in {countdown}</Text>
-          )}
-          {ctf.is_running && (
+    <div className="border-r border-white-600 border-opacity-50 h-full">
+      <div className="px-4">
+        {!ctf.is_open && <Text fontSize="sm">CTF is closed now</Text>}
+        {!ctf.is_open && now < ctf.start_at && (
+          <Text fontSize="sm">CTF will start in {countdown}</Text>
+        )}
+        {ctf.is_running && (
+          <>
+            <Text>CTF is now running!</Text>
+            <Text fontSize="sm">{countdown} remains</Text>
+            <Progress size="xs" value={progress} colorScheme="pink" />
+          </>
+        )}
+        {ctf.is_over && <Text>CTF is over. Thanks for playing!</Text>}
+      </div>
+
+      <MenuLink label="Top" href="/" icon={faHome} />
+
+      {ctf && ((ctf.is_running && account) || ctf.is_over) && (
+        <MenuLink label="Tasks" href="/tasks" icon={faFlag} />
+      )}
+
+      <MenuLink label="Ranking" href="/ranking" icon={faTrophy} />
+      <Divider />
+
+      {account ? (
+        <>
+          <MenuLink label="Profile" href="/profile" icon={faAddressCard} />
+          <Divider />
+          <MenuLink label="Logout" href="/logout" icon={faSignOutAlt} />
+          {account.is_admin && (
             <>
-              <Text>CTF is now running!</Text>
-              <Text fontSize="sm">{countdown} remains</Text>
-              <Progress size="xs" value={progress} colorScheme="pink" />
+              <Divider />
+              <MenuLink label="Admin" href="/admin" icon={faWrench} />
+              <MenuLink label="Tasks" href="/admin/tasks" icon={faFlagUsa} />
+              <MenuLink label="Teams" href="/admin/teams" icon={faUsers} />
+              <MenuLink label="Config" href="/admin/config" icon={faWrench} />
             </>
           )}
-          {ctf.is_over && <Text>CTF is over. Thanks for playing!</Text>}
-        </Box>
-
-        <MenuLink label="Top" href="/" icon={faHome} />
-
-        {ctf && ((ctf.is_running && account) || ctf.is_over) && (
-          <MenuLink label="Tasks" href="/tasks" icon={faFlag} />
-        )}
-
-        <MenuLink label="Ranking" href="/ranking" icon={faTrophy} />
-        <Divider />
-
-        {account ? (
-          <>
-            <MenuLink label="Profile" href="/profile" icon={faAddressCard} />
-            <Divider />
-            <MenuLink label="Logout" href="/logout" icon={faSignOutAlt} />
-            {account.is_admin && (
-              <>
-                <Divider />
-                <MenuLink label="Admin" href="/admin" icon={faWrench} />
-                <MenuLink label="Tasks" href="/admin/tasks" icon={faFlagUsa} />
-                <MenuLink label="Teams" href="/admin/teams" icon={faUsers} />
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <MenuLink label="Login" href="/login" icon={faSignInAlt} />
-            <MenuLink label="Register" href="/register" icon={faSign} />
-          </>
-        )}
-      </Stack>
-    </Box>
+        </>
+      ) : (
+        <>
+          <MenuLink label="Login" href="/login" icon={faSignInAlt} />
+          <MenuLink label="Register" href="/register" icon={faSign} />
+        </>
+      )}
+    </div>
   );
 };
 

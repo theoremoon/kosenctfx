@@ -1,10 +1,18 @@
 import NextDocument, { Head, Html, Main, NextScript } from "next/document";
+import { bgColor, bgSubColor, pink, white } from "../lib/color";
 
 type Props = {};
 class Document extends NextDocument<Props> {
   render() {
     return (
-      <Html>
+      <Html
+        style={{
+          backgroundColor: bgColor,
+          backgroundImage: `radial-gradient(${bgSubColor} 1px, transparent 1px)`,
+          backgroundSize: `10px 10px`,
+          color: "#eaf1f1",
+        }}
+      >
         <Head>
           <title>BSides Ahmedabad CTF 2021</title>
           <link rel="preconnect" href="https://fonts.googleapis.com" />

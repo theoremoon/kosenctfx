@@ -37,8 +37,8 @@ func (r *repository) Migrate() {
 		&model.Submission{},
 		&model.ValidSubmission{},
 		&model.SubmissionLock{},
-		&model.Message{},
 		&model.Config{},
+		&model.BucketConfig{},
 	)
 }
 

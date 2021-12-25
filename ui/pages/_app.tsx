@@ -1,6 +1,5 @@
 import {
   Box,
-  ChakraProvider,
   Container,
   extendTheme,
   Flex,
@@ -13,78 +12,27 @@ import React from "react";
 import { SWRConfig } from "swr";
 import Menu from "../components/menu";
 import { bgColor, bgSubColor, pink, white } from "../lib/color";
-
-const theme = extendTheme(
-  {
-    initialColorMode: "dark",
-    useSystemColorMode: false,
-    styles: {
-      global: {
-        "html, body": {
-          minHeight: "100vh",
-          height: "100%",
-          backgroundColor: bgColor,
-          backgroundImage: `radial-gradient(${bgSubColor} 1px, transparent 1px)`,
-          backgroundSize: `10px 10px`,
-          color: "#eaf1f1",
-        },
-        "#__next": {
-          minHeight: "100%",
-        },
-        input: {
-          textAlign: "center",
-        },
-        "button.chakra-button:hover": {
-          background: pink,
-          color: white,
-        },
-      },
-    },
-  },
-
-  withDefaultVariant({
-    variant: "flushed",
-    components: ["Input"],
-  }),
-  withDefaultVariant({
-    variant: "outline",
-    components: ["Button"],
-  }),
-  withDefaultColorScheme({
-    colorScheme: "pink",
-  })
-);
+import "tailwindcss/tailwind.css";
+import "../style/global.scss";
 
 const App = ({ Component, pageProps }: AppProps) => {
   return (
     <SWRConfig value={{ fetcher: defaultFetcher }}>
-      <ChakraProvider theme={theme}>
-        <Flex
-          sx={{
-            minHeight: "100vh",
-            height: "100%",
-          }}
-        >
-          <div style={{ overflow: "hidden" }}>
-            <Menu />
-          </div>
-          <Container maxW="container.xl">
-            <Flex direction="column" h="100%">
-              <Box flex="1">
+      <div className="min-h-full h-full flex flex-row">
+        <div className="w-44 break-normal">
+          <Menu />
+        </div>
+        <div className="container h-full">
+          <div className="w-min md:w-2/3 mx-auto h-full">
+            <div className="h-full flex flex-col">
+              <div className="flex-1">
                 <Component {...pageProps} />
-              </Box>
-              <Box
-                sx={{
-                  opacity: "0.2",
-                  textAlign: "center",
-                }}
-              >
-                powered by kosenctfx
-              </Box>
-            </Flex>
-          </Container>
-        </Flex>
-      </ChakraProvider>
+              </div>
+              <div className="opacity-20 text-center">powered by kosenctfx</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </SWRConfig>
   );
 };

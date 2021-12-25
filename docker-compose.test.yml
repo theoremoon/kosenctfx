@@ -1,6 +1,6 @@
 version: '3'
 services:
-  db:
+  db-test:
     image: mysql:8
     environment:
       MYSQL_DATABASE: testtable
@@ -10,9 +10,8 @@ services:
 
     command: mysqld --general-log=1 --general-log-file=/var/lib/mysql/general-query.log
 
-  redis:
+  redis-test:
     image: redis:6
-
 
   go-test:
     image: golang:1.15
@@ -20,6 +19,9 @@ services:
     volumes:
       - "./scoreserver:/app"
       - "./go-modules:/go/pkg/mod"
-    command: "go test ./..."
+    command: "bash -c 'sleep 5 && go test ./...'" # sleep for waiting up mysql
+    depends_on:
+      - db-test
+      - redis-test
 
 

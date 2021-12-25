@@ -24,3 +24,6 @@ sql:
 
 pass:
 	echo 'select token from configs;' | docker-compose exec -T db mysql -u kosenctfxuser -pkosenctfxpassword kosenctfx
+
+test:
+	docker-compose -f docker-compose.test.yml run go-test

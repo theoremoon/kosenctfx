@@ -1,8 +1,9 @@
 package repository_test
 
 import (
-	"testing"
+	"database/sql"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -18,10 +19,15 @@ func newRepository() repository.Repository {
 		panic(err)
 	}
 
-	return repository.New(db)
+	repo := repository.New(db)
+	repo.Migrate()
+	return repo
 }
 
-func TestMigrate(t *testing.T) {
-	repo := newRepository()
-	repo.Migrate()
+func getDB() *sql.DB {
+	db, err := sql.Open("mysql", testDB)
+	if err != nil {
+		panic(err)
+	}
+	return db
 }

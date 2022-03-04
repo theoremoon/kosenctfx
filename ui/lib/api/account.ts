@@ -1,3 +1,5 @@
+import { makeSWRResponse, ssrFetcher } from "lib/api";
+import { isStaticMode } from "lib/static";
 import useSWR from "swr";
 
 export interface Account {
@@ -7,5 +9,12 @@ export interface Account {
   is_admin: boolean;
 }
 
-const useAccount = () => useSWR<Account | null>("/account");
+const useAccount = (staticValue: Account|null) => {
+  return (isStaticMode) ? (
+    makeSWRResponse(staticValue)
+  ) : (
+    useSWR<Account | null>("/account")
+  )
+}
+export const fetchAccount = () => ssrFetcher<Account|null>("/account");
 export default useAccount;

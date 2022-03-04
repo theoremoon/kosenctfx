@@ -5,7 +5,7 @@ const Loading = () => {
   return (
     <Flex h="100%" justifyContent="center" alignItems="center">
       <Box w="md" mx="auto">
-        <Spinner size="xs" />
+        <Spinner size="xl" />
       </Box>
     </Flex>
   );

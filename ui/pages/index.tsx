@@ -10,12 +10,16 @@ import {
   Text,
   UnorderedList,
 } from "@chakra-ui/react";
+import { fetchAccount } from "lib/api/account";
 import { dateFormat } from "lib/date";
-import type { NextPage } from "next";
-import useCTF from "../lib/api/ctf";
+import { AllPageProps } from "lib/pages";
+import { isStaticMode } from "lib/static";
+import type { GetStaticProps, NextPage } from "next";
+import useCTF, { fetchCTF } from "../lib/api/ctf";
 
-const Home: NextPage = () => {
-  const { data: ctf } = useCTF();
+type IndexPageProps = AllPageProps & {};
+const Index: NextPage<IndexPageProps> = ({ ctf: fallbackCTF, ...props }: IndexPageProps) => {
+  const { data: ctf } = useCTF(fallbackCTF);
   return (
     <Stack>
       <Text fontSize="4xl"> CTF Name</Text>
@@ -102,4 +106,15 @@ const Home: NextPage = () => {
   );
 };
 
-export default Home;
+export const getStaticProps: GetStaticProps<IndexPageProps> = async () => {
+  const ctf = await fetchCTF();
+  const account = (isStaticMode) ? null : await fetchAccount();
+  return {
+    props: {
+      ctf: ctf,
+      account: account,
+    }
+  }
+};
+
+export default Index;

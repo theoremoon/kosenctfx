@@ -18,11 +18,6 @@ const CountrySelector = ({
   return (
     <Select
       variant="flushed"
-      sx={{
-        option: {
-          backgroundColor: bgColor,
-        },
-      }}
       onChange={onChange}
       value={value}
       id={id}

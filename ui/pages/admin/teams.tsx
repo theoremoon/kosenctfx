@@ -12,9 +12,10 @@ import {
   Thead,
   Tr,
 } from "@chakra-ui/react";
+import AdminLayout from "components/adminLayout";
 import Right from "components/right";
 import useMessage from "lib/useMessage";
-import { useState } from "react";
+import React, { useState } from "react";
 import { api } from "../../lib/api";
 import useScoreboard from "../../lib/api/scoreboard";
 import { dateFormat } from "../../lib/date";
@@ -77,7 +78,7 @@ const Teams = () => {
   };
 
   return (
-    <Stack>
+    <AdminLayout>
       <Box w="md" mx="auto">
         <FormControl>
           <FormLabel htmlFor="teamname">teamname</FormLabel>
@@ -186,7 +187,7 @@ const Teams = () => {
           </Tbody>
         </Table>
       </Box>
-    </Stack>
+    </AdminLayout>
   );
 };
 

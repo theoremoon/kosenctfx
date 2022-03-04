@@ -18,11 +18,12 @@ import {
 import Loading from "components/loading";
 import TaskModalBody from "components/taskmodalbody";
 import useMessage from "lib/useMessage";
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import Right from "../../../components/right";
 import { api } from "../../../lib/api";
 import useAdminTasks, { Task } from "../../../lib/api/admin/tasks";
 import { useRouter } from "next/router";
+import AdminLayout from "components/adminLayout";
 
 type taskElementProps = {
   task: Task;
@@ -101,8 +102,7 @@ const Tasks = ({ tasks }: TasksProps) => {
   }, [api, message, error, tasks]);
 
   return (
-    <>
-      <Stack space={4}>
+    <AdminLayout>
         <Table maxW="100%" size="sm">
           <Thead>
             <Tr>
@@ -118,7 +118,7 @@ const Tasks = ({ tasks }: TasksProps) => {
             </Tr>
           </Thead>
           <Tbody>
-            {tasks.map((task, i) => (
+            {tasks.map((task) => (
               <Tr key={task.name}>
                 <TaskElement
                   task={task}
@@ -143,8 +143,7 @@ const Tasks = ({ tasks }: TasksProps) => {
         <Right>
           <Button onClick={openCloseChallenge}>Open/Close Challenges</Button>
         </Right>
-      </Stack>
-    </>
+    </AdminLayout>
   );
 };
 

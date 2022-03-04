@@ -14,7 +14,6 @@ import React, { useEffect } from "react";
 import { SWRConfig } from "swr";
 import useAccount from "lib/api/account";
 import { fetchCTF } from "lib/api/ctf";
-import {SSRContext} from "lib/ssrContext";
 import { isStaticMode } from "lib/static";
 
 const theme = extendTheme(

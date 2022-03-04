@@ -12,14 +12,12 @@ export interface CTF {
 }
 
 const useCTF = (fallback: CTF) => {
-  return (isStaticMode) ? (
-    makeSWRResponse(fallback)
-  ) : (
-    useSWR<CTF>("/ctf", null, {
-      fallbackData: fallback,
-    })
-  );
-}
+  return isStaticMode
+    ? makeSWRResponse(fallback)
+    : useSWR<CTF>("/ctf", null, {
+        fallbackData: fallback,
+      });
+};
 export const fetchCTF = () => ssrFetcher<CTF>("/ctf");
 
 export default useCTF;

@@ -42,7 +42,7 @@ const Ranking = ({ scoreboard, tasks }: RankingProps) => {
     ],
     ["asc", "asc", "desc"]
   );
-  let initialTeams = scoreboard.slice(0, 10).map((t) => t.team);
+  const initialTeams = scoreboard.slice(0, 10).map((t) => t.team);
   if (account) {
     initialTeams.push(account.teamname);
   }
@@ -91,7 +91,7 @@ const Ranking = ({ scoreboard, tasks }: RankingProps) => {
               sx={{
                 background:
                   t.team_id === account?.team_id
-                    ? `rgba(255,255,255, 0.2)`
+                    ? "rgba(255,255,255, 0.2)"
                     : "",
               }}
             >

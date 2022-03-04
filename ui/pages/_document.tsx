@@ -1,7 +1,8 @@
 import NextDocument, { Head, Html, Main, NextScript } from "next/document";
 import { ColorModeScript } from "@chakra-ui/react";
 
-type Props = {};
+type Props = Record<string, never>;
+
 class Document extends NextDocument<Props> {
   render() {
     return (

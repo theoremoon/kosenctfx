@@ -17,8 +17,11 @@ import { isStaticMode } from "lib/static";
 import type { GetStaticProps, NextPage } from "next";
 import useCTF, { fetchCTF } from "../lib/api/ctf";
 
-type IndexPageProps = AllPageProps & {};
-const Index: NextPage<IndexPageProps> = ({ ctf: fallbackCTF, ...props }: IndexPageProps) => {
+type IndexPageProps = AllPageProps;
+const Index: NextPage<IndexPageProps> = ({
+  ctf: fallbackCTF,
+  ...props
+}: IndexPageProps) => {
   const { data: ctf } = useCTF(fallbackCTF);
   return (
     <Stack>
@@ -108,13 +111,13 @@ const Index: NextPage<IndexPageProps> = ({ ctf: fallbackCTF, ...props }: IndexPa
 
 export const getStaticProps: GetStaticProps<IndexPageProps> = async () => {
   const ctf = await fetchCTF();
-  const account = (isStaticMode) ? null : await fetchAccount();
+  const account = isStaticMode ? null : await fetchAccount();
   return {
     props: {
       ctf: ctf,
       account: account,
-    }
-  }
+    },
+  };
 };
 
 export default Index;

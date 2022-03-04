@@ -11,7 +11,7 @@ export const api = axios.create({
 
 export const ssrApi = axios.create({
   baseURL: "http://nginx:80/api/",
-})
+});
 
 /// swrから使うためにglobalなfetcher
 export const defaultFetcher = (url: string) =>
@@ -21,12 +21,15 @@ export const defaultFetcher = (url: string) =>
 export const ssrFetcher = <T>(url: string) =>
   ssrApi.get(url).then((res) => res.data as T);
 
-export const makeSWRResponse = <T, E = any>(data: T) => ({
-  data: data,
-  error: undefined,
-  mutate: () => {},
-  isValidating: false,
-} as SWRResponse<T, E>);
+export const makeSWRResponse = <T, E = any>(data: T) =>
+  ({
+    data: data,
+    error: undefined,
+    mutate: () => {
+      /* do nothing */
+    },
+    isValidating: false,
+  } as SWRResponse<T, E>);
 
 type Message = {
   message: string;

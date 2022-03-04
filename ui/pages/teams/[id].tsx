@@ -65,8 +65,6 @@ const Team = () => {
       )}
     </Stack>
   );
-
-  return;
 };
 
 export default Team;

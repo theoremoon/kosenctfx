@@ -103,46 +103,46 @@ const Tasks = ({ tasks }: TasksProps) => {
 
   return (
     <AdminLayout>
-        <Table maxW="100%" size="sm">
-          <Thead>
-            <Tr>
-              <Th>Name</Th>
-              <Th>Score</Th>
-              <Th>#Solve</Th>
-              <Th>Category</Th>
-              <Th>Author</Th>
-              <Th>Is Open?</Th>
-              <Th>Is Survey?</Th>
-              <Th>Preview</Th>
-              <Th>Flag</Th>
+      <Table maxW="100%" size="sm">
+        <Thead>
+          <Tr>
+            <Th>Name</Th>
+            <Th>Score</Th>
+            <Th>#Solve</Th>
+            <Th>Category</Th>
+            <Th>Author</Th>
+            <Th>Is Open?</Th>
+            <Th>Is Survey?</Th>
+            <Th>Preview</Th>
+            <Th>Flag</Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          {tasks.map((task) => (
+            <Tr key={task.name}>
+              <TaskElement
+                task={task}
+                isOpened={taskOpenState.get(task.id) || false}
+                onUpdateOpened={(isOpen) => {
+                  setTaskOpenState((prev) =>
+                    new Map(prev).set(task.id, isOpen)
+                  );
+                }}
+                onClickCallback={() => {
+                  router.push(`/admin/tasks/${task.id}`, undefined, {
+                    shallow: true,
+                    scroll: false,
+                  });
+                }}
+              />
             </Tr>
-          </Thead>
-          <Tbody>
-            {tasks.map((task) => (
-              <Tr key={task.name}>
-                <TaskElement
-                  task={task}
-                  isOpened={taskOpenState.get(task.id) || false}
-                  onUpdateOpened={(isOpen) => {
-                    setTaskOpenState((prev) =>
-                      new Map(prev).set(task.id, isOpen)
-                    );
-                  }}
-                  onClickCallback={() => {
-                    router.push(`/admin/tasks/${task.id}`, undefined, {
-                      shallow: true,
-                      scroll: false,
-                    });
-                  }}
-                />
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
+          ))}
+        </Tbody>
+      </Table>
 
-        <Right>
-          <Button onClick={openCloseChallenge}>Open/Close Challenges</Button>
-        </Right>
+      <Right>
+        <Button onClick={openCloseChallenge}>Open/Close Challenges</Button>
+      </Right>
     </AdminLayout>
   );
 };

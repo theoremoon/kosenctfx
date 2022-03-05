@@ -2,16 +2,31 @@ import { Stack, Table, Tbody, Text, Th, Thead, Tr } from "@chakra-ui/react";
 import SeriesChart from "components/chart";
 import CountryFlag from "components/countryflag";
 import Loading from "components/loading";
+import { fetchSeries, SeriesEntry } from "lib/api/series";
 import { orderBy } from "lodash";
-import { useRouter } from "next/router";
-import useScoreboard from "../../lib/api/scoreboard";
-import useTeam from "../../lib/api/team";
+import { GetStaticPaths, GetStaticProps } from "next";
+import useScoreboard, {
+  fetchScoreboard,
+  ScoreFeedEntry,
+} from "../../lib/api/scoreboard";
+import useTeam, { fetchTeam, Team } from "../../lib/api/team";
 import { dateFormat } from "../../lib/date";
-const Team = () => {
-  const router = useRouter();
-  const id = router.query.id as string;
-  const { data: team } = useTeam(id);
-  const { data: scoreboard } = useScoreboard();
+
+interface TeamProps {
+  teamID: number;
+  team: Team;
+  scoreboard: ScoreFeedEntry[];
+  series: SeriesEntry[][];
+}
+
+const TeamPage = ({
+  teamID,
+  team: defaultTeam,
+  scoreboard: defaultScoreboard,
+  series: defaultSeries,
+}: TeamProps) => {
+  const { data: team } = useTeam(teamID.toString(), defaultTeam);
+  const { data: scoreboard } = useScoreboard(defaultScoreboard);
 
   if (!team || !scoreboard) {
     return <Loading />;
@@ -34,7 +49,7 @@ const Team = () => {
         Rank {teamScore.pos} / {teamScore.score} points
       </Text>
 
-      <SeriesChart teams={[team.teamname]} />
+      <SeriesChart teams={[team.teamname]} series={defaultSeries} />
 
       {teamScore && (
         <Table>
@@ -67,4 +82,34 @@ const Team = () => {
   );
 };
 
-export default Team;
+export const getStaticProps: GetStaticProps<TeamProps> = async (context) => {
+  const id = context.params?.id;
+  if (id === undefined) {
+    return { notFound: true };
+  }
+
+  const scoreboard = await fetchScoreboard();
+  const team = await fetchTeam(id.toString());
+  const series = await fetchSeries([]);
+  return {
+    props: {
+      teamID: Number(id),
+      team: team,
+      scoreboard: scoreboard,
+      series: series,
+    },
+  };
+};
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const scoreboard = await fetchScoreboard();
+
+  return {
+    paths: scoreboard.map((entry) => ({
+      params: { id: entry.team_id.toString() },
+    })),
+    fallback: false,
+  };
+};
+
+export default TeamPage;

@@ -52,7 +52,7 @@ const TaskCard = ({ task, isSolved, ...props }: TaskCardProps) => {
               as={FontAwesomeIcon}
               icon={faCheck}
               sx={{
-                color: "#00ff00",
+                color: "#88c4d7",
                 fontSize: "1em",
               }}
             />

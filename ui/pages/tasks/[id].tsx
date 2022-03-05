@@ -6,6 +6,8 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import TaskModalBody from "components/taskmodalbody";
+import { fetchCTF } from "lib/api/ctf";
+import { AllPageProps } from "lib/pages";
 import { isStaticMode } from "lib/static";
 import { GetStaticPaths, GetStaticProps } from "next";
 import { useRouter } from "next/router";
@@ -15,11 +17,11 @@ import useAccount, { Account, fetchAccount } from "../../lib/api/account";
 import useTasks, { fetchTasks, Task } from "../../lib/api/tasks";
 import parentpath from "../../lib/parentpath";
 
-interface TaskProps {
+type TaskProps = {
   taskID: number;
   tasks: Task[];
   account: Account | null;
-}
+} & AllPageProps;
 
 const TasksDefault = ({
   taskID,
@@ -75,11 +77,13 @@ export const getStaticProps: GetStaticProps<TaskProps> = async (context) => {
   const id = context.params?.id;
   const account = isStaticMode ? null : await fetchAccount();
   const tasks = await fetchTasks();
+  const ctf = await fetchCTF();
   return {
     props: {
       taskID: Number(id),
       tasks: tasks,
       account: account,
+      ctf: ctf,
     },
   };
 };

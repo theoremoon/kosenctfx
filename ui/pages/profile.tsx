@@ -8,11 +8,12 @@ import {
 } from "@chakra-ui/react";
 import CountrySelector from "components/countryselector";
 import Right from "components/right";
+import { GetStaticProps } from "next";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import Loading from "../components/loading";
 import { api } from "../lib/api";
-import useAccount, { Account } from "../lib/api/account";
+import useAccount, { Account, fetchAccount } from "../lib/api/account";
 import useMessage from "../lib/useMessage";
 
 type UpdateParams = {
@@ -21,16 +22,16 @@ type UpdateParams = {
 };
 
 interface ProfileProps {
-  account: Account;
+  account: Account | null;
 }
 
-const Profile = ({ account }: ProfileProps) => {
+const Profile = ({ account: defaultAccount }: ProfileProps) => {
   const { message, error } = useMessage();
-  const { mutate } = useAccount();
-  const [country, setCountry] = useState(account.country);
+  const { data: account, mutate } = useAccount(defaultAccount);
+  const [country, setCountry] = useState(account?.country || "");
   const { register, setValue, handleSubmit } = useForm({
     defaultValues: {
-      teamname: account.teamname,
+      teamname: account?.teamname,
       password: "",
     },
   });
@@ -47,6 +48,10 @@ const Profile = ({ account }: ProfileProps) => {
       error(e);
     }
   };
+
+  if (account === undefined) {
+    return <Loading />;
+  }
 
   return (
     <Box w="sm" mx="auto" mt="10">
@@ -90,12 +95,13 @@ const Profile = ({ account }: ProfileProps) => {
   );
 };
 
-const ProfileDefault = () => {
-  const { data: account } = useAccount();
-  if (!account) {
-    return <Loading />;
-  }
-  return <Profile account={account} />;
+export const getStaticProps: GetStaticProps<ProfileProps> = async () => {
+  const account = await fetchAccount();
+  return {
+    props: {
+      account: account,
+    },
+  };
 };
 
-export default ProfileDefault;
+export default Profile;

@@ -2,6 +2,7 @@ import { Stack, Table, Tbody, Text, Th, Thead, Tr } from "@chakra-ui/react";
 import SeriesChart from "components/chart";
 import CountryFlag from "components/countryflag";
 import Loading from "components/loading";
+import { CTF, fetchCTF } from "lib/api/ctf";
 import { fetchSeries, SeriesEntry } from "lib/api/series";
 import { orderBy } from "lodash";
 import { GetStaticPaths, GetStaticProps } from "next";
@@ -11,13 +12,14 @@ import useScoreboard, {
 } from "../../lib/api/scoreboard";
 import useTeam, { fetchTeam, Team } from "../../lib/api/team";
 import { dateFormat } from "../../lib/date";
+import { AllPageProps } from "../../lib/pages";
 
-interface TeamProps {
+type TeamProps = {
   teamID: number;
   team: Team;
   scoreboard: ScoreFeedEntry[];
   series: SeriesEntry[][];
-}
+} & AllPageProps;
 
 const TeamPage = ({
   teamID,
@@ -90,13 +92,16 @@ export const getStaticProps: GetStaticProps<TeamProps> = async (context) => {
 
   const scoreboard = await fetchScoreboard();
   const team = await fetchTeam(id.toString());
-  const series = await fetchSeries([]);
+  const series = await fetchSeries([team.teamname]);
+  const ctf = await fetchCTF();
   return {
     props: {
       teamID: Number(id),
       team: team,
       scoreboard: scoreboard,
       series: series,
+      ctf: ctf,
+      account: null,
     },
   };
 };

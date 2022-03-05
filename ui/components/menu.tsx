@@ -1,169 +1,153 @@
 import {
   Box,
-  Divider,
-  HStack,
-  LinkBox,
-  LinkOverlay,
-  Progress,
-  Stack,
-  Text,
-  useInterval,
+  Flex,
+  Link,
+  Spacer,
+  Menu as ChakraMenu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  IconButton,
 } from "@chakra-ui/react";
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
-import {
-  faAddressCard,
-  faFlag,
-  faFlagUsa,
-  faHome,
-  faSign,
-  faSignInAlt,
-  faSignOutAlt,
-  faTrophy,
-  faUsers,
-  faWrench,
-} from "@fortawesome/free-solid-svg-icons";
+import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import useAccount, { Account } from "lib/api/account";
+import useCTF, { CTF } from "lib/api/ctf";
+import { isStaticMode } from "lib/static";
 import NextLink from "next/link";
-import React, { useEffect, useState } from "react";
-import useAccount from "../lib/api/account";
-import useCTF, { CTF } from "../lib/api/ctf";
+import React from "react";
 import Loading from "./loading";
 
-interface MenuLinkProps {
-  label: string;
+type MenuItem = {
   href: string;
-  icon: IconProp;
+  innerText: string;
+};
+
+interface ResponsiveMenuWrapperProps {
+  siteName: React.ReactNode;
+  leftMenuItems: MenuItem[];
+  rightMenuItems: MenuItem[];
 }
 
-const MenuLink = ({ label, href, icon }: MenuLinkProps) => {
+const ResponsiveMenuWrapper = ({
+  siteName,
+  leftMenuItems,
+  rightMenuItems,
+}: ResponsiveMenuWrapperProps) => {
   return (
-    <LinkBox
-      css={{
-        padding: "0.75em",
-        paddingLeft: "1em",
-        filter: "brightness(0.7)",
-      }}
-      _hover={{
-        filter: "brightness(1)",
-        textShadow: "0 0 1px #ffffff",
-      }}
-    >
-      <NextLink href={href} passHref>
-        <LinkOverlay>
-          <HStack>
-            <FontAwesomeIcon icon={icon} />
-            <Text fontSize="xl">{label}</Text>
-          </HStack>
-        </LinkOverlay>
-      </NextLink>
-    </LinkBox>
+    <>
+      <Flex
+        maxW="container.xl"
+        w="100%"
+        mx="auto"
+        p={2}
+        justify="space-between"
+        display={{ base: "none", md: "flex" }}
+      >
+        {siteName}
+        {leftMenuItems.map((item) => (
+          <NextLink href={item.href} passHref key={item.href}>
+            <Link fontSize="xl" p={1} mr={4}>
+              {item.innerText}
+            </Link>
+          </NextLink>
+        ))}
+        <Spacer />
+        <Flex>
+          {rightMenuItems.map((item) => (
+            <NextLink href={item.href} passHref key={item.href}>
+              <Link fontSize="xl" p={1} mr={4}>
+                {item.innerText}
+              </Link>
+            </NextLink>
+          ))}
+        </Flex>
+      </Flex>
+      <Flex
+        p={2}
+        w="100%"
+        justify="space-between"
+        display={{ base: "flex", md: "none" }}
+      >
+        {siteName}
+        <Spacer />
+        <ChakraMenu>
+          <MenuButton
+            as={IconButton}
+            icon={<FontAwesomeIcon icon={faBars} />}
+          />
+          <MenuList>
+            {leftMenuItems.map((item) => (
+              <MenuItem key={item.href}>
+                <NextLink href={item.href} passHref>
+                  <Link fontSize="xl" p={1} mr={4}>
+                    {item.innerText}
+                  </Link>
+                </NextLink>
+              </MenuItem>
+            ))}
+            {rightMenuItems.map((item) => (
+              <MenuItem key={item.href}>
+                <NextLink href={item.href} passHref>
+                  <Link fontSize="xl" p={1} mr={4}>
+                    {item.innerText}
+                  </Link>
+                </NextLink>
+              </MenuItem>
+            ))}
+          </MenuList>
+        </ChakraMenu>
+      </Flex>
+    </>
   );
 };
 
 interface MenuProps {
   ctf: CTF;
+  account: Account;
 }
 
-const Menu = ({ ctf }: MenuProps) => {
-  const { data: account } = useAccount();
-  const [progress, setProgress] = useState(0);
-  const [now, setNow] = useState(0);
-  const [countdown, setCountdown] = useState("");
+const Menu = ({ ctf: ctfDefault, account: accountDefault }: MenuProps) => {
+  const { data: account } = useAccount(accountDefault);
+  const { data: ctf } = useCTF(ctfDefault);
 
-  const calcCountdown = (current: number, to: number) => {
-    const d = to - current;
-    const days = ("" + Math.floor(d / (60 * 60 * 24))).padStart(2, "0");
-    const hours = ("" + Math.floor((d % (60 * 60 * 24)) / (60 * 60))).padStart(
-      2,
-      "0"
-    );
-    const minutes = ("" + Math.floor((d % (60 * 60)) / 60)).padStart(2, "0");
-    const seconds = ("" + Math.floor(d % 60)).padStart(2, "0");
-    return days + "d " + hours + ":" + minutes + ":" + seconds;
-  };
+  if (ctf === undefined || account === undefined) {
+    return <Loading />;
+  }
+  const canShowTasks =
+    ctf.is_open && (ctf.is_over || (ctf.is_running && account));
 
-  const calcProgress = () => {
-    setNow(Date.now().valueOf() / 1000);
+  const leftMenuItems = [
+    { item: { href: "/tasks", innerText: "TASKS" }, available: canShowTasks },
+    { item: { href: "/ranking", innerText: "RANKING" }, available: true },
+  ].flatMap((x) => (x.available ? [x.item] : []));
 
-    setProgress(((ctf.end_at - now) / (ctf.end_at - ctf.start_at)) * 100);
-
-    if (now < ctf.start_at) {
-      setCountdown(calcCountdown(now, ctf.start_at));
-    } else if (now < ctf.end_at) {
-      setCountdown(calcCountdown(now, ctf.end_at));
-    }
-  };
-
-  useEffect(calcProgress, []);
-  useInterval(calcProgress, 1000);
+  const rightMenuItems = [
+    {
+      item: { href: "/admin", innerText: "ADMIN" },
+      available: account && account.is_admin,
+    },
+    { item: { href: "/profile", innerText: "PROFILE" }, available: account },
+    { item: { href: "/login", innerText: "LOGIN" }, available: !account },
+    { item: { href: "/register", innerText: "REGISTER" }, available: !account },
+    { item: { href: "/logout", innerText: "LOGOUT" }, available: account },
+  ].flatMap((x) => (x.available && !isStaticMode ? [x.item] : []));
 
   return (
-    <Box
-      sx={{
-        minWidth: "150px",
-        minHeight: "100vh",
-        height: "100%",
-        borderRightColor: "#EDFDFD33",
-        borderRightStyle: "solid",
-        borderRightWidth: "1px",
-      }}
-    >
-      <Stack>
-        <Box maxW="150px">
-          {!ctf.is_open && <Text fontSize="sm">CTF is closed now</Text>}
-          {!ctf.is_open && now < ctf.start_at && (
-            <Text fontSize="sm">CTF will start in {countdown}</Text>
-          )}
-          {ctf.is_running && (
-            <>
-              <Text>CTF is now running!</Text>
-              <Text fontSize="sm">{countdown} remains</Text>
-              <Progress size="xs" value={progress} colorScheme="pink" />
-            </>
-          )}
-          {ctf.is_over && <Text>CTF is over. Thanks for playing!</Text>}
-        </Box>
-
-        <MenuLink label="Top" href="/" icon={faHome} />
-
-        {ctf && ((ctf.is_running && account) || ctf.is_over) && (
-          <MenuLink label="Tasks" href="/tasks" icon={faFlag} />
-        )}
-
-        <MenuLink label="Ranking" href="/ranking" icon={faTrophy} />
-        <Divider />
-
-        {account ? (
-          <>
-            <MenuLink label="Profile" href="/profile" icon={faAddressCard} />
-            <Divider />
-            <MenuLink label="Logout" href="/logout" icon={faSignOutAlt} />
-            {account.is_admin && (
-              <>
-                <Divider />
-                <MenuLink label="Admin" href="/admin" icon={faWrench} />
-                <MenuLink label="Tasks" href="/admin/tasks" icon={faFlagUsa} />
-                <MenuLink label="Teams" href="/admin/teams" icon={faUsers} />
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <MenuLink label="Login" href="/login" icon={faSignInAlt} />
-            <MenuLink label="Register" href="/register" icon={faSign} />
-          </>
-        )}
-      </Stack>
+    <Box w="100%" borderBottom="1px solid #4491cf">
+      <ResponsiveMenuWrapper
+        siteName={
+          <NextLink href="/" passHref>
+            <Link fontSize="xl" p={1} mr={4}>
+              zer0pts CTF 2022
+            </Link>
+          </NextLink>
+        }
+        leftMenuItems={leftMenuItems}
+        rightMenuItems={rightMenuItems}
+      />
     </Box>
   );
 };
 
-const MenuDefault = () => {
-  const { data: ctf } = useCTF();
-  if (!ctf) {
-    return <Loading />;
-  }
-  return <Menu ctf={ctf} />;
-};
-
-export default MenuDefault;
+export default Menu;

@@ -15,8 +15,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import SeriesChart from "components/chart";
 import CountryFlag from "components/countryflag";
 import Loading from "components/loading";
+import { CTF, fetchCTF } from "lib/api/ctf";
 import { fetchSeries, SeriesEntry } from "lib/api/series";
 import { white } from "lib/color";
+import { AllPageProps } from "lib/pages";
 import { isStaticMode } from "lib/static";
 import { orderBy } from "lodash";
 import { GetStaticProps } from "next";
@@ -30,12 +32,12 @@ import useScoreboard, {
 import useTasks, { fetchTasks, Task } from "../lib/api/tasks";
 import { dateFormat } from "../lib/date";
 
-interface RankingProps {
+type RankingProps = {
   scoreboard: ScoreFeedEntry[];
   tasks: Task[];
   account: Account | null;
   series: SeriesEntry[][];
-}
+} & AllPageProps;
 
 const Ranking = ({
   scoreboard: scoreboardDefault,
@@ -190,12 +192,14 @@ export const getStaticProps: GetStaticProps<RankingProps> = async () => {
   const account = isStaticMode ? null : await fetchAccount();
   const topTeams = scoreboard.slice(0, 10).map((t) => t.team);
   const series = await fetchSeries(topTeams);
+  const ctf = await fetchCTF();
   return {
     props: {
       account: account,
       scoreboard: scoreboard,
       tasks: tasks,
       series: series,
+      ctf: ctf,
     },
   };
 };

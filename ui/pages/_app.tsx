@@ -6,7 +6,7 @@ import {
   extendTheme,
   withDefaultVariant,
 } from "@chakra-ui/react";
-import Menu from "../components/Menu";
+import Menu from "../components/menu";
 import { defaultFetcher } from "lib/api";
 import type { AppProps } from "next/app";
 import React from "react";

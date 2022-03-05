@@ -28,7 +28,7 @@ const Login = () => {
     formState: { errors },
   } = useForm<LoginParams>();
   const router = useRouter();
-  const { mutate } = useAccount();
+  const { mutate } = useAccount(null);
   const { message, error } = useMessage();
   const onSubmit: SubmitHandler<LoginParams> = async (values) => {
     try {

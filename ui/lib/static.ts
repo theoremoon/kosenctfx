@@ -1,1 +1,1 @@
-export const isStaticMode = false;
+export const isStaticMode = true;

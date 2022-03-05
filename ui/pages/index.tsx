@@ -80,7 +80,7 @@ const Index: NextPage<IndexPageProps> = ({
     <Stack mt={5}>
       <Box maxW="container.sm" mx="auto">
         <Box maxW="3xs" mx="auto">
-          <Image src={zer0pts_svg} />
+          <Image unoptimized={true} src={zer0pts_svg} />
         </Box>
         <Center fontSize="4xl">zer0pts CTF 2022</Center>
 

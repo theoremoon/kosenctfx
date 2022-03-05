@@ -1,3 +1,5 @@
+import { fetchCTF } from "lib/api/ctf";
+import { AllPageProps } from "lib/pages";
 import { isStaticMode } from "lib/static";
 import { GetStaticProps } from "next";
 import Loading from "../../components/loading";
@@ -5,10 +7,10 @@ import Tasks from "../../components/tasks";
 import useAccount, { Account, fetchAccount } from "../../lib/api/account";
 import useTasks, { fetchTasks, Task } from "../../lib/api/tasks";
 
-interface TasksProps {
+type TasksProps = {
   tasks: Task[];
   account: Account | null;
-}
+} & AllPageProps;
 
 const TasksDefault = ({
   tasks: defaultTasks,
@@ -25,10 +27,12 @@ const TasksDefault = ({
 export const getStaticProps: GetStaticProps<TasksProps> = async () => {
   const account = isStaticMode ? null : await fetchAccount();
   const tasks = await fetchTasks();
+  const ctf = await fetchCTF();
   return {
     props: {
       tasks: tasks,
       account: account,
+      ctf: ctf,
     },
   };
 };

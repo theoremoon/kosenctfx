@@ -15,9 +15,13 @@ import {
 import AdminLayout from "components/adminLayout";
 import Right from "components/right";
 import useMessage from "lib/useMessage";
+import { GetStaticProps } from "next";
 import React, { useState } from "react";
 import { api } from "../../lib/api";
-import useScoreboard from "../../lib/api/scoreboard";
+import useScoreboard, {
+  fetchScoreboard,
+  ScoreFeedEntry,
+} from "../../lib/api/scoreboard";
 import { dateFormat } from "../../lib/date";
 
 type Submission = {
@@ -38,11 +42,15 @@ type Team = {
   submissions: Submission[];
 };
 
-const Teams = () => {
+interface AdminTeamsProps {
+  scoreboard: ScoreFeedEntry[];
+}
+
+const Teams = ({ scoreboard: defaultScoreboard }: AdminTeamsProps) => {
   const [teamName, setTeamName] = useState("");
   const [teamEmail, setTeamEmail] = useState("");
   const [team, setTeam] = useState<Team>();
-  const { data: scoreboard } = useScoreboard();
+  const { data: scoreboard } = useScoreboard(defaultScoreboard);
 
   const { message, error } = useMessage();
   const search = async (teamname: string) => {
@@ -189,6 +197,15 @@ const Teams = () => {
       </Box>
     </AdminLayout>
   );
+};
+
+export const getStaticProps: GetStaticProps<AdminTeamsProps> = async () => {
+  const scoreboard = await fetchScoreboard();
+  return {
+    props: {
+      scoreboard: scoreboard,
+    },
+  };
 };
 
 export default Teams;

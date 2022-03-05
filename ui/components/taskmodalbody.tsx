@@ -120,9 +120,17 @@ const TaskModalBody = ({ task, ...props }: TaskModalBodyProps) => {
         <Box w="30%" pl={1} sx={{ overflowY: "auto" }}>
           <Stack spacing={1} h="0">
             <Text fontSize="xl">solved by ({task.solved_by.length})</Text>
-            <Box>
+            <Box pl={2}>
               {task.solved_by.map((t) => (
-                <Text fontSize="sm" key={t.team_name}>
+                <Text
+                  fontSize="sm"
+                  key={t.team_name}
+                  sx={{
+                    "&:hover": {
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
                   <Link as={NextLink} href={`/teams/${t.team_id}`}>
                     {t.team_name}
                   </Link>

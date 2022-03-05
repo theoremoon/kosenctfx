@@ -1,14 +1,15 @@
 import ReactECharts from "echarts-for-react";
 import { white } from "lib/color";
-import useSeries from "../lib/api/series";
+import useSeries, { SeriesEntry } from "../lib/api/series";
 import Loading from "./loading";
 
 interface SeriesChartProps {
   teams: string[];
+  series: SeriesEntry[][];
 }
 
-const SeriesChart = ({ teams }: SeriesChartProps) => {
-  const { data } = useSeries(teams);
+const SeriesChart = ({ teams, series: defaultSeries }: SeriesChartProps) => {
+  const { data } = useSeries(teams, defaultSeries);
 
   if (teams.length === 0) {
     return <></>;

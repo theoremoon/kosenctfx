@@ -1,3 +1,5 @@
+import { makeSWRResponse, ssrFetcher } from "lib/api";
+import { isStaticMode } from "lib/static";
 import useSWR from "swr";
 
 export interface TaskStat {
@@ -15,6 +17,12 @@ export interface ScoreFeedEntry {
   last_submission: number;
 }
 
-const useScoreboard = () => useSWR<ScoreFeedEntry[]>("/scoreboard");
+const useScoreboard = (staticValue: ScoreFeedEntry[]) => {
+  return isStaticMode
+    ? makeSWRResponse(staticValue)
+    : useSWR<ScoreFeedEntry[]>("/scoreboard");
+};
 
+export const fetchScoreboard = () =>
+  ssrFetcher<ScoreFeedEntry[]>("/scoreboard");
 export default useScoreboard;

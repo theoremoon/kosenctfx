@@ -24,6 +24,7 @@ import { dateFormat, parseDateString } from "../../lib/date";
 import AdminLayout from "components/adminLayout";
 import useScoreboard from "../../lib/api/scoreboard";
 import Loading from "../../components/loading";
+import useTasks from "lib/api/tasks";
 
 type ConfigParams = {
   start_at: string;
@@ -45,6 +46,7 @@ type AdminConfigProps = {
 const AdminConfig = ({ config: defaultConfig }: AdminConfigProps) => {
   const { data: config, mutate } = useConfig();
   const { data: scoreboard } = useScoreboard([]);
+  const { data: tasks } = useTasks([]);
   const {
     start_at: _start_at,
     end_at: _end_at,
@@ -102,7 +104,18 @@ const AdminConfig = ({ config: defaultConfig }: AdminConfigProps) => {
     const link = document.createElement("a");
     link.href =
       "data:applicaion/json;charset=utf-8," +
-      encodeURIComponent(JSON.stringify(scoreboard));
+      encodeURIComponent(
+        JSON.stringify({
+          tasks: tasks?.map((task) => task.name),
+          standings: scoreboard?.map((team) => ({
+            pos: team.pos,
+            team: team.team,
+            score: team.score,
+            taskStats: team.taskStats,
+            lastAccept: team.last_submission,
+          })),
+        })
+      );
     link.download = "scoreboard.json";
     document.body.appendChild(link);
     link.click();
@@ -232,10 +245,6 @@ const AdminConfig = ({ config: defaultConfig }: AdminConfigProps) => {
             >
               Scoreboard for CTFtime
             </Button>
-          </WrapItem>
-
-          <WrapItem>
-            <Button>Scoreboard for CTF-ratings</Button>
           </WrapItem>
 
           <WrapItem>

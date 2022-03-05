@@ -5,54 +5,51 @@ import {
   Container,
   extendTheme,
   withDefaultVariant,
-} from "@chakra-ui/react";
-import Menu from "../components/Menu";
-import Loading from "../components/loading";
-import { defaultFetcher } from "lib/api";
-import type { AppProps } from "next/app";
-import React, { useEffect } from "react";
-import { SWRConfig } from "swr";
-import useAccount from "lib/api/account";
-import { fetchCTF } from "lib/api/ctf";
-import { isStaticMode } from "lib/static";
+} from '@chakra-ui/react';
+import Menu from '../components/Menu';
+import { defaultFetcher } from 'lib/api';
+import type { AppProps } from 'next/app';
+import React from 'react';
+import { SWRConfig } from 'swr';
+import { isStaticMode } from 'lib/static';
 
 const theme = extendTheme(
   {
-    initialColorMode: "dark",
+    initialColorMode: 'dark',
     useSystemColorMode: false,
     colors: {
       gray: {
-        "50": "#EFF0F6",
-        "100": "#D1D4E5",
-        "200": "#B4B9D5",
-        "300": "#969DC4",
-        "400": "#7982B4",
-        "500": "#5B67A4",
-        "600": "#495283",
-        "700": "#373E62",
-        "800": "#0b1933",
-        "900": "#121521",
+        '50': '#EFF0F6',
+        '100': '#D1D4E5',
+        '200': '#B4B9D5',
+        '300': '#969DC4',
+        '400': '#7982B4',
+        '500': '#5B67A4',
+        '600': '#495283',
+        '700': '#373E62',
+        '800': '#0b1933',
+        '900': '#121521',
       },
     },
     styles: {
       global: {
-        "html, body": {
-          minHeight: "100vh",
-          height: "100%",
+        'html, body': {
+          minHeight: '100vh',
+          height: '100%',
         },
-        "#__next": {
-          minHeight: "100%",
+        '#__next': {
+          minHeight: '100%',
         },
         input: {
-          textAlign: "center",
+          textAlign: 'center',
         },
       },
     },
     components: {
       Link: {
         baseStyle: {
-          "&:focus": {
-            boxShadow: "none",
+          '&:focus': {
+            boxShadow: 'none',
           },
         },
       },
@@ -60,8 +57,8 @@ const theme = extendTheme(
   },
 
   withDefaultVariant({
-    variant: "flushed",
-    components: ["Input"],
+    variant: 'flushed',
+    components: ['Input'],
   })
 );
 

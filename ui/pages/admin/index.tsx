@@ -216,14 +216,14 @@ const AdminConfigImpl = ({ data }: AdminConfigImplProps) => {
 
           <FormControl>
             <Right>
-              <Button type="submit">Apply Changes</Button>
+              <Button type="submit" mt={4}>Apply Changes</Button>
             </Right>
           </FormControl>
         </form>
 
-        <Divider />
+        <Divider mt={4} mb={4} />
 
-        <Wrap>
+        <Wrap mt={4}>
           <WrapItem>
             <Button
               onClick={() => {

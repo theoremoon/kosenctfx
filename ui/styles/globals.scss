@@ -1,3 +1,6 @@
+$primary-bg: #190e3b;
+$secondary-bg: #1a1b4e;
+
 html,
 body,
 #__next {
@@ -11,7 +14,7 @@ body,
   color: "#eaf1f1";
 }
 body {
-  background-color: $primary-bg;
+  background-color: #190e3b;
   background-image: radial-gradient($secondary-bg 1px, transparent 1px);
   background-size: 10px 10px;
 }

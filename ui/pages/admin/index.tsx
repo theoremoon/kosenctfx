@@ -216,7 +216,9 @@ const AdminConfigImpl = ({ data }: AdminConfigImplProps) => {
 
           <FormControl>
             <Right>
-              <Button type="submit" mt={4}>Apply Changes</Button>
+              <Button type="submit" mt={4}>
+                Apply Changes
+              </Button>
             </Right>
           </FormControl>
         </form>

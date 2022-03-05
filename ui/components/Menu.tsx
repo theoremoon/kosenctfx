@@ -122,7 +122,7 @@ const Menu = ({
     ctf.is_open && (ctf.is_over || (ctf.is_running && account));
 
   const leftMenuItems = [
-    { item: { href: "/task", innerText: "TASKS" }, available: canShowTasks },
+    { item: { href: "/tasks", innerText: "TASKS" }, available: canShowTasks },
     { item: { href: "/ranking", innerText: "RANKING" }, available: true },
   ].flatMap((x) => (x.available ? [x.item] : []));
 

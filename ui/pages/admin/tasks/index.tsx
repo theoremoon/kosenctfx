@@ -59,7 +59,7 @@ const TaskElement = ({
         👀
       </Td>
       <Td>
-        <Code colorScheme="whiteAlpha" title={task.flag}>
+        <Code title={task.flag}>
           {task.flag}
         </Code>
       </Td>

@@ -10,7 +10,7 @@ export const api = axios.create({
 });
 
 export const ssrApi = axios.create({
-  baseURL: "http://nginx:80/api/",
+  baseURL: process.env.SSR_API_HOST,
 });
 
 /// swrから使うためにglobalなfetcher

@@ -71,6 +71,8 @@ services:
   ui:
     image: node
     command: 'sh -c "cd /src; yarn && yarn dev"'
+    environ:
+      SSR_API_HOST: "http://nginx:80/api/"
     volumes:
       - ./ui:/src
 

@@ -7,11 +7,15 @@ services:
       MYSQL_USER: kosenctfxuser
       MYSQL_PASSWORD: kosenctfxpassword
       MYSQL_ROOT_PASSWORD: rootpassword
-
     command: mysqld --general-log=1 --general-log-file=/var/lib/mysql/general-query.log
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/logs:/var/log/mysql
 
   redis:
     image: redis:6
+    volumes:
+      - ./redis/data:/data
 
   scoreserver:
     build:
@@ -29,15 +33,19 @@ services:
       BUCKET_ENDPOINT: "minio:9000"
       BUCKET_REGION: "us-east-1"
       BUCKET_ACCESS_KEY: "minio"
-      BUCKET_SECRET_KEY: "kosenctfx"
+      BUCKET_SECRET_KEY: "minio123"
       BUCKET_NAME: "kosenctfx-challenges"
       BUCKET_INSECURE: "1"
       ADMIN_TOKEN: "admin"
   
   ui:
     build:
-      context: ui2
+      context: ui
       dockerfile: Dockerfile.prod
+    environment:
+      SSR_API_HOST: "http://nginx:80/api/"
+    command: |
+      bash -c 'sleep 15; yarn build && yarn start'
 
   nginx:
     build:
@@ -45,4 +53,13 @@ services:
       dockerfile: Dockerfile.prod
     ports:
       - "8000:80"
+
+  minio:
+    image: minio/minio
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    command: ["server", "/data"]
+    ports:
+      - "9000:9000"  # minio
 

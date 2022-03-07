@@ -2,6 +2,6 @@ FROM node:16
 
 WORKDIR /app
 ADD ./ /app
-RUN yarn && yarn build
+RUN yarn install --frozen-lockfile
 
-ENTRYPOINT yarn start
+CMD bash

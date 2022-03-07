@@ -56,7 +56,9 @@ const TaskModalBody = ({ task, ...props }: TaskModalBodyProps) => {
       </Heading>
       <Flex>
         <Stack w="70%" pl={1} spacing={1}>
-          <Tags tags={[task.category, ...task.tags]} />
+          <Tags
+            tags={task.category ? [task.category, ...task.tags] : task.tags}
+          />
           <HStack>
             <Box color="#000">
               <Box fontSize="2xl" sx={{ display: "inline" }}>

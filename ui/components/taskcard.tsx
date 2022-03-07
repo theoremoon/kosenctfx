@@ -73,7 +73,9 @@ const TaskCard = ({ task, isSolved, ...props }: TaskCardProps) => {
             solves
           </Box>
         </Flex>
-        <Tags tags={[task.category, ...task.tags]} />
+        <Tags
+          tags={task.category ? [task.category, ...task.tags] : task.tags}
+        />
       </Box>
     </Link>
   );

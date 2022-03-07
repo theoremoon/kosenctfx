@@ -37,6 +37,8 @@ services:
       BUCKET_NAME: "kosenctfx-challenges"
       BUCKET_INSECURE: "1"
       ADMIN_TOKEN: "admin"
+    ports:
+      - "5000:5000"
   
   ui:
     build:
@@ -46,6 +48,8 @@ services:
       SSR_API_HOST: "http://nginx:80/api/"
     command: |
       bash -c 'sleep 15; yarn build && yarn start'
+    ports:
+      - "3000:3000"
 
   nginx:
     build:

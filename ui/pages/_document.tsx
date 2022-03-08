@@ -8,7 +8,7 @@ class Document extends NextDocument<Props> {
     return (
       <Html>
         <Head>
-          <title>BSides Ahmedabad CTF 2021</title>
+          <title>zer0pts CTF 2022</title>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" />
           <link
@@ -16,18 +16,15 @@ class Document extends NextDocument<Props> {
             rel="stylesheet"
           />
 
-          <meta property="og:title" content="BSides Ahmedabad CTF 2021"></meta>
-          <meta
-            property="og:site_name"
-            content="BSides Ahmedabad CTF 2021"
-          ></meta>
+          <meta property="og:title" content="zer0pts CTF 2022"></meta>
+          <meta property="og:site_name" content="zer0pts CTF 2022"></meta>
           <meta
             property="og:url"
-            content="https://score.bsidesahmedabad.in/"
+            content="https://2022.ctf.bsidesahmedabad.in/"
           ></meta>
           <meta
             property="og:description"
-            content="BSides Ahmedabad CTF 2021 organized by zer0pts"
+            content="zer0pts CTF 2021 organized by zer0pts"
           ></meta>
           <meta property="og:type" content="website"></meta>
           <meta

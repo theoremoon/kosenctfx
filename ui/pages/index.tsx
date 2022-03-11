@@ -110,7 +110,7 @@ const Index: NextPage<IndexPageProps> = ({
       <Text fontSize="xl" mt={10}>
         [ Contact ]
       </Text>
-      <Text pl={4}>Discord: TBD</Text>
+      <Text pl={4}>Discord: <a href="https://discord.gg/3QrDP2sMYd">https://discord.gg/3QrDP2sMYd</a></Text>
 
       <Text fontSize="xl" mt={10}>
         [ Prizes ]

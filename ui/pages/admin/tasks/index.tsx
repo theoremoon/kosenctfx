@@ -1,6 +1,7 @@
 import {
   Button,
   Code,
+  HStack,
   Modal,
   ModalBody,
   ModalContent,
@@ -69,9 +70,13 @@ interface TasksProps {
   tasks: Task[];
 }
 
+interface TasksMD {
+  text: string;
+}
+
 const Tasks = ({ tasks }: TasksProps) => {
   const { mutate } = useAdminTasks();
-  const { message, error } = useMessage();
+  const { message, error, text: textMessage } = useMessage();
 
   const openState = new Map(tasks.map((t) => [t.id, t.is_open]));
   const [taskOpenState, setTaskOpenState] = useState(openState);
@@ -99,8 +104,17 @@ const Tasks = ({ tasks }: TasksProps) => {
     mutate();
   }, [api, message, error, tasks]);
 
+  const generateTasksMD = useCallback(async () => {
+    const res = await api.get<TasksMD>("/admin/tasks.md");
+    navigator.clipboard.writeText(res.data.text);
+    textMessage("Copied tasks.md to clipboard");
+  }, [api, textMessage]);
+
   return (
     <AdminLayout>
+      <HStack>
+        <Button onClick={generateTasksMD}>tasks.md</Button>
+      </HStack>
       <Table maxW="100%" size="sm">
         <Thead>
           <Tr>

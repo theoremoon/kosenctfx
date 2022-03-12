@@ -36,6 +36,15 @@ const useMessage = () => {
     }
   };
 
-  return { error: err, message: msg };
+  const text = (m: string) => {
+    toast({
+      description: m,
+      status: "info",
+      duration: 2000,
+      isClosable: true,
+    });
+  };
+
+  return { error: err, message: msg, text: text };
 };
 export default useMessage;

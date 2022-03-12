@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bytes"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -8,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"golang.org/x/xerrors"
@@ -688,6 +691,41 @@ func (s *server) listChallengesHandler() echo.HandlerFunc {
 	}
 }
 
+//go:embed task.md.tpl
+var taskTemplate string
+
+func (s *server) tasksMDHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		chals, err := s.getChallenges(conf)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		// これは起動時に一回だけ読んで失敗したらpanicとかでもいいかも
+		t, err := template.New("task.md").Parse(taskTemplate)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		buf := bytes.NewBuffer([]byte{})
+		for _, chal := range chals {
+			if err := t.Execute(buf, chal); err != nil {
+				return errorHandle(c, xerrors.Errorf(": %w", err))
+			}
+			buf.WriteString("\n")
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"text": buf.String(),
+		})
+	}
+}
+
 func (s *server) adminTeamHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		teamName := c.QueryParam("team")
@@ -1068,6 +1106,7 @@ func (s *server) setChallenges(config *model.Config, challenges []*service.Chall
 	return nil
 }
 
+///プレイヤー向けに、openなtaskのリストを返す / redisを読む
 func (s *server) getRawChallenges(config *model.Config) ([]*service.Challenge, error) {
 	key := challengesKey(config.CTFName)
 	challengesStr, err := s.redis.Get(key).Result()

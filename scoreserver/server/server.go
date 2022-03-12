@@ -128,6 +128,7 @@ func (s *server) Start(addr string) error {
 	e.POST("/admin/new-challenge", s.newChallengeHandler(), s.adminMiddleware)
 	e.GET("/admin/list-challenges", s.listChallengesHandler(), s.adminMiddleware)
 	e.GET("/admin/tasks.md", s.tasksMDHandler(), s.adminMiddleware)
+	e.GET("/admin/check-port.py", s.checkPortPyHandler(), s.adminMiddleware)
 	e.GET("/admin/team", s.adminTeamHandler(), s.adminMiddleware)
 	e.GET("/admin/teams", s.listTeamHandler(), s.adminMiddleware)
 	e.POST("/admin/update-email", s.updateTeamEmail(), s.adminMiddleware)

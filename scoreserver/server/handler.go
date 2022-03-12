@@ -585,6 +585,8 @@ func (s *server) updateChallengeHandler() echo.HandlerFunc {
 			IsSurvey    bool `json:"is_survey"`
 			Tags        []string
 			Attachments []service.Attachment
+			Host        *string
+			Port        *int
 		})
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, err)
@@ -600,6 +602,8 @@ func (s *server) updateChallengeHandler() echo.HandlerFunc {
 				IsSurvey:    req.IsSurvey,
 				Tags:        req.Tags,
 				Attachments: req.Attachments,
+				Host:        req.Host,
+				Port:        req.Port,
 			})
 		if err != nil {
 			return errorHandle(c, err)
@@ -625,6 +629,8 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 			IsSurvey    bool `json:"is_survey"`
 			Tags        []string
 			Attachments []service.Attachment
+			Host        *string
+			Port        *int
 		})
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
@@ -642,6 +648,8 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 				Tags:        req.Tags,
 				Attachments: req.Attachments,
 				IsOpen:      chal.IsOpen,
+				Host:        req.Host,
+				Port:        req.Port,
 			}); err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
@@ -663,6 +671,8 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 				IsSurvey:    req.IsSurvey,
 				Tags:        req.Tags,
 				Attachments: req.Attachments,
+				Host:        req.Host,
+				Port:        req.Port,
 			}); err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
@@ -718,6 +728,35 @@ func (s *server) tasksMDHandler() echo.HandlerFunc {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
 			buf.WriteString("\n")
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"text": buf.String(),
+		})
+	}
+}
+
+//go:embed check-port.py.tpl
+var checkPortPyTemplate string
+
+func (s *server) checkPortPyHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		chals, err := s.app.ListAllRawChallenges()
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		// これは起動時に一回だけ読んで失敗したらpanicとかでもいいかも
+		t, err := template.New("check-port.py").Parse(checkPortPyTemplate)
+		if err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
+		}
+
+		buf := bytes.NewBuffer([]byte{})
+		if err := t.Execute(buf, map[string]interface{}{
+			"Challenges": chals,
+		}); err != nil {
+			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 
 		return c.JSON(http.StatusOK, map[string]interface{}{

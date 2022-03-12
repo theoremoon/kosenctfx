@@ -110,10 +110,27 @@ const Tasks = ({ tasks }: TasksProps) => {
     textMessage("Copied tasks.md to clipboard");
   }, [api, textMessage]);
 
+  const generateCheckPortPy = useCallback(async () => {
+    const res = await api.get<TasksMD>("/admin/check-port.py");
+
+    const link = document.createElement("a");
+    link.href =
+      "data:text/plain;charset=utf-8," + encodeURIComponent(res.data.text);
+    link.download = "check-port.py";
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (link.parentNode) {
+        link.parentNode.removeChild(link);
+      }
+    }, 1000);
+  }, [api]);
+
   return (
     <AdminLayout>
       <HStack>
         <Button onClick={generateTasksMD}>tasks.md</Button>
+        <Button onClick={generateCheckPortPy}>check-port.py</Button>
       </HStack>
       <Table maxW="100%" size="sm">
         <Thead>

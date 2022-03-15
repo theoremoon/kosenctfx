@@ -108,7 +108,7 @@ export const getStaticProps: GetStaticProps<TeamProps> = async (context) => {
 };
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const scoreboard = await fetchScoreboard();
+  const scoreboard = await fetchScoreboard().catch(() => []);
 
   return {
     paths: scoreboard.map((entry) => ({

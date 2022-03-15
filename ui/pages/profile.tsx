@@ -96,7 +96,7 @@ const Profile = ({ account: defaultAccount }: ProfileProps) => {
 };
 
 export const getStaticProps: GetStaticProps<ProfileProps> = async () => {
-  const account = await fetchAccount();
+  const account = await fetchAccount().catch(() => null);
   return {
     props: {
       account: account,

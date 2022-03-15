@@ -219,7 +219,10 @@ const Index: NextPage<IndexPageProps> = ({
 
 export const getStaticProps: GetStaticProps<IndexPageProps> = async () => {
   const ctf = await fetchCTF();
-  const account = isStaticMode ? null : await fetchAccount();
+  let account = null;
+  try {
+    account = isStaticMode ? null : await fetchAccount();
+  } catch {}
   return {
     props: {
       ctf: ctf,

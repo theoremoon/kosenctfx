@@ -90,7 +90,7 @@ export const getStaticProps: GetStaticProps<TaskProps> = async (context) => {
 };
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const tasks = await fetchTasks();
+  const tasks = await fetchTasks().catch(() => []);
 
   return {
     paths: tasks.map((t) => ({ params: { id: t.id.toString() } })),

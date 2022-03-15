@@ -200,7 +200,7 @@ const Teams = ({ scoreboard: defaultScoreboard }: AdminTeamsProps) => {
 };
 
 export const getStaticProps: GetStaticProps<AdminTeamsProps> = async () => {
-  const scoreboard = await fetchScoreboard();
+  const scoreboard = await fetchScoreboard().catch(() => []);
   return {
     props: {
       scoreboard: scoreboard,

@@ -25,8 +25,8 @@ const TasksDefault = ({
 };
 
 export const getStaticProps: GetStaticProps<TasksProps> = async () => {
-  const account = isStaticMode ? null : await fetchAccount();
-  const tasks = await fetchTasks();
+  const account = isStaticMode ? null : await fetchAccount().catch(() => null);
+  const tasks = await fetchTasks().catch(() => []);
   const ctf = await fetchCTF();
   return {
     props: {

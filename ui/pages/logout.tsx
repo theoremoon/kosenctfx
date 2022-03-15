@@ -25,7 +25,7 @@ const Logout = ({ account }: LogoutProps) => {
 };
 
 export const getStaticProps: GetStaticProps<LogoutProps> = async () => {
-  const account = isStaticMode ? null : await fetchAccount();
+  const account = isStaticMode ? null : await fetchAccount().catch(() => null);
   return {
     props: {
       account: account,

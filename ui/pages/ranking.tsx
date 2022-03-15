@@ -187,11 +187,11 @@ const Ranking = ({
 };
 
 export const getStaticProps: GetStaticProps<RankingProps> = async () => {
-  const scoreboard = await fetchScoreboard();
-  const tasks = await fetchTasks();
-  const account = isStaticMode ? null : await fetchAccount();
+  const scoreboard = await fetchScoreboard().catch(() => []);
+  const tasks = await fetchTasks().catch(() => []);
+  const account = isStaticMode ? null : await fetchAccount().catch(() => null);
   const topTeams = scoreboard.slice(0, 10).map((t) => t.team);
-  const series = await fetchSeries(topTeams);
+  const series = await fetchSeries(topTeams).catch(() => []);
   const ctf = await fetchCTF();
   return {
     props: {

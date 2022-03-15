@@ -82,7 +82,9 @@ const App = ({ Component, pageProps }: AppProps) => {
           <Container maxW="container.xl" minH="100vh">
             <Component {...pageProps} />
           </Container>
-          <Center color="#ffffff66">powered by kosenctfx</Center>
+          <Center color="#ffffff66" mt={10} mb={1}>
+            powered by kosenctfx
+          </Center>
         </Box>
       </ChakraProvider>
     </SWRConfig>

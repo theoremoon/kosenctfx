@@ -24,7 +24,7 @@ class Document extends NextDocument<Props> {
           ></meta>
           <meta
             property="og:description"
-            content="zer0pts CTF 2021 organized by zer0pts"
+            content="zer0pts CTF 2022 organized by zer0pts"
           ></meta>
           <meta property="og:type" content="website"></meta>
           <meta

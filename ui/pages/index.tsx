@@ -193,7 +193,7 @@ const Index: NextPage<IndexPageProps> = ({
       </Text>
 
       <Text fontSize="xl" mt={10}>
-        [ Prizes ]
+        [ Sponsors ]
       </Text>
       <Center>
         <Box

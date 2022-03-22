@@ -85,7 +85,7 @@ export const getStaticProps: GetStaticProps<TaskProps> = async (context) => {
       account: account,
       ctf: ctf,
     },
-    revalidate: 1, // revalidate every 1 seconds
+    revalidate: isStaticMode ? undefined : 1, // revalidate every 1 seconds
   };
 };
 
@@ -94,7 +94,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   return {
     paths: tasks.map((t) => ({ params: { id: t.id.toString() } })),
-    fallback: "blocking",
+    fallback: isStaticMode ? false : "blocking",
   };
 };
 

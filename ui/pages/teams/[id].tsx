@@ -4,6 +4,7 @@ import CountryFlag from "components/countryflag";
 import Loading from "components/loading";
 import { CTF, fetchCTF } from "lib/api/ctf";
 import { fetchSeries, SeriesEntry } from "lib/api/series";
+import { isStaticMode } from "lib/static";
 import { orderBy } from "lodash";
 import { GetStaticPaths, GetStaticProps } from "next";
 import useScoreboard, {
@@ -103,7 +104,7 @@ export const getStaticProps: GetStaticProps<TeamProps> = async (context) => {
       ctf: ctf,
       account: null,
     },
-    revalidate: 1,
+    revalidate: isStaticMode ? undefined : 1,
   };
 };
 
@@ -114,7 +115,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     paths: scoreboard.map((entry) => ({
       params: { id: entry.team_id.toString() },
     })),
-    fallback: "blocking",
+    fallback: isStaticMode ? false : "blocking",
   };
 };
 

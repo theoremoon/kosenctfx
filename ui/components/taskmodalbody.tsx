@@ -2,7 +2,6 @@ import {
   Box,
   Button,
   Flex,
-  Heading,
   HStack,
   Input,
   Link,
@@ -14,10 +13,8 @@ import {
 import { faDownload } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Task } from "lib/api/tasks";
-import { isStaticMode } from "lib/static";
 import useMessage from "lib/useMessage";
 import NextLink from "next/link";
-import React from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { api } from "../lib/api";
 import useTasks from "../lib/api/tasks";
@@ -35,7 +32,7 @@ type SubmitParams = {
 
 const TaskModalBody = ({ task, ...props }: TaskModalBodyProps) => {
   const { register, handleSubmit } = useForm<SubmitParams>();
-  const { mutate } = useTasks([]);
+  const { mutate } = useTasks();
   const { message, error } = useMessage();
   const onSubmit: SubmitHandler<SubmitParams> = async (values) => {
     try {
@@ -50,33 +47,19 @@ const TaskModalBody = ({ task, ...props }: TaskModalBodyProps) => {
   };
 
   return (
-    <Stack spacing={1} color="#000">
-      <Heading as="h2" fontSize="3xl">
-        {task.name}
-      </Heading>
+    <Stack spacing={1} color={bgColor}>
+      <Text fontSize="xl">
+        {task.name} - {task.score}
+      </Text>
       <Flex>
         <Stack w="70%" pl={1} spacing={1}>
-          <Tags
-            tags={task.category ? [task.category, ...task.tags] : task.tags}
-          />
-          <HStack>
-            <Box color="#000">
-              <Box fontSize="2xl" sx={{ display: "inline" }}>
-                {task.score}
-              </Box>
-              pts
-            </Box>
-            <Box color="#000">
-              <Box fontSize="2xl" sx={{ display: "inline" }}>
-                {task.solved_by.length}
-              </Box>
-              solves
-            </Box>
-          </HStack>
+          <Tags tags={[task.category, ...task.tags]} />
           <Box
             sx={{
               a: {
-                color: "blue.300",
+                textDecoration: "underline",
+                textDecorationColor: pink,
+                textDecorationThickness: "0.1em",
               },
               "a:focus": {
                 outline: "none",
@@ -87,7 +70,7 @@ const TaskModalBody = ({ task, ...props }: TaskModalBodyProps) => {
           <HStack minH="4em">
             {task.attachments.map((a) => (
               <a href={a.url} download key={a.url}>
-                <Tag colorScheme="blackAlpha" variant="solid" maxW="10em">
+                <Tag variant="outline" maxW="10em">
                   <FontAwesomeIcon icon={faDownload} />
                   <TagLabel isTruncated>{a.name}</TagLabel>
                 </Tag>
@@ -95,44 +78,22 @@ const TaskModalBody = ({ task, ...props }: TaskModalBodyProps) => {
             ))}
           </HStack>
           {task.author && <Right>author: {task.author}</Right>}
-          {!isStaticMode && (
-            <HStack>
-              <Input
-                id="flag"
-                placeholder="zer0pts{...}"
-                variant="flushed"
-                sx={{
-                  borderColor: "blue.300",
-                  "&::placeholder": {
-                    color: "#999",
-                  },
-                }}
-                {...register("flag", { required: true })}
-              />
-              <Button
-                onClick={handleSubmit(onSubmit)}
-                colorScheme="blue"
-                variant="solid"
-              >
-                Submit
-              </Button>
-            </HStack>
-          )}
+          <HStack>
+            <Input
+              id="flag"
+              placeholder="Neko{...}"
+              variant="flushed"
+              {...register("flag", { required: true })}
+            />
+            <Button onClick={handleSubmit(onSubmit)}>Submit</Button>
+          </HStack>
         </Stack>
         <Box w="30%" pl={1} sx={{ overflowY: "auto" }}>
           <Stack spacing={1} h="0">
-            <Text fontSize="xl">solved by ({task.solved_by.length})</Text>
-            <Box pl={2}>
+            <Text size="lg">{task.solved_by.length}solves</Text>
+            <Box>
               {task.solved_by.map((t) => (
-                <Text
-                  fontSize="sm"
-                  key={t.team_name}
-                  sx={{
-                    "&:hover": {
-                      textDecoration: "underline",
-                    },
-                  }}
-                >
+                <Text fontSize="sm" key={t.team_name}>
                   <Link as={NextLink} href={`/teams/${t.team_id}`}>
                     {t.team_name}
                   </Link>

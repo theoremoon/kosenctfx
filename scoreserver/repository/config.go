@@ -1,14 +1,19 @@
 package repository
 
 import (
+	"github.com/pkg/errors"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"golang.org/x/xerrors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ConfigRepository interface {
 	SetConfig(conf *model.Config) error
 	GetConfig() (*model.Config, error)
+
+	SetBucketConfig(bucketConfig *model.BucketConfig) error
+	GetBucketConfig(ctfID uint32) (*model.BucketConfig, error)
 }
 
 func (r *repository) SetConfig(conf *model.Config) error {
@@ -45,4 +50,25 @@ func (r *repository) GetConfig() (*model.Config, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	return &conf, nil
+}
+
+func (r *repository) SetBucketConfig(bucketConfig *model.BucketConfig) error {
+	dbErr := r.db.Clauses(clause.OnConflict{
+		DoNothing: true,
+	}).Create(bucketConfig)
+	if err := dbErr.Error; err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+func (r *repository) GetBucketConfig(ctfID uint32) (*model.BucketConfig, error) {
+	var b model.BucketConfig
+	if err := r.db.Where("ctf_id = ?", ctfID).First(&b).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, NotFound(err.Error())
+		}
+		return nil, err
+	}
+	return &b, nil
 }

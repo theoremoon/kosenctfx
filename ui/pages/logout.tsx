@@ -1,18 +1,12 @@
 import Loading from "components/loading";
 import { api } from "lib/api";
-import { isStaticMode } from "lib/static";
-import { GetStaticProps } from "next";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
-import useAccount, { Account, fetchAccount } from "../lib/api/account";
+import useAccount from "../lib/api/account";
 
-interface LogoutProps {
-  account: Account | null;
-}
-
-const Logout = ({ account }: LogoutProps) => {
+const Logout = () => {
   const router = useRouter();
-  const { mutate } = useAccount(account);
+  const { mutate } = useAccount();
   useEffect(() => {
     const f = async () => {
       await api.post("/logout");
@@ -22,15 +16,6 @@ const Logout = ({ account }: LogoutProps) => {
     f();
   }, []);
   return <Loading />;
-};
-
-export const getStaticProps: GetStaticProps<LogoutProps> = async () => {
-  const account = isStaticMode ? null : await fetchAccount().catch(() => null);
-  return {
-    props: {
-      account: account,
-    },
-  };
 };
 
 export default Logout;

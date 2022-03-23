@@ -1,4 +1,3 @@
-import { ssrFetcher } from "lib/api";
 import useSWR from "swr";
 
 export interface Config {
@@ -13,7 +12,5 @@ export interface Config {
 }
 
 const useConfig = () => useSWR<Config>("/admin/get-config");
-
-export const fetchConfig = () => ssrFetcher<Config>("/admin/get-config");
 
 export default useConfig;

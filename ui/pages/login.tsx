@@ -1,9 +1,7 @@
 import {
   Box,
-  Button,
   FormControl,
   FormLabel,
-  Input,
   Link,
   Text,
   VStack,
@@ -15,6 +13,11 @@ import { useRouter } from "next/router";
 import { SubmitHandler, useForm } from "react-hook-form";
 import Right from "../components/right";
 import useAccount from "../lib/api/account";
+import FormWrapper from "../components/formwrapper";
+import FormItem from "../components/formitem";
+import Input from "../components/input";
+import Label from "../components/label";
+import Button from "../components/button";
 
 type LoginParams = {
   teamname: string;
@@ -28,7 +31,7 @@ const Login = () => {
     formState: { errors },
   } = useForm<LoginParams>();
   const router = useRouter();
-  const { mutate } = useAccount(null);
+  const { mutate } = useAccount();
   const { message, error } = useMessage();
   const onSubmit: SubmitHandler<LoginParams> = async (values) => {
     try {
@@ -45,38 +48,32 @@ const Login = () => {
     }
   };
   return (
-    <Box w="sm" mx="auto" mt="10">
+    <FormWrapper>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack>
-          <FormControl isInvalid={errors.teamname !== undefined}>
-            <FormLabel htmlFor="teamname">teamname</FormLabel>
-            <Input
-              id="teamname"
-              variant="flushed"
-              {...register("teamname", { required: true })}
-            ></Input>
-          </FormControl>
-          <FormControl isInvalid={errors.password !== undefined}>
-            <FormLabel htmlFor="password">password</FormLabel>
-            <Input
-              id="password"
-              type="password"
-              {...register("password", { required: true })}
-            ></Input>
-          </FormControl>
-          <FormControl>
-            <Right>
-              <Button type="submit">Login</Button>
-            </Right>
-          </FormControl>
-          <Text>
-            <Link as={NextLink} href="/passwordreset_request">
-              Forgot your password? You can reset your password here.
-            </Link>
-          </Text>
-        </VStack>
+        <FormItem>
+          <Label htmlFor="teamname">teamname</Label>
+          <Input id="teamname" {...register("teamname", { required: true })} />
+        </FormItem>
+        <FormItem>
+          <Label htmlFor="password">password</Label>
+          <Input
+            id="password"
+            type="password"
+            {...register("password", { required: true })}
+          />
+        </FormItem>
+        <FormItem>
+          <Right>
+            <Button type="submit">Login</Button>
+          </Right>
+        </FormItem>
+        <p>
+          <Link as={NextLink} href="/passwordreset_request">
+            Forgot your password? You can reset your password here.
+          </Link>
+        </p>
       </form>
-    </Box>
+    </FormWrapper>
   );
 };
 

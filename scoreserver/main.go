@@ -9,7 +9,6 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
-	"github.com/theoremoon/kosenctfx/scoreserver/bucket"
 	"github.com/theoremoon/kosenctfx/scoreserver/config"
 	"github.com/theoremoon/kosenctfx/scoreserver/mailer"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
@@ -109,20 +108,6 @@ func run() error {
 	}
 	if conf.SolveLogWebhookURL != "" {
 		srv.SolveLogWebhook = webhook.NewDiscord(conf.SolveLogWebhookURL, 1*time.Second)
-	}
-	if conf.BucketName != "" {
-		b := bucket.NewS3Bucket(
-			conf.BucketName,
-			conf.BucketEndpoint,
-			conf.BucketRegion,
-			conf.BucketAccessKey,
-			conf.BucketSecretKey,
-			conf.InsecureBucket,
-		)
-		if err := b.CreateBucket(); err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		srv.Bucket = b
 	}
 
 	return srv.Start(conf.Addr)

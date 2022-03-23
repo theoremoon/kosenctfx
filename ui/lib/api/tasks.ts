@@ -1,5 +1,3 @@
-import { makeSWRResponse, ssrFetcher } from "lib/api";
-import { isStaticMode } from "lib/static";
 import useSWR from "swr";
 
 export interface Attachment {
@@ -28,9 +26,6 @@ export interface Task {
   is_survey: boolean;
 }
 
-const useTasks = (staticValue: Task[]) => {
-  return isStaticMode ? makeSWRResponse(staticValue) : useSWR<Task[]>("/tasks");
-};
-export const fetchTasks = () => ssrFetcher<Task[]>("/tasks");
+const useTasks = () => useSWR<Task[]>("/tasks");
 
 export default useTasks;

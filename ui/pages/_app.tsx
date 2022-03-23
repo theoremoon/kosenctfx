@@ -1,94 +1,39 @@
 import {
   Box,
-  Center,
-  ChakraProvider,
   Container,
   extendTheme,
+  Flex,
+  withDefaultColorScheme,
   withDefaultVariant,
 } from "@chakra-ui/react";
-import Menu from "../components/menu";
 import { defaultFetcher } from "lib/api";
 import type { AppProps } from "next/app";
 import React from "react";
 import { SWRConfig } from "swr";
-import { isStaticMode } from "lib/static";
-
-const theme = extendTheme(
-  {
-    initialColorMode: "dark",
-    useSystemColorMode: false,
-    colors: {
-      gray: {
-        "50": "#EFF0F6",
-        "100": "#D1D4E5",
-        "200": "#ffffff",
-        "300": "#969DC4",
-        "400": "#7982B4",
-        "500": "#5B67A4",
-        "600": "#495283",
-        "700": "#373E62",
-        "800": "#0b1933",
-        "900": "#121521",
-      },
-    },
-    styles: {
-      global: {
-        "html, body": {
-          minHeight: "100vh",
-          height: "100%",
-        },
-        "#__next": {
-          minHeight: "100%",
-        },
-        input: {
-          textAlign: "center",
-        },
-      },
-    },
-    components: {
-      Link: {
-        baseStyle: {
-          "&:focus": {
-            boxShadow: "none",
-          },
-        },
-      },
-      Code: {
-        withDefaultVariant: "solid",
-      },
-    },
-  },
-
-  withDefaultVariant({
-    variant: "flushed",
-    components: ["Input"],
-  })
-);
+import Menu from "../components/menu";
+import { bgColor, bgSubColor, pink, white } from "../lib/color";
+import "tailwindcss/tailwind.css";
+import "../style/global.scss";
 
 const App = ({ Component, pageProps }: AppProps) => {
   return (
-    <SWRConfig
-      value={{
-        fetcher: defaultFetcher,
-        revalidateOnMount: !isStaticMode,
-        revalidateOnFocus: !isStaticMode,
-        revalidateOnReconnect: !isStaticMode,
-        refreshInterval: isStaticMode ? 0 : 30000,
-      }}
-    >
-      <ChakraProvider theme={theme}>
-        <Box className="h-full">
-          <Menu {...pageProps} />
-          <Container maxW="container.xl" minH="100vh">
-            <Component {...pageProps} />
-          </Container>
-          <Center color="#ffffff66" mt={10} mb={1}>
-            powered by kosenctfx
-          </Center>
-        </Box>
-      </ChakraProvider>
+    <SWRConfig value={{ fetcher: defaultFetcher }}>
+      <div className="min-h-full h-full flex flex-row">
+        <div className="w-44 break-normal">
+          <Menu />
+        </div>
+        <div className="container h-full">
+          <div className="w-min md:w-2/3 mx-auto h-full">
+            <div className="h-full flex flex-col">
+              <div className="flex-1">
+                <Component {...pageProps} />
+              </div>
+              <div className="opacity-20 text-center">powered by kosenctfx</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </SWRConfig>
   );
 };
-
 export default App;

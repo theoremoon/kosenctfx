@@ -8,6 +8,7 @@ import {
 import TaskModalBody from "components/taskmodalbody";
 import { useRouter } from "next/router";
 import Loading from "../../../components/loading";
+import useAccount from "../../../lib/api/account";
 import parentpath from "../../../lib/parentpath";
 import Tasks from "./index";
 import useAdminTasks from "../../../lib/api/admin/tasks";
@@ -40,14 +41,10 @@ const TasksDefault = () => {
             shallow: true,
           });
         }}
-        size="4xl"
+        size="xl"
       >
         <ModalOverlay />
-        <ModalContent
-          sx={{
-            backgroundColor: "#ffffff",
-          }}
-        >
+        <ModalContent>
           <ModalBody>
             <TaskModalBody task={task} />
           </ModalBody>

@@ -1,5 +1,3 @@
-import { makeSWRResponse, ssrFetcher } from "lib/api";
-import { isStaticMode } from "lib/static";
 import useSWR from "swr";
 
 export interface CTF {
@@ -11,9 +9,6 @@ export interface CTF {
   is_over: boolean;
 }
 
-const useCTF = (fallback: CTF) => {
-  return isStaticMode ? makeSWRResponse(fallback) : useSWR<CTF>("/ctf");
-};
-export const fetchCTF = () => ssrFetcher<CTF>("/ctf");
+const useCTF = () => useSWR<CTF>("/ctf");
 
 export default useCTF;

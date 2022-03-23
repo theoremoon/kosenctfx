@@ -1,7 +1,6 @@
 import {
   Button,
   Code,
-  HStack,
   Modal,
   ModalBody,
   ModalContent,
@@ -19,12 +18,11 @@ import {
 import Loading from "components/loading";
 import TaskModalBody from "components/taskmodalbody";
 import useMessage from "lib/useMessage";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import Right from "../../../components/right";
 import { api } from "../../../lib/api";
 import useAdminTasks, { Task } from "../../../lib/api/admin/tasks";
 import { useRouter } from "next/router";
-import AdminLayout from "components/adminLayout";
 
 type taskElementProps = {
   task: Task;
@@ -60,7 +58,9 @@ const TaskElement = ({
         👀
       </Td>
       <Td>
-        <Code title={task.flag}>{task.flag}</Code>
+        <Code colorScheme="whiteAlpha" title={task.flag}>
+          {task.flag}
+        </Code>
       </Td>
     </>
   );
@@ -70,13 +70,9 @@ interface TasksProps {
   tasks: Task[];
 }
 
-interface TasksMD {
-  text: string;
-}
-
 const Tasks = ({ tasks }: TasksProps) => {
   const { mutate } = useAdminTasks();
-  const { message, error, text: textMessage } = useMessage();
+  const { message, error } = useMessage();
 
   const openState = new Map(tasks.map((t) => [t.id, t.is_open]));
   const [taskOpenState, setTaskOpenState] = useState(openState);
@@ -104,75 +100,51 @@ const Tasks = ({ tasks }: TasksProps) => {
     mutate();
   }, [api, message, error, tasks]);
 
-  const generateTasksMD = useCallback(async () => {
-    const res = await api.get<TasksMD>("/admin/tasks.md");
-    navigator.clipboard.writeText(res.data.text);
-    textMessage("Copied tasks.md to clipboard");
-  }, [api, textMessage]);
-
-  const generateCheckPortPy = useCallback(async () => {
-    const res = await api.get<TasksMD>("/admin/check-port.py");
-
-    const link = document.createElement("a");
-    link.href =
-      "data:text/plain;charset=utf-8," + encodeURIComponent(res.data.text);
-    link.download = "check-port.py";
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => {
-      if (link.parentNode) {
-        link.parentNode.removeChild(link);
-      }
-    }, 1000);
-  }, [api]);
-
   return (
-    <AdminLayout>
-      <HStack>
-        <Button onClick={generateTasksMD}>tasks.md</Button>
-        <Button onClick={generateCheckPortPy}>check-port.py</Button>
-      </HStack>
-      <Table maxW="100%" size="sm">
-        <Thead>
-          <Tr>
-            <Th>Name</Th>
-            <Th>Score</Th>
-            <Th>#Solve</Th>
-            <Th>Category</Th>
-            <Th>Author</Th>
-            <Th>Is Open?</Th>
-            <Th>Is Survey?</Th>
-            <Th>Preview</Th>
-            <Th>Flag</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {tasks.map((task) => (
-            <Tr key={task.name}>
-              <TaskElement
-                task={task}
-                isOpened={taskOpenState.get(task.id) || false}
-                onUpdateOpened={(isOpen) => {
-                  setTaskOpenState((prev) =>
-                    new Map(prev).set(task.id, isOpen)
-                  );
-                }}
-                onClickCallback={() => {
-                  router.push(`/admin/tasks/${task.id}`, undefined, {
-                    shallow: true,
-                    scroll: false,
-                  });
-                }}
-              />
+    <>
+      <Stack space={4}>
+        <Table maxW="100%" size="sm">
+          <Thead>
+            <Tr>
+              <Th>Name</Th>
+              <Th>Score</Th>
+              <Th>#Solve</Th>
+              <Th>Category</Th>
+              <Th>Author</Th>
+              <Th>Is Open?</Th>
+              <Th>Is Survey?</Th>
+              <Th>Preview</Th>
+              <Th>Flag</Th>
             </Tr>
-          ))}
-        </Tbody>
-      </Table>
+          </Thead>
+          <Tbody>
+            {tasks.map((task, i) => (
+              <Tr key={task.name}>
+                <TaskElement
+                  task={task}
+                  isOpened={taskOpenState.get(task.id) || false}
+                  onUpdateOpened={(isOpen) => {
+                    setTaskOpenState((prev) =>
+                      new Map(prev).set(task.id, isOpen)
+                    );
+                  }}
+                  onClickCallback={() => {
+                    router.push(`/admin/tasks/${task.id}`, undefined, {
+                      shallow: true,
+                      scroll: false,
+                    });
+                  }}
+                />
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
 
-      <Right>
-        <Button onClick={openCloseChallenge}>Open/Close Challenges</Button>
-      </Right>
-    </AdminLayout>
+        <Right>
+          <Button onClick={openCloseChallenge}>Open/Close Challenges</Button>
+        </Right>
+      </Stack>
+    </>
   );
 };
 

@@ -1,5 +1,4 @@
 import axios, { AxiosError } from "axios";
-import { SWRResponse } from "swr";
 
 export interface APIError {
   message: string;
@@ -9,27 +8,9 @@ export const api = axios.create({
   baseURL: "/api",
 });
 
-export const ssrApi = axios.create({
-  baseURL: process.env.SSR_API_HOST,
-});
-
 /// swrから使うためにglobalなfetcher
 export const defaultFetcher = (url: string) =>
   api.get(url).then((res) => res.data);
-
-/// ssrで使うためのfetcher
-export const ssrFetcher = <T>(url: string) =>
-  ssrApi.get(url).then((res) => res.data as T);
-
-export const makeSWRResponse = <T, E = any>(data: T) =>
-  ({
-    data: data,
-    error: undefined,
-    mutate: () => {
-      /* do nothing */
-    },
-    isValidating: false,
-  } as SWRResponse<T, E>);
 
 type Message = {
   message: string;

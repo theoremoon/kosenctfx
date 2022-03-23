@@ -1,19 +1,8 @@
-import {
-  ChakraProps,
-  Icon,
-  Link,
-  Box,
-  Spacer,
-  Stack,
-  Text,
-  Flex,
-  Heading,
-} from "@chakra-ui/react";
+import { ChakraProps, Icon, Link, Spacer, Stack, Text } from "@chakra-ui/react";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Task } from "lib/api/tasks";
 import { useRouter } from "next/router";
-import React from "react";
 import { pink } from "../lib/color";
 import Tags from "./tags";
 
@@ -34,49 +23,40 @@ const TaskCard = ({ task, isSolved, ...props }: TaskCardProps) => {
         });
       }}
       sx={{
+        borderWidth: "2px",
+        borderColor: "white",
         borderRadius: "4px",
-        backgroundColor: "#edf2f7",
-        p: 2,
+        p: 4,
+        width: "200px",
+        height: "calc(200px / 4 * 3)",
         filter: isSolved ? "brightness(0.7)" : "none",
         "&:hover": {
           textDecoration: "none",
-          filter: "brightness(0.7)",
+          borderColor: pink,
           cursor: "pointer",
         },
       }}
     >
-      <Box>
-        <Heading fontSize="xl" color="#000">
+      <Stack>
+        <Text fontSize="xl">
           {isSolved && (
             <Icon
               as={FontAwesomeIcon}
               icon={faCheck}
               sx={{
-                color: "#88c4d7",
+                color: "#00ff00",
                 fontSize: "1em",
               }}
             />
           )}{" "}
           {task.name}
-        </Heading>
-        <Flex justify="space-around" m={0}>
-          <Box color="#000">
-            <Box fontSize="2xl" sx={{ display: "inline" }}>
-              {task.score}
-            </Box>
-            pts
-          </Box>
-          <Box color="#000">
-            <Box fontSize="2xl" sx={{ display: "inline" }}>
-              {task.solved_by.length}
-            </Box>
-            solves
-          </Box>
-        </Flex>
-        <Tags
-          tags={task.category ? [task.category, ...task.tags] : task.tags}
-        />
-      </Box>
+        </Text>
+        <Spacer />
+        <Text>
+          {task.score} points / {task.solved_by.length} solves
+        </Text>
+        <Tags tags={task.tags} />
+      </Stack>
     </Link>
   );
 };

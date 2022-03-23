@@ -6,39 +6,26 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import TaskModalBody from "components/taskmodalbody";
-import { fetchCTF } from "lib/api/ctf";
-import { AllPageProps } from "lib/pages";
-import { isStaticMode } from "lib/static";
-import { GetStaticPaths, GetStaticProps } from "next";
 import { useRouter } from "next/router";
 import Loading from "../../components/loading";
 import Tasks from "../../components/tasks";
-import useAccount, { Account, fetchAccount } from "../../lib/api/account";
-import useTasks, { fetchTasks, Task } from "../../lib/api/tasks";
+import useAccount from "../../lib/api/account";
+import useTasks from "../../lib/api/tasks";
 import parentpath from "../../lib/parentpath";
 
-type TaskProps = {
-  taskID: number;
-  tasks: Task[];
-  account: Account | null;
-} & AllPageProps;
-
-const TasksDefault = ({
-  taskID,
-  tasks: defaultTasks,
-  account: defaultAccount,
-}: TaskProps) => {
+const TasksDefault = () => {
   const router = useRouter();
+  const { id } = router.query;
   const { onClose } = useDisclosure();
 
-  const { data: tasks } = useTasks(defaultTasks);
-  const { data: account } = useAccount(defaultAccount);
+  const { data: tasks } = useTasks();
+  const { data: account } = useAccount();
 
   if (!tasks || account === undefined) {
     return <Loading />;
   }
 
-  const filterdTasks = tasks.filter((t) => t.id === taskID);
+  const filterdTasks = tasks.filter((t) => t.id === Number(id));
   if (filterdTasks.length !== 1) {
     return <Loading />;
   }
@@ -56,14 +43,10 @@ const TasksDefault = ({
             shallow: true,
           });
         }}
-        size="4xl"
+        size="xl"
       >
         <ModalOverlay />
-        <ModalContent
-          sx={{
-            backgroundColor: "#ffffff",
-          }}
-        >
+        <ModalContent>
           <ModalBody>
             <TaskModalBody task={task} />
           </ModalBody>
@@ -71,31 +54,6 @@ const TasksDefault = ({
       </Modal>
     </>
   );
-};
-
-export const getStaticProps: GetStaticProps<TaskProps> = async (context) => {
-  const id = context.params?.id;
-  const account = isStaticMode ? null : await fetchAccount();
-  const tasks = await fetchTasks();
-  const ctf = await fetchCTF();
-  return {
-    props: {
-      taskID: Number(id),
-      tasks: tasks,
-      account: account,
-      ctf: ctf,
-    },
-    revalidate: isStaticMode ? undefined : 1, // revalidate every 1 seconds
-  };
-};
-
-export const getStaticPaths: GetStaticPaths = async () => {
-  const tasks = await fetchTasks().catch(() => []);
-
-  return {
-    paths: tasks.map((t) => ({ params: { id: t.id.toString() } })),
-    fallback: isStaticMode ? false : "blocking",
-  };
 };
 
 export default TasksDefault;

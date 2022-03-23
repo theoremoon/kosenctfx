@@ -1,14 +1,20 @@
 import NextDocument, { Head, Html, Main, NextScript } from "next/document";
-import { ColorModeScript } from "@chakra-ui/react";
+import { bgColor, bgSubColor, pink, white } from "../lib/color";
 
-type Props = Record<string, never>;
-
+type Props = {};
 class Document extends NextDocument<Props> {
   render() {
     return (
-      <Html>
+      <Html
+        style={{
+          backgroundColor: bgColor,
+          backgroundImage: `radial-gradient(${bgSubColor} 1px, transparent 1px)`,
+          backgroundSize: `10px 10px`,
+          color: "#eaf1f1",
+        }}
+      >
         <Head>
-          <title>zer0pts CTF 2022</title>
+          <title>BSides Ahmedabad CTF 2021</title>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" />
           <link
@@ -16,15 +22,18 @@ class Document extends NextDocument<Props> {
             rel="stylesheet"
           />
 
-          <meta property="og:title" content="zer0pts CTF 2022"></meta>
-          <meta property="og:site_name" content="zer0pts CTF 2022"></meta>
+          <meta property="og:title" content="BSides Ahmedabad CTF 2021"></meta>
+          <meta
+            property="og:site_name"
+            content="BSides Ahmedabad CTF 2021"
+          ></meta>
           <meta
             property="og:url"
-            content="https://2022.ctf.bsidesahmedabad.in/"
+            content="https://score.bsidesahmedabad.in/"
           ></meta>
           <meta
             property="og:description"
-            content="zer0pts CTF 2022 organized by zer0pts"
+            content="BSides Ahmedabad CTF 2021 organized by zer0pts"
           ></meta>
           <meta property="og:type" content="website"></meta>
           <meta
@@ -33,7 +42,6 @@ class Document extends NextDocument<Props> {
           ></meta>
         </Head>
         <body>
-          <ColorModeScript initialColorMode="dark" />
           <Main />
           <NextScript />
         </body>

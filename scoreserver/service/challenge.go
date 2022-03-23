@@ -37,9 +37,6 @@ type Challenge struct {
 	Attachments []Attachment `json:"attachments"`
 	SolvedBy    []SolvedBy   `json:"solved_by"`
 
-	Host *string `json:"host"`
-	Port *int    `json:"port"`
-
 	IsOpen    bool `json:"is_open"`
 	IsRunning bool `json:"is_running"`
 	IsSurvey  bool `json:"is_survey"`
@@ -114,9 +111,6 @@ func (app *app) rawChallengesToChallenges(cs []*model.Challenge) ([]*Challenge, 
 			IsOpen:      c.IsOpen,
 			IsRunning:   false, // TODO
 			IsSurvey:    c.IsSurvey,
-			Host:        c.Host,
-			Port:        c.Port,
-
 			Tags:        tagMap[c.ID],
 			Attachments: attachmentMap[c.ID],
 		}
@@ -136,8 +130,6 @@ func (app *app) rawChallengeToChallenge(c *model.Challenge) (*Challenge, error) 
 		IsOpen:      c.IsOpen,
 		IsRunning:   false, // TODO
 		IsSurvey:    c.IsSurvey,
-		Host:        c.Host,
-		Port:        c.Port,
 	}
 
 	tags, err := app.repo.FindTagsByChallengeID(c.ID)
@@ -240,8 +232,6 @@ func (app *app) AddChallenge(c *Challenge) error {
 		Author:      c.Author,
 		IsOpen:      false,
 		IsSurvey:    c.IsSurvey,
-		Host:        c.Host,
-		Port:        c.Port,
 	}
 	err := app.repo.AddChallenge(&chal)
 	if err != nil {
@@ -292,8 +282,6 @@ func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
 		Author:      c.Author,
 		IsSurvey:    c.IsSurvey,
 		IsOpen:      c.IsOpen,
-		Host:        c.Host,
-		Port:        c.Port,
 	}
 	chal.ID = challengeID
 

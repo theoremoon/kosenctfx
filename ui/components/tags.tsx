@@ -1,4 +1,4 @@
-import { HStack, Tag } from "@chakra-ui/react";
+import { HStack, Text } from "@chakra-ui/react";
 import { pink } from "../lib/color";
 
 interface TagsProps {
@@ -9,14 +9,19 @@ const Tags = ({ tags, ...props }: TagsProps) => {
   return (
     <HStack>
       {tags.map((t) => (
-        <Tag
+        <Text
           key={t}
-          colorScheme="blackAlpha"
-          variant="solid"
-          sx={{ color: "black", backgroundColor: "#0000001a" }}
+          sx={{
+            borderColor: pink,
+            borderWidth: "1px",
+            borderStyle: "thick",
+            paddingLeft: 1,
+            paddingRight: 1,
+            borderRadius: "4px",
+          }}
         >
-          {t}
-        </Tag>
+          {t}{" "}
+        </Text>
       ))}
     </HStack>
   );

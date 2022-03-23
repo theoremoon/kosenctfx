@@ -1,119 +1,149 @@
 package bucket
 
 import (
+	"bytes"
+	"context"
 	"fmt"
-	"time"
+	"io/ioutil"
+	"net/http"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-
-	"golang.org/x/xerrors"
+	"github.com/google/uuid"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/pkg/errors"
 )
-
-var (
-	PresignURLLifetime = 10 * time.Minute
-)
-
-const bucketPolicyTempalte = "{\"Version\": \"2012-10-17\", \"Statement\": [{\"Sid\": \"AddPerm\", \"Effect\": \"Allow\", \"Principal\": \"*\", \"Action\": [\"s3:GetObject\"], \"Resource\": [\"arn:aws:s3:::%s/*\"]}]}"
 
 type Bucket interface {
-	CreateBucket() error
-	GeneratePresignedURL(key string) (string, string, error)
 }
 
-type s3Bucket struct {
-	bucketName string
-	endpoint   string
-	region     string
-	insecure   bool
-	accessKey  string
-	secretKey  string
+type bucket struct {
+	Endpoint   string
+	Region     string
+	BucketName string
+	AccessKey  string
+	SecretKey  string
+	HTTPS      bool
+	client     *minio.Client
 }
 
-func NewS3Bucket(bucketName, endpoint, region, accessKey, secretKey string, insecure bool) Bucket {
-	return &s3Bucket{
-		bucketName: bucketName,
-		endpoint:   endpoint,
-		region:     region,
-		accessKey:  accessKey,
-		secretKey:  secretKey,
-		insecure:   insecure,
-	}
-}
-
-// TODO CORS
-func (b *s3Bucket) CreateBucket() error {
-	cred := credentials.NewStaticCredentials(b.accessKey, b.secretKey, "")
-	s, err := session.NewSession(&aws.Config{
-		Region:           &b.region,
-		Endpoint:         b.buildEndpoint(),
-		Credentials:      cred,
-		DisableSSL:       &b.insecure,
-		S3ForcePathStyle: aws.Bool(true),
+func New(endpoint, region, bucketName, accessKey, secretKey string, https bool) (Bucket, error) {
+	client, err := minio.New(endpoint, &minio.Options{
+		Creds: credentials.NewStaticV4(accessKey, secretKey, ""),
 	})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return nil, errors.WithStack(err)
 	}
 
-	svc := s3.New(s)
+	return &bucket{
+		Endpoint:   endpoint,
+		Region:     region,
+		BucketName: bucketName,
+		HTTPS:      https,
+		client:     client,
+	}, nil
+}
 
-	// Bucketを作ってみる
-	_, err = svc.CreateBucket(&s3.CreateBucketInput{
-		Bucket: &b.bucketName,
+func SetupBucket(endpoint, region, bucketName, accessKey, secretKey string, https bool) (Bucket, error) {
+	client, err := minio.New(endpoint, &minio.Options{
+		Creds: credentials.NewStaticV4(accessKey, secretKey, ""),
 	})
-	if aerr, ok := err.(awserr.Error); ok && (aerr.Code() == s3.ErrCodeBucketAlreadyExists || aerr.Code() == s3.ErrCodeBucketAlreadyOwnedByYou) {
-		// すでにbucketがある場合は何もしない
-		// return nil
-	} else if err != nil {
-		return xerrors.Errorf(": %w", err)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 
-	// BucketにPolicyを与える
-	if _, err := svc.PutBucketPolicy(&s3.PutBucketPolicyInput{
-		Bucket: &b.bucketName,
-		Policy: aws.String(fmt.Sprintf(bucketPolicyTempalte, b.bucketName)),
-	}); err != nil {
-		return xerrors.Errorf(": %w", err)
+	exist, err := client.BucketExists(context.Background(), bucketName)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if !exist {
+		// create bucket
+		err = client.MakeBucket(
+			context.Background(),
+			bucketName,
+			minio.MakeBucketOptions{
+				Region: region,
+			},
+		)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	bucketPolicy := fmt.Sprintf(`{"Version": "2012-10-17", "Statement": [{"Sid": "AddPerm", "Effect": "Allow", "Principal": "*", "Action": ["s3:GetObject"], "Resource": ["arn:aws:s3:::%s/*"]}]}`, bucketName)
+
+	// set bucket policy
+	err = client.SetBucketPolicy(
+		context.Background(),
+		bucketName,
+		bucketPolicy,
+	)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &bucket{
+		Endpoint:   endpoint,
+		Region:     region,
+		BucketName: bucketName,
+		HTTPS:      https,
+		client:     client,
+	}, nil
+}
+
+func (b *bucket) Upload(objectName string, buf *bytes.Buffer) error {
+	_, err := b.client.PutObject(
+		context.Background(),
+		b.BucketName,
+		objectName,
+		buf,
+		int64(buf.Len()),
+		minio.PutObjectOptions{},
+	)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 	return nil
 }
 
-func (b *s3Bucket) GeneratePresignedURL(key string) (string, string, error) {
-	cred := credentials.NewStaticCredentials(b.accessKey, b.secretKey, "")
-	s, err := session.NewSession(&aws.Config{
-		Region:           &b.region,
-		Endpoint:         b.buildEndpoint(),
-		Credentials:      cred,
-		DisableSSL:       &b.insecure,
-		S3ForcePathStyle: aws.Bool(true),
-	})
+func (b *bucket) TestBucket() error {
+	// test upload & download
+	testObjectName := fmt.Sprintf("test-object-%s", uuid.New().String())
+	testData := []byte("test")
+	err := b.Upload(testObjectName, bytes.NewBuffer(testData))
 	if err != nil {
-		return "", "", xerrors.Errorf(": %w", err)
+		return errors.WithStack(err)
 	}
 
-	svc := s3.New(s)
-	req, _ := svc.PutObjectRequest(&s3.PutObjectInput{
-		Bucket: &b.bucketName,
-		Key:    &key,
-	})
-	url, err := req.Presign(PresignURLLifetime)
+	url := b.BuildEndpoint(testObjectName)
+	data, err := download(url)
 	if err != nil {
-		return "", "", xerrors.Errorf(": %w", err)
+		return fmt.Errorf("failed to download test object from bucket: %w", err)
 	}
 
-	return url, b.buildKeyURL(key), nil
+	if bytes.Compare(data, testData) != 0 {
+		return errors.New("object integrity is not complete. the bucket may be corrupted")
+	}
+	return nil
 }
 
-func (b *s3Bucket) buildEndpoint() *string {
-	if b.insecure {
-		return aws.String("http://" + b.endpoint)
+func (b *bucket) BuildEndpoint(objectName string) string {
+	protocol := "https://"
+	if !b.HTTPS {
+		protocol = "http://"
 	}
-	return aws.String("https://" + b.endpoint)
+	return fmt.Sprintf("%s%s/%s/%s", protocol, b.Endpoint, b.BucketName, objectName)
 }
 
-func (b *s3Bucket) buildKeyURL(key string) string {
-	return fmt.Sprintf("%s/%s/%s", *b.buildEndpoint(), b.bucketName, key)
+func download(url string) ([]byte, error) {
+	res, err := http.Get(url)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	defer res.Body.Close()
+
+	buf, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return buf, nil
 }

@@ -128,3 +128,15 @@ type Config struct {
 
 	ScoreExpr string `gorm:"size:10000"`
 }
+
+type BucketConfig struct {
+	Model
+
+	CTFId      uint32 `gorm:"unique_index,column:ctf_id"`
+	Endpoint   string `json:"endpoint"`
+	Region     string `json:"region"`
+	BucketName string `json:"bucketName"`
+	AccessKey  string `json:"accessKey"`
+	SecretKey  string `json:"secretKey"`
+	HTTPS      bool   `json:"https"`
+}

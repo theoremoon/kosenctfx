@@ -1,5 +1,4 @@
-import { api, makeSWRResponse, ssrFetcher } from "lib/api";
-import { isStaticMode } from "lib/static";
+import { api } from "lib/api";
 import useSWR from "swr";
 
 export interface Team {
@@ -8,13 +7,8 @@ export interface Team {
   country: string;
 }
 
-const useTeam = (teamID: string, staticValue: Team) => {
-  return isStaticMode
-    ? makeSWRResponse(staticValue)
-    : useSWR<Team>(`/team/${teamID}`);
-};
-
-export const fetchTeam = (teamID: string) =>
-  ssrFetcher<Team>(`/team/${teamID}`);
-
+const useTeam = (teamid: string) =>
+  useSWR<Team>(teamid, (team) => {
+    return api.get<Team>(`/team/${team}`).then((r) => r.data);
+  });
 export default useTeam;

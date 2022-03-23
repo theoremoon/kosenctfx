@@ -18,7 +18,6 @@ import type { GetStaticProps, NextPage } from "next";
 import useCTF, { CTF, fetchCTF } from "../lib/api/ctf";
 import Image from "next/image";
 import zer0pts_svg from "public/zer0pts_logo_white.svg";
-import trailofbits_svg from "public/trailofbits.svg";
 import { useEffect, useState } from "react";
 import { useInterval } from "usehooks-ts";
 
@@ -195,24 +194,6 @@ const Index: NextPage<IndexPageProps> = ({
       <Text fontSize="xl" mt={10}>
         [ Sponsors ]
       </Text>
-      <Center>
-        <Box
-          mx="auto"
-          sx={{
-            "& img": {
-              width: "10em",
-            },
-          }}
-        >
-          <a
-            href="https://www.trailofbits.com/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Image unoptimized={true} src={trailofbits_svg} />
-          </a>
-        </Box>
-      </Center>
     </Stack>
   );
 };

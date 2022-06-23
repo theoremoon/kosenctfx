@@ -1,7 +1,11 @@
 package server
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -9,6 +13,7 @@ import (
 	"github.com/go-redis/redismock/v8"
 	"github.com/labstack/echo/v4"
 	"github.com/steinfletcher/apitest"
+	jsonpath "github.com/steinfletcher/apitest-jsonpath"
 	"github.com/theoremoon/kosenctfx/scoreserver/mailer"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
@@ -169,4 +174,135 @@ func TestRegister(t *testing.T) {
 				Expect(t).Status(tt.expected).End()
 		})
 	}
+}
+
+func createTeam(t *testing.T, app service.App, s *echo.Echo) (*model.Team, []*apitest.Cookie) {
+	t.Helper()
+
+	// register
+	user := struct {
+		Teamname string
+		Password string
+		Email    string
+	}{
+		Teamname: gofakeit.Name(),
+		Password: gofakeit.UUID(),
+		Email:    gofakeit.Email(),
+	}
+	userJSON, err := json.Marshal(user)
+	if err != nil {
+		panic(err)
+	}
+
+	registerReq := httptest.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(userJSON))
+	registerReq.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	registerRec := httptest.NewRecorder()
+	s.ServeHTTP(registerRec, registerReq)
+
+	// login
+	loginReq := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(userJSON))
+	loginReq.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	loginRec := httptest.NewRecorder()
+	s.ServeHTTP(loginRec, loginReq)
+
+	cookies := make([]*apitest.Cookie, 0)
+	for _, c := range loginRec.Result().Cookies() {
+		cookies = append(cookies, apitest.FromHTTPCookie(c))
+	}
+
+	// get uesr
+	team, err := app.GetTeamByName(user.Teamname)
+	if err != nil {
+		panic(err)
+	}
+
+	return team, cookies
+}
+
+func TestLogin(t *testing.T) {
+	t.Parallel()
+	app := newApp(t)
+	s := newServer(t, app)
+
+	// register
+	user := struct {
+		Teamname string
+		Password string
+		Email    string
+	}{
+		Teamname: gofakeit.Name(),
+		Password: gofakeit.UUID(),
+		Email:    gofakeit.Email(),
+	}
+	apitest.New().Handler(s).
+		Post("/register").
+		JSON(user).
+		Expect(t).Status(http.StatusOK).End()
+
+	// login
+	tests := []struct {
+		Teamname string
+		Password string
+		message  string
+		expected int
+	}{
+		{
+			Teamname: user.Teamname,
+			Password: user.Password,
+			message:  "loginできる",
+			expected: http.StatusOK,
+		},
+		{
+			Teamname: strings.ToUpper(user.Teamname),
+			Password: user.Password,
+			message:  "username case sensitive",
+			expected: http.StatusBadRequest,
+		},
+		{
+			Teamname: user.Teamname,
+			Password: strings.ToUpper(user.Password),
+			message:  "password case sensitive",
+			expected: http.StatusBadRequest,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.message, func(t *testing.T) {
+			apitest.New().Handler(s).
+				Post("/login").
+				JSON(tt).
+				Expect(t).Status(tt.expected).End()
+		})
+	}
+}
+
+func TestAccount(t *testing.T) {
+	t.Parallel()
+	app := newApp(t)
+	s := newServer(t, app)
+
+	t.Run("アカウント取得できる", func(t *testing.T) {
+		t.Parallel()
+
+		team, cookies := createTeam(t, app, s)
+		apitest.New().Handler(s).
+			Get("/account").Cookies(cookies...).
+			Expect(t).Assert(
+			jsonpath.Chain().
+				Equal("$.teamname", team.Teamname).
+				Equal("$.country", team.CountryCode).
+				Equal("$.is_admin", team.IsAdmin).
+				End(),
+		).Status(http.StatusOK).End()
+	})
+
+	t.Run("ログインしてないときも一旦200", func(t *testing.T) {
+		t.Parallel()
+
+		apitest.New().Handler(s).
+			Get("/account").
+			Expect(t).
+			Body("").
+			Status(http.StatusOK).End()
+	})
 }

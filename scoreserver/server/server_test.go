@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/go-redis/redismock/v8"
 	"github.com/labstack/echo/v4"
 	"github.com/steinfletcher/apitest"
@@ -91,11 +92,83 @@ func newServer(t *testing.T, app service.App) *echo.Echo {
 }
 
 func TestRegister(t *testing.T) {
+	t.Parallel()
 	app := newApp(t)
 	s := newServer(t, app)
 
-	apitest.New().Handler(s).
-		Post("/register").
-		JSON(`{"teamname": "yo", "password": "hi", "email": "yo@example.com", "country": ""}`).
-		Expect(t).Status(http.StatusOK).End()
+	tests := []struct {
+		Teamname string
+		Password string
+		Email    string
+		Country  string
+		message  string
+		expected int
+	}{
+		{
+			Teamname: "team1",
+			Password: "password",
+			Email:    "team1@example.com",
+			Country:  "jp",
+			message:  "registerできる",
+			expected: http.StatusOK,
+		},
+		{
+			Teamname: "team1",
+			Password: gofakeit.UUID(),
+			Email:    gofakeit.Email(),
+			Country:  "",
+			message:  "teamname unique",
+			expected: http.StatusBadRequest,
+		},
+		{
+			Teamname: gofakeit.Name(),
+			Password: gofakeit.UUID(),
+			Email:    "team1@example.com",
+			Country:  "",
+			message:  "email unique",
+			expected: http.StatusBadRequest,
+		},
+		{
+			Teamname: "",
+			Password: gofakeit.UUID(),
+			Email:    gofakeit.Email(),
+			Country:  "",
+			message:  "teamnameいる",
+			expected: http.StatusBadRequest,
+		},
+		{
+			Teamname: gofakeit.Name(),
+			Password: "",
+			Email:    gofakeit.Email(),
+			Country:  "",
+			message:  "passwordいる",
+			expected: http.StatusBadRequest,
+		},
+		{
+			Teamname: gofakeit.Name(),
+			Password: gofakeit.UUID(),
+			Email:    "",
+			Country:  "",
+			message:  "emailいる",
+			expected: http.StatusBadRequest,
+		},
+		{
+			Teamname: gofakeit.Name(),
+			Password: gofakeit.UUID(),
+			Email:    gofakeit.Email(),
+			Country:  gofakeit.UUID(),
+			message:  "countryはcountry",
+			expected: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.message, func(t *testing.T) {
+			apitest.New().Handler(s).
+				Post("/register").
+				JSON(tt).
+				Expect(t).Status(tt.expected).End()
+		})
+	}
 }

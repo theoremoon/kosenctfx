@@ -10,5 +10,5 @@ services:
     volumes:
       - "./scoreserver:/go/src/github.com/theoremoon/kosenctfx"
       - "./go-modules:/go/pkg/mod"
-    command: "bash -c 'go test -v ./...'" # sleep for waiting up mysql
+    command: "bash -c 'go test ./...'" # sleep for waiting up mysql
 

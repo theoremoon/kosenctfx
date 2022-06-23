@@ -1,10 +1,15 @@
 package server
 
 import (
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/go-redis/redismock/v8"
+	"github.com/labstack/echo/v4"
+	"github.com/steinfletcher/apitest"
 	"github.com/theoremoon/kosenctfx/scoreserver/mailer"
+	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"github.com/theoremoon/kosenctfx/scoreserver/webhook"
@@ -43,13 +48,36 @@ func newApp(t *testing.T) service.App {
 	return service.New(repo, mailer)
 }
 
-func newServer(t *testing.T) *server {
+func newServer(t *testing.T, app service.App) *echo.Echo {
 	t.Helper()
 
-	app := newApp(t)
 	redis, _ := redismock.NewClientMock()
 
-	return &server{
+	admin, err := app.RegisterTeam("admin", "admin", "admin@example.com", "")
+	if err != nil {
+		panic(err)
+	}
+	if err := app.MakeTeamAdmin(admin); err != nil {
+		panic(err)
+	}
+
+	err = app.SetCTFConfig(&model.Config{
+		CTFName:      "KosenCTF X",
+		Token:        "admin@example.com",
+		StartAt:      time.Now().Unix(),
+		EndAt:        time.Now().Add(1 * time.Hour).Unix(),
+		RegisterOpen: true,
+		CTFOpen:      true,
+		LockCount:    5,
+		LockDuration: 60,
+		LockSecond:   300,
+		ScoreExpr:    "func calc(count) { return count; }",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	srv := &server{
 		app:             app,
 		SessionKey:      "kosenctfx",
 		Token:           TOKEN,
@@ -59,4 +87,15 @@ func newServer(t *testing.T) *server {
 		TaskOpenWebhook: webhook.Dummy("TASK OPEN"),
 		SolveLogWebhook: webhook.Dummy("SOLVE"),
 	}
+	return srv.build(true)
+}
+
+func TestRegister(t *testing.T) {
+	app := newApp(t)
+	s := newServer(t, app)
+
+	apitest.New().Handler(s).
+		Post("/register").
+		JSON(`{"teamname": "yo", "password": "hi", "email": "yo@example.com", "country": ""}`).
+		Expect(t).Status(http.StatusOK).End()
 }

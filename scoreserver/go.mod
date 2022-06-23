@@ -14,6 +14,7 @@ require (
 	github.com/mattn/anko v0.1.8
 	github.com/pariz/gountries v0.0.0-20200430155801-1c6a393df9c7
 	github.com/prometheus/client_golang v1.11.0
+	github.com/steinfletcher/apitest v1.5.12
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	gorm.io/driver/mysql v1.3.4
@@ -26,6 +27,7 @@ require (
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

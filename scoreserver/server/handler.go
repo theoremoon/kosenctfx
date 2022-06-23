@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -16,7 +17,7 @@ import (
 	"golang.org/x/xerrors"
 	"gorm.io/gorm"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus"
@@ -1139,7 +1140,7 @@ func (s *server) setChallenges(config *model.Config, challenges []*service.Chall
 	}
 	key := challengesKey(config.CTFName)
 
-	if err := s.redis.Set(key, string(challengesJson), cacheDuration).Err(); err != nil {
+	if err := s.redis.Set(context.Background(), key, string(challengesJson), cacheDuration).Err(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
@@ -1148,7 +1149,7 @@ func (s *server) setChallenges(config *model.Config, challenges []*service.Chall
 ///プレイヤー向けに、openなtaskのリストを返す / redisを読む
 func (s *server) getRawChallenges(config *model.Config) ([]*service.Challenge, error) {
 	key := challengesKey(config.CTFName)
-	challengesStr, err := s.redis.Get(key).Result()
+	challengesStr, err := s.redis.Get(context.Background(), key).Result()
 
 	if err != nil {
 		// nilのときrefreshする
@@ -1210,7 +1211,7 @@ func (s *server) setScoreboard(config *model.Config, scoreboard []*service.Score
 	}
 
 	key := scoreboardKey(config.CTFName)
-	if err := s.redis.Set(key, string(scoreboardJson), cacheDuration).Err(); err != nil {
+	if err := s.redis.Set(context.Background(), key, string(scoreboardJson), cacheDuration).Err(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
@@ -1218,7 +1219,7 @@ func (s *server) setScoreboard(config *model.Config, scoreboard []*service.Score
 
 func (s *server) getScoreboard(config *model.Config) ([]*service.ScoreFeedEntry, error) {
 	key := scoreboardKey(config.CTFName)
-	scoreboardStr, err := s.redis.Get(key).Result()
+	scoreboardStr, err := s.redis.Get(context.Background(), key).Result()
 	if err != nil {
 		// nilのときrefreshする
 		if xerrors.Is(err, redis.Nil) {
@@ -1266,7 +1267,7 @@ func (s *server) appendScoreSeries(config *model.Config, standings []*service.Sc
 		}
 
 		key := rankingSeriesKey(config.CTFName, team.TeamID)
-		err = s.redis.RPush(key, string(seriesJson)).Err()
+		err = s.redis.RPush(context.Background(), key, string(seriesJson)).Err()
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -1277,7 +1278,7 @@ func (s *server) appendScoreSeries(config *model.Config, standings []*service.Sc
 
 func (s *server) getTeamSeries(config *model.Config, teamID uint32) (TeamScoreSeries, error) {
 	key := rankingSeriesKey(config.CTFName, teamID)
-	seriesStr, err := s.redis.LRange(key, 0, -1).Result()
+	seriesStr, err := s.redis.LRange(context.Background(), key, 0, -1).Result()
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -1290,12 +1291,12 @@ func (s *server) getTeamSeries(config *model.Config, teamID uint32) (TeamScoreSe
 }
 
 func (s *server) removeAllSeries(config *model.Config) error {
-	keys, err := s.redis.Keys(fmt.Sprintf("%s_rankingseries_*", config.CTFName)).Result()
+	keys, err := s.redis.Keys(context.Background(), fmt.Sprintf("%s_rankingseries_*", config.CTFName)).Result()
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	if err := s.redis.Del(keys...).Err(); err != nil {
+	if err := s.redis.Del(context.Background(), keys...).Err(); err != nil {
 	}
 	return nil
 }
@@ -1308,11 +1309,11 @@ func (s *server) countActiveSessions() (int64, error) {
 	now := time.Now().Unix()
 	nowStr := strconv.FormatInt(now, 10)
 	// expiredなセッションを消す
-	if err := s.redis.ZRemRangeByScore(sessionSetKey, "0", nowStr).Err(); err != nil {
+	if err := s.redis.ZRemRangeByScore(context.Background(), sessionSetKey, "0", nowStr).Err(); err != nil {
 		return 0, xerrors.Errorf(": %w", err)
 	}
 
-	cnt, err := s.redis.ZCount(sessionSetKey, nowStr, "inf").Result()
+	cnt, err := s.redis.ZCount(context.Background(), sessionSetKey, nowStr, "inf").Result()
 	if err != nil {
 		return 0, xerrors.Errorf(": %w", err)
 	}

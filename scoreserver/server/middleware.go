@@ -1,13 +1,14 @@
 package server
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo/v4"
 	"github.com/theoremoon/kosenctfx/scoreserver/loader"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
@@ -39,8 +40,8 @@ func (s *server) loginMiddleware(h echo.HandlerFunc) echo.HandlerFunc {
 			tokenStr := hex.EncodeToString(tokenHash[:])
 
 			// 値は上書きしたいのでmemberの値で一度削除する
-			s.redis.ZRem(sessionSetKey, tokenStr)
-			s.redis.ZAdd(sessionSetKey, redis.Z{
+			s.redis.ZRem(context.Background(), sessionSetKey, tokenStr)
+			s.redis.ZAdd(context.Background(), sessionSetKey, &redis.Z{
 				Score:  float64(time.Now().Add(sessionActiveDuration).Unix()),
 				Member: tokenStr,
 			})

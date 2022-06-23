@@ -14,10 +14,13 @@ services:
     image: redis:6
 
   go-test:
-    image: golang:1.15
-    working_dir: "/app"
+    image: golang:1.17
+    working_dir: "/go/src/github.com/theoremoon/kosenctfx"
+    user: "${UID}:${GID}"
+    environment:
+      GOCACHE: "/tmp/.cache"
     volumes:
-      - "./scoreserver:/app"
+      - "./scoreserver:/go/src/github.com/theoremoon/kosenctfx"
       - "./go-modules:/go/pkg/mod"
     command: "bash -c 'sleep 5 && go test ./...'" # sleep for waiting up mysql
     depends_on:

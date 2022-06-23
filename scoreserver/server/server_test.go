@@ -22,8 +22,6 @@ import (
 const (
 	TOKEN        = "token"
 	FRONTEND_URL = ""
-	testDB       = "testuser:testpassword@tcp(db-test:3306)/testtable"
-	testRedis    = "testuser:testpassword@tcp(db-test:3306)/testtable"
 )
 
 func newRepository(t *testing.T) repository.Repository {

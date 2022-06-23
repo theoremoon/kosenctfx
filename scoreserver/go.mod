@@ -4,9 +4,8 @@ go 1.17
 
 require (
 	github.com/aws/aws-sdk-go v1.30.29
-	github.com/brianvoe/gofakeit/v6 v6.10.0
 	github.com/go-redis/redis v6.15.9+incompatible
-	github.com/go-sql-driver/mysql v1.5.0
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/uuid v1.1.1
 	github.com/graph-gophers/dataloader/v6 v6.0.0
 	github.com/labstack/echo/v4 v4.1.16
@@ -16,8 +15,10 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	gorm.io/driver/mysql v1.0.3
-	gorm.io/gorm v1.20.7
+	gorm.io/driver/mysql v1.3.4
+	gorm.io/driver/sqlite v1.3.4
+	gorm.io/gorm v1.23.4
+	gotest.tools/v3 v3.3.0
 	syreclabs.com/go/faker v1.2.3
 )
 
@@ -26,11 +27,13 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
+	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.1 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jmespath/go-jmespath v0.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mattn/go-sqlite3 v1.14.12 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.14.2 // indirect
 	github.com/onsi/gomega v1.10.3 // indirect

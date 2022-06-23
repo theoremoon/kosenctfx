@@ -29,5 +29,6 @@ pass:
 	echo 'select token from configs;' | docker-compose exec -T db mysql -u kosenctfxuser -pkosenctfxpassword kosenctfx
 
 test:
+	(cd scoreserver; go mod tidy)
 	env UID=$(UID) GID=$(GID) docker compose -f compose.test.yaml down --remove-orphans
 	env UID=$(UID) GID=$(GID) docker compose -f compose.test.yaml run --rm go-test

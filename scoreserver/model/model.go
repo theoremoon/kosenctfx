@@ -6,7 +6,7 @@ import (
 )
 
 type Model struct {
-	ID        uint32         `gorm:"primary_key" json:"id"`
+	ID        uint32         `gorm:"primaryKey" json:"id"`
 	CreatedAt int64          `gorm:"autoCreateTime" json:"-"`
 	UpdatedAt int64          `gorm:"autoUpdateTime" json:"-"`
 	DeletedAt gorm.DeletedAt `json:"-"`

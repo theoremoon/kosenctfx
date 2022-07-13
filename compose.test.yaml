@@ -1,0 +1,14 @@
+version: '3'
+services:
+
+  go-test:
+    image: golang:1.17
+    working_dir: "/go/src/github.com/theoremoon/kosenctfx"
+    user: "${UID}:${GID}"
+    environment:
+      GOCACHE: "/tmp/.cache"
+    volumes:
+      - "./scoreserver:/go/src/github.com/theoremoon/kosenctfx"
+      - "./go-modules:/go/pkg/mod"
+    command: "bash -c 'go test ./...'" # sleep for waiting up mysql
+

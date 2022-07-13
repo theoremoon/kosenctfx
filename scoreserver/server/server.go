@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/theoremoon/kosenctfx/scoreserver/bucket"
@@ -93,9 +93,12 @@ func New(app service.App, db *gorm.DB, redis *redis.Client, frontendURL, token s
 	}
 }
 
-func (s *server) Start(addr string) error {
+func (s *server) build(isTest bool) *echo.Echo {
 	e := echo.New()
-	e.Use(middleware.Logger())
+	// testのときは余計なログはかない
+	if !isTest {
+		e.Use(middleware.Logger())
+	}
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{s.FrontendURL},
 		AllowCredentials: true,
@@ -140,6 +143,11 @@ func (s *server) Start(addr string) error {
 	// prometheus exporter
 	e.GET("/admin/metrics", s.metricsHandler(), s.adminMiddleware)
 
+	return e
+}
+
+func (s *server) Start(addr string) error {
+	e := s.build(false)
 	return e.Start(addr)
 }
 

@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"golang.org/x/xerrors"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"

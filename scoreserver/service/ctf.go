@@ -5,6 +5,7 @@ import (
 
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"golang.org/x/xerrors"
+	"gorm.io/gorm"
 )
 
 type CTFStatus int
@@ -35,18 +36,38 @@ func CalcCTFStatus(conf *model.Config) CTFStatus {
 	}
 }
 
-func (app *app) GetCTFConfig() (*model.Config, error) {
-	conf, err := app.repo.GetConfig()
-	if err != nil {
-		return nil, err
-	}
-	return conf, nil
-}
+func (app *app) SetCTFConfig(conf *model.Config) error {
+	err := app.db.Transaction(func(tx *gorm.DB) error {
+		var c model.Config
+		if err := tx.First(&c).Error; err != nil {
+			if !xerrors.Is(err, gorm.ErrRecordNotFound) {
+				return xerrors.Errorf(": %w", err)
+			}
 
-func (app *app) SetCTFConfig(config *model.Config) error {
-	err := app.repo.SetConfig(config)
+			// 存在しない時：つくる
+			if err := tx.Create(conf).Error; err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+			return nil
+		}
+
+		// 存在するとき： update
+		conf.Model = c.Model
+		if err := tx.Save(conf).Error; err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		return nil
+	})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
+}
+
+func (app *app) GetCTFConfig() (*model.Config, error) {
+	var conf model.Config
+	if err := app.db.First(&conf).Error; err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return &conf, nil
 }

@@ -83,17 +83,17 @@ type ScoreFeedEntry struct {
 }
 
 func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team, submissions []*model.Submission) ([]*Challenge, []*ScoreFeedEntry, error) {
-	conf, err := app.repo.GetConfig()
+	conf, err := app.GetCTFConfig()
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}
 
 	// List Tags and Attachments
-	tags, err := app.repo.ListAllTags()
+	tags, err := app.listAllTags()
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}
-	attachments, err := app.repo.ListAllAttachments()
+	attachments, err := app.listAllAttachments()
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}

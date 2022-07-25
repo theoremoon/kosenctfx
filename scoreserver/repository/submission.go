@@ -13,15 +13,9 @@ type SubmissionRepository interface {
 	ListSubmissionByIDs(ids []uint32) ([]*model.Submission, error)
 	ListValidSubmissions() ([]*model.ValidSubmission, error)
 	ListTeamSubmissions(teamID uint32) ([]*model.Submission, error)
-	InsertSubmission(s *model.Submission) error
-	InsertValidableSubmission(s *model.Submission) (bool, error)
 	MarkSubmissionValid(id uint32) error
 	CountSubmissions() (int64, error)
 	CountValidSubmissions() (int64, error)
-
-	GetWrongCount(teamID uint32, duration time.Duration) (int64, error)
-	LockSubmission(teamID uint32, duration time.Duration) error
-	CheckSubmittable(teamID uint32) (bool, error)
 }
 
 func (r *repository) ListSubmissions(offset, limit int64) ([]*model.Submission, error) {

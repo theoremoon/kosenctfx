@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/labstack/gommon/log"
 	"github.com/mattn/anko/core"
@@ -12,6 +11,7 @@ import (
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"golang.org/x/xerrors"
+	"gorm.io/gorm"
 )
 
 type Attachment struct {
@@ -60,10 +60,96 @@ type ChallengeApp interface {
 	UpdateChallenge(challengeID uint32, c *Challenge) error
 
 	SubmitFlag(team *model.Team, ipaddress string, flag string, ctfRunning bool, submitted_at int64) (*model.Challenge, bool, bool, error)
+}
 
-	GetWrongCount(teamID uint32, duration time.Duration) (int64, error)
-	LockSubmission(teamID uint32, duration time.Duration) error
-	CheckSubmittable(teamID uint32) (bool, error)
+func (app *app) insertSubmission(s *model.Submission) error {
+	if err := app.db.Create(s).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (app *app) insertValidableSubmission(s *model.Submission) (bool, error) {
+	valid := false
+
+	// ややこしいのでtransactionをとって行う
+	err := app.db.Transaction(func(tx *gorm.DB) error {
+		// とりあえずsubmissionは保存しておく
+		if err := app.db.Create(s).Error; err != nil {
+			return err
+		}
+
+		// 既存の提出を読んでvalidityを決定する
+		var count int64
+		if err := app.db.Model(&model.ValidSubmission{}).Where("team_id = ? AND challenge_id = ?", s.TeamId, s.ChallengeId).Count(&count).Error; err != nil {
+			return err
+		}
+		if count == 0 {
+			valid = true
+		}
+
+		if valid {
+			// validならvalid submissionを作成する
+			vs := model.ValidSubmission{
+				SubmissionId: s.ID,
+				ChallengeId:  *s.ChallengeId,
+				TeamId:       s.TeamId,
+			}
+			if err := app.db.Create(&vs).Error; err != nil {
+				// ただしConstraint Errorが起きたらやはりValidではなかった
+				if isDuplicatedError(err) {
+					valid = false
+					return nil
+				} else {
+					return xerrors.Errorf(": %w", err)
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return false, xerrors.Errorf(": %w", err)
+	}
+	return valid, nil
+}
+
+func (app *app) markSubmissionValid(id uint32) error {
+	if err := app.db.Model(&model.Submission{}).Where("id = ?", id).Update("is_valid", true).Error; err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (app *app) listTagsByChallengeIDs(ids []uint32) ([]*model.Tag, error) {
+	var tags []*model.Tag
+	if err := app.db.Order("challenge_id asc").Where("challenge_id IN ?", ids).Find(&tags).Error; err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return tags, nil
+}
+
+func (app *app) listAttachmentsByChallengeIDs(ids []uint32) ([]*model.Attachment, error) {
+	var attachments []*model.Attachment
+	if err := app.db.Order("challenge_id asc").Where("challenge_id IN ?", ids).Find(&attachments).Error; err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return attachments, nil
+}
+
+func (app *app) listAllTags() ([]*model.Tag, error) {
+	var tags []*model.Tag
+	if err := app.db.Find(&tags).Error; err != nil {
+		return nil, err
+	}
+	return tags, nil
+}
+
+func (app *app) listAllAttachments() ([]*model.Attachment, error) {
+	var attachments []*model.Attachment
+	if err := app.db.Find(&attachments).Error; err != nil {
+		return nil, err
+	}
+	return attachments, nil
 }
 
 func (app *app) rawChallengesToChallenges(cs []*model.Challenge) ([]*Challenge, error) {
@@ -72,12 +158,12 @@ func (app *app) rawChallengesToChallenges(cs []*model.Challenge) ([]*Challenge, 
 		ids[i] = c.ID
 	}
 
-	tags, err := app.repo.ListTagsByChallengeIDs(ids)
+	tags, err := app.listTagsByChallengeIDs(ids)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	attachments, err := app.repo.ListAttachmentsByChallengeIDs(ids)
+	attachments, err := app.listAttachmentsByChallengeIDs(ids)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -140,7 +226,7 @@ func (app *app) rawChallengeToChallenge(c *model.Challenge) (*Challenge, error) 
 		Port:        c.Port,
 	}
 
-	tags, err := app.repo.FindTagsByChallengeID(c.ID)
+	tags, err := app.listTagsByChallengeIDs([]uint32{c.ID})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -149,7 +235,7 @@ func (app *app) rawChallengeToChallenge(c *model.Challenge) (*Challenge, error) 
 		chal.Tags[i] = tags[i].Tag
 	}
 
-	attachments, err := app.repo.FindAttachmentsByChallengeID(c.ID)
+	attachments, err := app.listAttachmentsByChallengeIDs([]uint32{c.ID})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -174,13 +260,13 @@ func (app *app) GetChallengeByID(challengeID uint32) (*Challenge, error) {
 }
 
 func (app *app) ListChallengeByIDs(ids []uint32) ([]*Challenge, error) {
-	cs, err := app.repo.ListChallengeByIDs(ids)
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+	var challenges []*model.Challenge
+	if err := app.db.Where("id IN ?", ids).Find(&challenges).Error; err != nil {
+		return nil, err
 	}
-	chals, err := app.rawChallengesToChallenges(cs)
+	chals, err := app.rawChallengesToChallenges(challenges)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 	return chals, nil
 }
@@ -193,42 +279,98 @@ func (app *app) GetChallengeByName(name string) (*Challenge, error) {
 	return app.rawChallengeToChallenge(c)
 }
 
+func (app *app) GetChallengeByFlag(flag string) (*model.Challenge, error) {
+	var c model.Challenge
+	if err := app.db.Where("flag = ?", flag).First(&c).Error; err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
 func (app *app) GetRawChallengeByID(challengeID uint32) (*model.Challenge, error) {
-	chal, err := app.repo.GetChallengeByID(challengeID)
-	if err != nil {
-		if xerrors.As(err, &repository.NotFoundError{}) {
+	var c model.Challenge
+	if err := app.db.Where("id = ?", challengeID).First(&c).Error; err != nil {
+		if xerrors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, NewErrorMessage(challengeNotfoundMessage)
 		}
 		return nil, xerrors.Errorf(": %w", err)
 	}
-	return chal, nil
+	return &c, nil
 }
 
 func (app *app) GetRawChallengeByName(name string) (*model.Challenge, error) {
-	chal, err := app.repo.GetChallengeByName(name)
-	if err != nil {
-		if xerrors.As(err, &repository.NotFoundError{}) {
+	var c model.Challenge
+	if err := app.db.Where("name = ?", name).First(&c).Error; err != nil {
+		if xerrors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, NewErrorMessage(challengeNotfoundMessage)
 		}
 		return nil, xerrors.Errorf(": %w", err)
 	}
-	return chal, nil
+	return &c, nil
 }
 
 func (app *app) ListOpenedRawChallenges() ([]*model.Challenge, error) {
-	chals, err := app.repo.ListOpenedChallenges()
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+	var challenges []*model.Challenge
+	if err := app.db.Where("is_open = ?", true).Find(&challenges).Error; err != nil {
+		return nil, err
 	}
-	return chals, nil
+	return challenges, nil
 }
 
 func (app *app) ListAllRawChallenges() ([]*model.Challenge, error) {
-	chals, err := app.repo.ListAllChallenges()
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+	var challenges []*model.Challenge
+	if err := app.db.Find(&challenges).Error; err != nil {
+		return nil, err
 	}
-	return chals, nil
+	return challenges, nil
+}
+
+func (app *app) OpenChallenge(challengeID uint32) error {
+	err := app.db.Model(&model.Challenge{}).
+		Where("id = ?", challengeID).
+		Update("is_open", true).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (app *app) CloseChallenge(challengeID uint32) error {
+	err := app.db.Model(&model.Challenge{}).
+		Where("id = ?", challengeID).
+		Update("is_open", false).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (app *app) addChallengeTag(t *model.Tag) error {
+	if err := app.db.Create(t).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (app *app) deleteTagByChallengeId(challengeId uint32) error {
+	if err := app.db.Where("challenge_id = ?", challengeId).Delete(&model.Tag{}).Error; err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (app *app) addChallengeAttachment(a *model.Attachment) error {
+	if err := app.db.Create(a).Error; err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (app *app) deleteAttachmentByChallengeId(challengeId uint32) error {
+	if err := app.db.Where("challenge_id = ?", challengeId).Delete(&model.Attachment{}).Error; err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
 }
 
 func (app *app) AddChallenge(c *Challenge) error {
@@ -243,25 +385,24 @@ func (app *app) AddChallenge(c *Challenge) error {
 		Host:        c.Host,
 		Port:        c.Port,
 	}
-	err := app.repo.AddChallenge(&chal)
-	if err != nil {
-		if xerrors.As(err, &repository.DuplicatedError{}) {
+	if err := app.db.Create(c).Error; err != nil {
+		if isDuplicatedError(err) {
 			return NewErrorMessage(fmt.Sprintf(challengeDuplicatedMessage, c.Name))
 		}
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 
 	for _, t := range c.Tags {
 		// do not care about error of this
-		app.repo.AddChallengeTag(&model.Tag{
+		_ = app.addChallengeTag(&model.Tag{
 			ChallengeId: chal.ID,
 			Tag:         t,
-		})
+		}).Error
 	}
 
 	for _, a := range c.Attachments {
 		// do not care about error of this
-		app.repo.AddChallengeAttachment(&model.Attachment{
+		_ = app.addChallengeAttachment(&model.Attachment{
 			ChallengeId: chal.ID,
 			Name:        a.Name,
 			URL:         a.URL,
@@ -270,19 +411,6 @@ func (app *app) AddChallenge(c *Challenge) error {
 	return nil
 }
 
-func (app *app) OpenChallenge(challengeID uint32) error {
-	if err := app.repo.OpenChallengeByID(challengeID); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	return nil
-}
-func (app *app) CloseChallenge(challengeID uint32) error {
-	if err := app.repo.CloseChallengeByID(challengeID); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	return nil
-
-}
 func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
 	chal := model.Challenge{
 		Name:        c.Name,
@@ -297,21 +425,21 @@ func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
 	}
 	chal.ID = challengeID
 
-	err := app.repo.UpdateChallenge(&chal)
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
+	if err := app.db.Save(&chal).Error; err != nil {
+		return err
 	}
 
-	if err := app.repo.DeleteTagByChallengeId(challengeID); err != nil {
-		return xerrors.Errorf(": %w", err)
+	// TODO: remove remote tags and attachments
+	if err := app.deleteTagByChallengeId(challengeID); err != nil {
+		return err
 	}
-	if err := app.repo.DeleteAttachmentByChallengeId(challengeID); err != nil {
-		return xerrors.Errorf(": %w", err)
+	if err := app.deleteAttachmentByChallengeId(challengeID); err != nil {
+		return err
 	}
 
 	for _, t := range c.Tags {
 		// do not care about error of this
-		app.repo.AddChallengeTag(&model.Tag{
+		_ = app.addChallengeTag(&model.Tag{
 			ChallengeId: chal.ID,
 			Tag:         t,
 		})
@@ -319,7 +447,7 @@ func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
 
 	for _, a := range c.Attachments {
 		// do not care about error of this
-		app.repo.AddChallengeAttachment(&model.Attachment{
+		_ = app.addChallengeAttachment(&model.Attachment{
 			ChallengeId: chal.ID,
 			Name:        a.Name,
 			URL:         a.URL,
@@ -330,7 +458,7 @@ func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
 
 /// 返り値は 解いたchallenge（is_correctがfalseならnil)、 is_correct, is_valid, error
 func (app *app) SubmitFlag(team *model.Team, ipaddress string, flag string, ctfRunning bool, submitted_at int64) (*model.Challenge, bool, bool, error) {
-	chal, err := app.repo.GetChallengeByFlag(flag)
+	chal, err := app.GetChallengeByFlag(flag)
 	if err != nil && !xerrors.As(err, &repository.NotFoundError{}) {
 		return nil, false, false, xerrors.Errorf(": %w", err)
 	}
@@ -345,7 +473,7 @@ func (app *app) SubmitFlag(team *model.Team, ipaddress string, flag string, ctfR
 	}
 	if chal == nil || !chal.IsOpen {
 		// wrong
-		if err := app.repo.InsertSubmission(s); err != nil {
+		if err := app.insertSubmission(s); err != nil {
 			return nil, false, false, xerrors.Errorf(": %w", err)
 		}
 		return nil, false, false, nil
@@ -356,51 +484,27 @@ func (app *app) SubmitFlag(team *model.Team, ipaddress string, flag string, ctfR
 
 		if ctfRunning {
 			// ctfRunningがtrueなときは初回の提出だけvalidになる。ここトランザクションかけておく
-			valid, err := app.repo.InsertValidableSubmission(s)
+			valid, err := app.insertValidableSubmission(s)
 			if err != nil {
 				return nil, false, false, xerrors.Errorf(": %w", err)
 			}
 
 			if valid {
 				// validなときsubmissionにvalidフラグ立てておく
-				if err := app.repo.MarkSubmissionValid(s.ID); err != nil {
+				if err := app.markSubmissionValid(s.ID); err != nil {
 					log.Errorf("%+v\n", err) // XXX
 				}
 			}
 			return chal, true, valid, nil
 		} else {
 			// elseの場合は参考記録なのでvalidにしない
-			if err := app.repo.InsertSubmission(s); err != nil {
+			if err := app.insertSubmission(s); err != nil {
 				return nil, false, false, xerrors.Errorf(": %w", err)
 			}
 			return chal, true, false, nil
 		}
 
 	}
-}
-
-func (app *app) GetWrongCount(teamID uint32, duration time.Duration) (int64, error) {
-	cnt, err := app.repo.GetWrongCount(teamID, duration)
-	if err != nil {
-		return 0, xerrors.Errorf(": %w", err)
-	}
-	return cnt, nil
-}
-
-func (app *app) LockSubmission(teamID uint32, duration time.Duration) error {
-	err := app.repo.LockSubmission(teamID, duration)
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	return nil
-}
-
-func (app *app) CheckSubmittable(teamID uint32) (bool, error) {
-	b, err := app.repo.CheckSubmittable(teamID)
-	if err != nil {
-		return false, xerrors.Errorf(": %w", err)
-	}
-	return b, nil
 }
 
 func CalcChallengeScore(solveCount int, scoreExpr string) (int, error) {

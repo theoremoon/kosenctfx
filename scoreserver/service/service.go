@@ -10,6 +10,7 @@ import (
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"golang.org/x/xerrors"
+	"gorm.io/gorm"
 )
 
 const (
@@ -44,13 +45,14 @@ type App interface {
 
 type app struct {
 	repo   repository.Repository
+	db     *gorm.DB
 	mailer mailer.Mailer
 }
 
-func New(repo repository.Repository, mailer mailer.Mailer) App {
+func New(db *gorm.DB, mailer mailer.Mailer) App {
 	return &app{
 		mailer: mailer,
-		repo:   repo,
+		db:     db,
 	}
 }
 

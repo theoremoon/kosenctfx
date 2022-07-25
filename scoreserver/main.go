@@ -66,7 +66,7 @@ func run() error {
 		}
 	}
 
-	app := service.New(repo, mailSender)
+	app := service.New(db, mailSender)
 
 	// admin ユーザを自動生成して適当なCTF情報を入れる
 	if _, err := app.GetAdminTeam(); err != nil {

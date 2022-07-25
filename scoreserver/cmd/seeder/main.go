@@ -54,7 +54,7 @@ func run() error {
 	repo := repository.New(db)
 	repo.Migrate()
 
-	app := service.New(repo, nil)
+	app := service.New(db, nil)
 	s := seeder.New(app)
 
 	if *all || *team {

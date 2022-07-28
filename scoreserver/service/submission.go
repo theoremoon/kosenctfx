@@ -21,57 +21,67 @@ type SubmissionApp interface {
 }
 
 func (app *app) ListSubmissions(offset, limit int64) ([]*model.Submission, error) {
-	submissions, err := app.repo.ListSubmissions(offset, limit)
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+	var submissions []*model.Submission
+	if err := app.db.Order("submissions.created_at desc").Offset(int(offset)).Limit(int(offset)).Find(&submissions).Error; err != nil {
+		return nil, err
 	}
 	return submissions, nil
 }
 
 func (app *app) ListSubmissionByIDs(ids []uint32) ([]*model.Submission, error) {
-	submissions, err := app.repo.ListSubmissionByIDs(ids)
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+	var submissions []*model.Submission
+	if err := app.db.Order("submissions.created_at desc").Where("submissions.id IN ?", ids).Find(&submissions).Error; err != nil {
+		return nil, err
+	}
+
+	return submissions, nil
+}
+
+func (app *app) listValidSubmissions() ([]*model.ValidSubmission, error) {
+	var submissions []*model.ValidSubmission
+	if err := app.db.Find(&submissions).Error; err != nil {
+		return nil, err
 	}
 	return submissions, nil
 }
 
 func (app *app) ListValidSubmissions() ([]*model.Submission, error) {
 	// model.Submissionのis_validカラムよりはこちらが信用できる
-	valid_submissions, err := app.repo.ListValidSubmissions()
+	valid_submissions, err := app.listValidSubmissions()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 	submission_ids := make([]uint32, len(valid_submissions))
 	for i, s := range valid_submissions {
 		submission_ids[i] = s.SubmissionId
 	}
-	submissions, err := app.repo.ListSubmissionByIDs(submission_ids)
+	submissions, err := app.ListSubmissionByIDs(submission_ids)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 	return submissions, nil
 }
+
 func (app *app) ListTeamSubmissions(teamID uint32) ([]*model.Submission, error) {
-	submissions, err := app.repo.ListTeamSubmissions(teamID)
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+	var submissions []*model.Submission
+	if err := app.db.Where("team_id = ?", teamID).Find(&submissions).Error; err != nil {
+		return nil, err
 	}
 	return submissions, nil
 }
 
 func (app *app) CountSubmissions() (int64, error) {
-	count, err := app.repo.CountSubmissions()
-	if err != nil {
-		return 0, xerrors.Errorf(": %w", err)
+	var count int64
+	if err := app.db.Model(&model.Submission{}).Count(&count).Error; err != nil {
+		return 0, err
 	}
 	return count, nil
 }
 
 func (app *app) CountValidSubmissions() (int64, error) {
-	count, err := app.repo.CountValidSubmissions()
-	if err != nil {
-		return 0, xerrors.Errorf(": %w", err)
+	var count int64
+	if err := app.db.Model(&model.ValidSubmission{}).Count(&count).Error; err != nil {
+		return 0, err
 	}
 	return count, nil
 }

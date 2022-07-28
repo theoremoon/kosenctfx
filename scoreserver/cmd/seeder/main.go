@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/config"
-	"github.com/theoremoon/kosenctfx/scoreserver/repository"
+	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/seeder"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 )
@@ -50,9 +50,7 @@ func run() error {
 		return err
 	}
 	defer rawdb.Close()
-
-	repo := repository.New(db)
-	repo.Migrate()
+	model.Migrate(db)
 
 	app := service.New(db, nil)
 	s := seeder.New(app)

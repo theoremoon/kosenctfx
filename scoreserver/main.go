@@ -13,7 +13,6 @@ import (
 	"github.com/theoremoon/kosenctfx/scoreserver/config"
 	"github.com/theoremoon/kosenctfx/scoreserver/mailer"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
-	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"github.com/theoremoon/kosenctfx/scoreserver/server"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"github.com/theoremoon/kosenctfx/scoreserver/webhook"
@@ -52,9 +51,7 @@ func run() error {
 		return err
 	}
 	redis := redis.NewClient(opt)
-
-	repo := repository.New(db)
-	repo.Migrate()
+	model.Migrate(db)
 
 	var mailSender mailer.Mailer
 	if conf.MailFake {

@@ -4,14 +4,12 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/pariz/gountries"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
-	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/xerrors"
 	"gorm.io/gorm"
@@ -182,7 +180,7 @@ func (app *app) Login(teamname, password, ipaddress string) (*model.LoginToken, 
 func (app *app) PasswordResetRequest(email string) error {
 	t, err := app.getTeamByEmail(email)
 	if err != nil {
-		if xerrors.As(err, &repository.NotFoundError{}) {
+		if xerrors.Is(err, gorm.ErrRecordNotFound) {
 			return NewErrorMessage(emailNotfoundMessage)
 		}
 		return err
@@ -223,7 +221,7 @@ func (app *app) PasswordReset(token, newpassword string) error {
 
 	t, err := app.getTeamByPasswordResetToken(token)
 	if err != nil {
-		if xerrors.As(err, &repository.NotFoundError{}) {
+		if xerrors.Is(err, gorm.ErrRecordNotFound) {
 			return NewErrorMessage(passwordResetTokenInvalidMessage)
 		}
 		return xerrors.Errorf(": %w", err)
@@ -322,12 +320,11 @@ func (app *app) validateEmail(email string) error {
 		return NewErrorMessage(emailTooLongMessage)
 	}
 
-	if _, err := app.getTeamByEmail(email); err == nil {
+	_, err := app.getTeamByEmail(email)
+	if err == nil {
 		return NewErrorMessage(emailDuplicatedMessage)
-	} else if err != nil && !xerrors.As(err, &repository.NotFoundError{}) {
-		log.Printf("%v\n", err)
-		log.Printf("%v\n", xerrors.As(err, &repository.NotFoundError{}))
-		return xerrors.Errorf(": %w", err)
+	} else if !xerrors.Is(err, gorm.ErrRecordNotFound) {
+		return err
 	}
 	return nil
 }

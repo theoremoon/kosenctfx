@@ -9,7 +9,6 @@ import (
 	_ "github.com/mattn/anko/packages"
 	"github.com/mattn/anko/vm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
-	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"golang.org/x/xerrors"
 	"gorm.io/gorm"
 )
@@ -459,7 +458,7 @@ func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
 /// 返り値は 解いたchallenge（is_correctがfalseならnil)、 is_correct, is_valid, error
 func (app *app) SubmitFlag(team *model.Team, ipaddress string, flag string, ctfRunning bool, submitted_at int64) (*model.Challenge, bool, bool, error) {
 	chal, err := app.GetChallengeByFlag(flag)
-	if err != nil && !xerrors.As(err, &repository.NotFoundError{}) {
+	if err != nil && !xerrors.As(err, gorm.ErrRecordNotFound) {
 		return nil, false, false, xerrors.Errorf(": %w", err)
 	}
 

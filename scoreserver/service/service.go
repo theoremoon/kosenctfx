@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/theoremoon/kosenctfx/scoreserver/mailer"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
-	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"golang.org/x/xerrors"
 	"gorm.io/gorm"
 )
@@ -44,7 +43,6 @@ type App interface {
 }
 
 type app struct {
-	repo   repository.Repository
 	db     *gorm.DB
 	mailer mailer.Mailer
 }

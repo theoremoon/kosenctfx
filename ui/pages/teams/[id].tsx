@@ -1,91 +1,39 @@
-import { Stack, Table, Tbody, Text, Th, Thead, Tr } from "@chakra-ui/react";
-import SeriesChart from "components/chart";
-import CountryFlag from "components/countryflag";
-import Loading from "components/loading";
-import { CTF, fetchCTF } from "lib/api/ctf";
-import { fetchSeries, SeriesEntry } from "lib/api/series";
-import { isStaticMode } from "lib/static";
-import { orderBy } from "lodash";
 import { GetStaticPaths, GetStaticProps } from "next";
+import Loading from "components/loading";
+import { isStaticMode } from "lib/static";
+import { AllPageProps } from "lib/pages";
+import { fetchCTF } from "lib/api/ctf";
+import { fetchSeries } from "lib/api/series";
 import useScoreboard, {
   fetchScoreboard,
   ScoreFeedEntry,
-} from "../../lib/api/scoreboard";
-import useTeam, { fetchTeam, Team } from "../../lib/api/team";
-import { dateFormat } from "../../lib/date";
-import { AllPageProps } from "../../lib/pages";
+} from "lib/api/scoreboard";
+import useTeam, { fetchTeam } from "lib/api/team";
+import TeamView from "theme/team";
+import { TeamProps } from "props/team";
 
-type TeamProps = {
-  teamID: number;
-  team: Team;
+type teamProps = Omit<TeamProps & AllPageProps, "scorefeed"> & {
   scoreboard: ScoreFeedEntry[];
-  series: SeriesEntry[][];
-} & AllPageProps;
-
+};
 const TeamPage = ({
-  teamID,
   team: defaultTeam,
   scoreboard: defaultScoreboard,
-  series: defaultSeries,
-}: TeamProps) => {
-  const { data: team } = useTeam(teamID.toString(), defaultTeam);
+  series: series,
+}: teamProps) => {
+  const { data: team } = useTeam(defaultTeam.team_id.toString(), defaultTeam);
   const { data: scoreboard } = useScoreboard(defaultScoreboard);
 
   if (!team || !scoreboard) {
     return <Loading />;
   }
-  const teamScore = scoreboard.filter(
+  const scorefeed = scoreboard.filter(
     (score) => score.team_id === team.team_id
   )[0];
 
-  return (
-    <Stack mt="10">
-      <Text fontSize="2xl">
-        {team.country && (
-          <>
-            <CountryFlag country={team.country} sx={{ display: "inline" }} />{" "}
-          </>
-        )}
-        {team.teamname}
-      </Text>
-      <Text>
-        Rank {teamScore.pos} / {teamScore.score} points
-      </Text>
-
-      <SeriesChart teams={[team.teamname]} series={defaultSeries} />
-
-      {teamScore && (
-        <Table>
-          <Thead>
-            <Tr>
-              <Th>Task</Th>
-              <Th>Score</Th>
-              <Th>Solved At</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {orderBy(
-              Object.entries(teamScore.taskStats).map(([key, taskStat]) => ({
-                taskname: key,
-                ...taskStat,
-              })),
-              ["solved_at"],
-              ["desc"]
-            ).map((task) => (
-              <tr key={task.taskname}>
-                <td>{task.taskname}</td>
-                <td>{task.points}</td>
-                <td>{dateFormat(task.time)}</td>
-              </tr>
-            ))}
-          </Tbody>
-        </Table>
-      )}
-    </Stack>
-  );
+  return TeamView({ team, scorefeed, series });
 };
 
-export const getStaticProps: GetStaticProps<TeamProps> = async (context) => {
+export const getStaticProps: GetStaticProps<teamProps> = async (context) => {
   const id = context.params?.id;
   if (id === undefined) {
     return { notFound: true };

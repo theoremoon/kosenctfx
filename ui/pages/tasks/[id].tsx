@@ -1,23 +1,21 @@
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalOverlay,
-  useDisclosure,
-} from "@chakra-ui/react";
-import TaskModalBody from "components/taskmodalbody";
 import { fetchCTF } from "lib/api/ctf";
 import { AllPageProps } from "lib/pages";
 import { isStaticMode } from "lib/static";
 import { GetStaticPaths, GetStaticProps } from "next";
 import { useRouter } from "next/router";
 import Loading from "../../components/loading";
-import Tasks from "../../components/tasks";
 import useAccount, { Account, fetchAccount } from "../../lib/api/account";
 import useTasks, { fetchTasks, Task } from "../../lib/api/tasks";
 import parentpath from "../../lib/parentpath";
+import TaskView from "theme/task";
+import useMessage from "lib/useMessage";
+import { FlagSubmitParams } from "props/task";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { api } from "lib/api";
+import { filterTask, sortTask, isSolved } from "lib/tasks";
+import { useCallback } from "react";
 
-type TaskProps = {
+type taskProps = {
   taskID: number;
   tasks: Task[];
   account: Account | null;
@@ -27,16 +25,28 @@ const TasksDefault = ({
   taskID,
   tasks: defaultTasks,
   account: defaultAccount,
-}: TaskProps) => {
+}: taskProps) => {
   const router = useRouter();
-  const { onClose } = useDisclosure();
-
-  const { data: tasks } = useTasks(defaultTasks);
+  const { data: tasks, mutate } = useTasks(defaultTasks);
   const { data: account } = useAccount(defaultAccount);
-
+  const { message, error } = useMessage();
+  const { register, handleSubmit } = useForm<FlagSubmitParams>();
+  const isSolvedByTeam = useCallback(isSolved(account || null), [account]);
   if (!tasks || account === undefined) {
     return <Loading />;
   }
+
+  const onSubmit: SubmitHandler<FlagSubmitParams> = async (values) => {
+    try {
+      const res = await api.post("/submit", {
+        flag: values.flag,
+      });
+      message(res);
+      mutate();
+    } catch (e) {
+      error(e);
+    }
+  };
 
   const filterdTasks = tasks.filter((t) => t.id === taskID);
   if (filterdTasks.length !== 1) {
@@ -46,34 +56,21 @@ const TasksDefault = ({
 
   return (
     <>
-      <Tasks tasks={tasks} team={account} />
-      <Modal
-        isOpen={true}
-        onClose={() => {
-          onClose();
-          router.push(parentpath(router.route), undefined, {
-            scroll: false,
-            shallow: true,
-          });
-        }}
-        size="4xl"
-      >
-        <ModalOverlay />
-        <ModalContent
-          sx={{
-            backgroundColor: "#ffffff",
-          }}
-        >
-          <ModalBody>
-            <TaskModalBody task={task} />
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+      <TaskView
+        task={task}
+        tasks={tasks}
+        tasksPath={parentpath(router.pathname)}
+        registerFlag={register}
+        onFlagSubmit={handleSubmit(onSubmit)}
+        filterTask={filterTask}
+        sortTask={sortTask}
+        isSolved={isSolvedByTeam}
+      />
     </>
   );
 };
 
-export const getStaticProps: GetStaticProps<TaskProps> = async (context) => {
+export const getStaticProps: GetStaticProps<taskProps> = async (context) => {
   const id = context.params?.id;
   const account = isStaticMode ? null : await fetchAccount();
   const tasks = await fetchTasks();
@@ -85,7 +82,7 @@ export const getStaticProps: GetStaticProps<TaskProps> = async (context) => {
       account: account,
       ctf: ctf,
     },
-    revalidate: isStaticMode ? undefined : 1, // revalidate every 1 seconds
+    revalidate: isStaticMode ? undefined : 30, // revalidate every 1 seconds
   };
 };
 

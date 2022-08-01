@@ -140,6 +140,9 @@ func (s *server) build(isTest bool) *echo.Echo {
 	e.POST("/admin/get-presigned-url", s.getPresignedURLHandler(), s.adminMiddleware)
 	e.POST("/admin/sql", s.sqlHandler(), s.adminMiddleware)
 
+	// TODO: adminMiddlewareをagentMiddlewareにおきかえる
+	e.POST("/agent/beat", s.agentBeatHandler(), s.adminMiddleware)
+
 	// prometheus exporter
 	e.GET("/admin/metrics", s.metricsHandler(), s.adminMiddleware)
 

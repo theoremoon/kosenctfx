@@ -103,11 +103,12 @@ type SubmissionLock struct {
 	Until  int64
 }
 
-type Message struct {
+type Agent struct {
 	Model
 
-	Key   string `gorm:"unique"`
-	Value string
+	AgentID        string `gorm:"unique"`
+	PublicIP       string
+	LastActivityAt int64
 }
 
 type Config struct {

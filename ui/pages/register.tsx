@@ -1,15 +1,15 @@
 import { api } from "lib/api";
+import { fetchAccount } from "lib/api/account";
+import { fetchCTF } from "lib/api/ctf";
+import { AllPageProps } from "lib/pages";
+import { isStaticMode } from "lib/static";
 import useMessage from "lib/useMessage";
+import { GetStaticProps } from "next";
 import { useRouter } from "next/router";
+import { RegisterParams } from "props/register";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import RegisterView from "theme/register";
-
-type RegisterParams = {
-  email: string;
-  teamname: string;
-  password: string;
-};
 
 const Register = () => {
   const [country, setCountry] = useState("");
@@ -38,6 +38,17 @@ const Register = () => {
     country,
     setCountry,
   });
+};
+
+export const getStaticProps: GetStaticProps<AllPageProps> = async () => {
+  const account = isStaticMode ? null : await fetchAccount().catch(() => null);
+  const ctf = await fetchCTF();
+  return {
+    props: {
+      account: account,
+      ctf: ctf,
+    },
+  };
 };
 
 export default Register;

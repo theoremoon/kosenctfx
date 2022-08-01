@@ -6,6 +6,7 @@ import useCTF, { CTF, fetchCTF } from "../lib/api/ctf";
 import { useEffect, useState } from "react";
 import { useInterval } from "usehooks-ts";
 import IndexView from "theme/index";
+import { IndexProps } from "props/index";
 
 const useCountdown = (ctf: CTF): string => {
   const [now, setNow] = useState(0);
@@ -48,25 +49,17 @@ const useCountdown = (ctf: CTF): string => {
   }
 };
 
-type IndexPageProps = AllPageProps;
-const Index: NextPage<IndexPageProps> = ({
-  ctf: fallbackCTF,
-}: IndexPageProps) => {
+type indexProps = Omit<IndexProps & AllPageProps, "status">;
+const Index = ({ ctf: fallbackCTF }: indexProps) => {
   const { data: ctf } = useCTF(fallbackCTF);
   const countdown = useCountdown(ctf || fallbackCTF);
 
   return IndexView({ ctf: ctf || fallbackCTF, status: countdown });
 };
 
-export const getStaticProps: GetStaticProps<IndexPageProps> = async () => {
+export const getStaticProps: GetStaticProps<indexProps> = async () => {
+  const account = isStaticMode ? null : await fetchAccount().catch(() => null);
   const ctf = await fetchCTF();
-  let account = null;
-  try {
-    account = isStaticMode ? null : await fetchAccount();
-  } catch {
-    // do nothing
-  }
-
   return {
     props: {
       ctf: ctf,

@@ -1,8 +1,8 @@
-import zer0pts_svg from "pblic/zer0pts_logo_white.svg";
+import zer0pts_svg from "public/zer0pts_logo_white.svg";
+import Image from "next/image";
 import {
   Stack,
   Box,
-  Image,
   Center,
   Text,
   UnorderedList,

@@ -2,13 +2,13 @@ import { api } from "lib/api";
 import useMessage from "lib/useMessage";
 import { useRouter } from "next/router";
 import { SubmitHandler, useForm } from "react-hook-form";
-import useAccount from "../lib/api/account";
+import useAccount, { fetchAccount } from "lib/api/account";
 import LoginView from "theme/login";
-
-type LoginParams = {
-  teamname: string;
-  password: string;
-};
+import { isStaticMode } from "lib/static";
+import { fetchCTF } from "lib/api/ctf";
+import { AllPageProps } from "lib/pages";
+import { GetStaticProps } from "next";
+import { LoginParams } from "props/login";
 
 const Login = () => {
   const router = useRouter();
@@ -32,6 +32,17 @@ const Login = () => {
   };
 
   return LoginView({ register, onSubmit: handleSubmit(onSubmit) });
+};
+
+export const getStaticProps: GetStaticProps<AllPageProps> = async () => {
+  const account = isStaticMode ? null : await fetchAccount().catch(() => null);
+  const ctf = await fetchCTF();
+  return {
+    props: {
+      account: account,
+      ctf: ctf,
+    },
+  };
 };
 
 export default Login;

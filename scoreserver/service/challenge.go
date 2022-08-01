@@ -384,7 +384,7 @@ func (app *app) AddChallenge(c *Challenge) error {
 		Host:        c.Host,
 		Port:        c.Port,
 	}
-	if err := app.db.Create(c).Error; err != nil {
+	if err := app.db.Create(&chal).Error; err != nil {
 		if isDuplicatedError(err) {
 			return NewErrorMessage(fmt.Sprintf(challengeDuplicatedMessage, c.Name))
 		}

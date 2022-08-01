@@ -64,7 +64,7 @@ func (app *app) RegisterTeam(teamname, password, email, countryCode string) (*mo
 		Email:        email,
 		CountryCode:  country,
 	}
-	if err := app.db.Create(t).Error; err != nil {
+	if err := app.db.Create(&t).Error; err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	return &t, nil
@@ -171,7 +171,7 @@ func (app *app) Login(teamname, password, ipaddress string) (*model.LoginToken, 
 		IPAddress: ipaddress,
 	}
 
-	if err := app.db.Create(token).Error; err != nil {
+	if err := app.db.Create(&token).Error; err != nil {
 		return nil, err
 	}
 	return &token, nil
@@ -192,7 +192,7 @@ func (app *app) PasswordResetRequest(email string) error {
 		ExpiresAt: tokenExpiredTime().Unix(),
 	}
 
-	if err := app.db.Create(token).Error; err != nil {
+	if err := app.db.Create(&token).Error; err != nil {
 		return err
 	}
 	if err := app.mailer.Send(email, passwordResetMailTitle, fmt.Sprintf(passwordResetMailBody, token.Token)); err != nil {

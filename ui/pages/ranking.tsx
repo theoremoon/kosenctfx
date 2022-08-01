@@ -1,18 +1,14 @@
-import { Box } from "@chakra-ui/react";
-import SeriesChart from "components/chart";
+import { GetStaticProps } from "next";
+import { orderBy } from "lodash";
+
 import Loading from "components/loading";
-import { fetchCTF } from "lib/api/ctf";
-import useSeries, { fetchSeries, SeriesEntry } from "lib/api/series";
 import { AllPageProps } from "lib/pages";
 import { isStaticMode } from "lib/static";
-import { orderBy } from "lodash";
-import { GetStaticProps } from "next";
-import useAccount, { Account, fetchAccount } from "../lib/api/account";
-import useScoreboard, {
-  fetchScoreboard,
-  ScoreFeedEntry,
-} from "../lib/api/scoreboard";
-import useTasks, { fetchTasks, Task } from "../lib/api/tasks";
+import useAccount, { fetchAccount } from "lib/api/account";
+import { fetchCTF } from "lib/api/ctf";
+import useSeries, { fetchSeries } from "lib/api/series";
+import useScoreboard, { fetchScoreboard } from "lib/api/scoreboard";
+import useTasks, { fetchTasks, Task } from "lib/api/tasks";
 import RankingView from "theme/ranking";
 import { RankingProps } from "props/ranking";
 
@@ -47,20 +43,13 @@ const Ranking = ({
     ["asc", "asc", "desc"]
   );
 
-  return (
-    <>
-      <Box mt={10}>
-        <SeriesChart teams={Array.from(chartTeams)} series={defaultSeries} />
-      </Box>
-      <RankingView
-        tasks={orderedTasks}
-        scoreboard={scoreboard}
-        account={account || null}
-        chartTeams={chartTeams}
-        chartSeries={series || defaultSeries}
-      />
-    </>
-  );
+  return RankingView({
+    tasks: orderedTasks,
+    scoreboard,
+    account: account || null,
+    chartTeams,
+    chartSeries: series || defaultSeries,
+  });
 };
 
 export const getStaticProps: GetStaticProps<rankingProps> = async () => {

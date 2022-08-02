@@ -1,71 +1,41 @@
-import {
-  Box,
-  Center,
-  ChakraProvider,
-  Container,
-  extendTheme,
-  withDefaultVariant,
-} from "@chakra-ui/react";
-import Menu from "../components/menu";
 import { defaultFetcher } from "lib/api";
 import type { AppProps } from "next/app";
 import React from "react";
 import { SWRConfig } from "swr";
 import { isStaticMode } from "lib/static";
-
-const theme = extendTheme(
-  {
-    initialColorMode: "dark",
-    useSystemColorMode: false,
-    colors: {
-      gray: {
-        "50": "#EFF0F6",
-        "100": "#D1D4E5",
-        "200": "#ffffff",
-        "300": "#969DC4",
-        "400": "#7982B4",
-        "500": "#5B67A4",
-        "600": "#495283",
-        "700": "#373E62",
-        "800": "#0b1933",
-        "900": "#121521",
-      },
-    },
-    styles: {
-      global: {
-        "html, body": {
-          minHeight: "100vh",
-          height: "100%",
-        },
-        "#__next": {
-          minHeight: "100%",
-        },
-        input: {
-          textAlign: "center",
-        },
-      },
-    },
-    components: {
-      Link: {
-        baseStyle: {
-          "&:focus": {
-            boxShadow: "none",
-          },
-        },
-      },
-      Code: {
-        withDefaultVariant: "solid",
-      },
-    },
-  },
-
-  withDefaultVariant({
-    variant: "flushed",
-    components: ["Input"],
-  })
-);
+import AppView from "theme/app";
+import { CTF } from "lib/api/ctf";
+import Loading from "components/loading";
+import useAccount from "lib/api/account";
 
 const App = ({ Component, pageProps }: AppProps) => {
+  const ctf: CTF | undefined = pageProps.ctf;
+  const { data: account } = useAccount(pageProps.account || null);
+
+  if (!ctf) {
+    return <Loading />;
+  }
+
+  const siteName = "zer0pts CTF 2022";
+  const canShowTasks =
+    ctf.is_open && (ctf.is_over || (ctf.is_running && account));
+
+  const leftMenuItems = [
+    { item: { href: "/tasks", innerText: "TASKS" }, available: canShowTasks },
+    { item: { href: "/ranking", innerText: "RANKING" }, available: true },
+  ].flatMap((x) => (x.available ? [x.item] : []));
+
+  const rightMenuItems = [
+    {
+      item: { href: "/admin", innerText: "ADMIN" },
+      available: account && account.is_admin,
+    },
+    { item: { href: "/profile", innerText: "PROFILE" }, available: account },
+    { item: { href: "/login", innerText: "LOGIN" }, available: !account },
+    { item: { href: "/register", innerText: "REGISTER" }, available: !account },
+    { item: { href: "/logout", innerText: "LOGOUT" }, available: account },
+  ].flatMap((x) => (x.available && !isStaticMode ? [x.item] : []));
+
   return (
     <SWRConfig
       value={{
@@ -76,17 +46,13 @@ const App = ({ Component, pageProps }: AppProps) => {
         refreshInterval: isStaticMode ? 0 : 30000,
       }}
     >
-      <ChakraProvider theme={theme}>
-        <Box className="h-full">
-          <Menu {...pageProps} />
-          <Container maxW="container.xl" minH="100vh">
-            <Component {...pageProps} />
-          </Container>
-          <Center color="#ffffff66" mt={10} mb={1}>
-            powered by kosenctfx
-          </Center>
-        </Box>
-      </ChakraProvider>
+      <AppView
+        Component={Component}
+        pageProps={pageProps}
+        siteName={siteName}
+        leftMenuItems={leftMenuItems}
+        rightMenuItems={rightMenuItems}
+      />
     </SWRConfig>
   );
 };

@@ -1,5 +1,7 @@
 import Loading from "components/loading";
 import { api } from "lib/api";
+import { fetchCTF } from "lib/api/ctf";
+import { AllPageProps } from "lib/pages";
 import { isStaticMode } from "lib/static";
 import { GetStaticProps } from "next";
 import { useRouter } from "next/router";
@@ -24,11 +26,15 @@ const Logout = ({ account }: LogoutProps) => {
   return <Loading />;
 };
 
-export const getStaticProps: GetStaticProps<LogoutProps> = async () => {
+export const getStaticProps: GetStaticProps<
+  LogoutProps & AllPageProps
+> = async () => {
   const account = isStaticMode ? null : await fetchAccount().catch(() => null);
+  const ctf = await fetchCTF();
   return {
     props: {
       account: account,
+      ctf: ctf,
     },
   };
 };

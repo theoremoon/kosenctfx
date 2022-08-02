@@ -1,29 +1,19 @@
-import {
-  Box,
-  Button,
-  Flex,
-  FormControl,
-  FormLabel,
-  Input,
-  useToast,
-  VStack,
-} from "@chakra-ui/react";
-import { api, ErrorResponse } from "lib/api";
+import { api } from "lib/api";
+import { fetchAccount } from "lib/api/account";
+import { fetchCTF } from "lib/api/ctf";
+import { AllPageProps } from "lib/pages";
+import { isStaticMode } from "lib/static";
+import useMessage from "lib/useMessage";
+import { GetStaticProps } from "next";
 import { useRouter } from "next/router";
+import { ResetRequestParams } from "props/passwordResetRequest";
 import { SubmitHandler, useForm } from "react-hook-form";
-
-type ResetRequestParams = {
-  email: string;
-};
+import ResetRequestView from "theme/passwordResetRequest";
 
 const ResetRequest = () => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ResetRequestParams>();
+  const { register, handleSubmit } = useForm<ResetRequestParams>();
   const router = useRouter();
-  const toast = useToast();
+  const { error: errorMessage } = useMessage();
   const onSubmit: SubmitHandler<ResetRequestParams> = async (values) => {
     try {
       await api.post("/passwordreset-request", {
@@ -31,38 +21,24 @@ const ResetRequest = () => {
       });
       router.push("/passwordreset");
     } catch (e) {
-      const message = (e as ErrorResponse).response?.data.message;
-      if (message) {
-        toast({
-          description: message,
-          status: "error",
-          duration: 2000,
-          isClosable: true,
-        });
-      }
+      errorMessage(e);
     }
   };
-  return (
-    <Box w="sm" mx="auto" mt="10">
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack>
-          <FormControl isInvalid={errors.email !== undefined}>
-            <FormLabel htmlFor="email">email</FormLabel>
-            <Input
-              id="email"
-              variant="flushed"
-              {...register("email", { required: true })}
-            ></Input>
-          </FormControl>
-          <FormControl>
-            <Flex w="100%" direction="row-reverse">
-              <Button type="submit">Send Email</Button>
-            </Flex>
-          </FormControl>
-        </VStack>
-      </form>
-    </Box>
-  );
+  return ResetRequestView({
+    register,
+    onSubmit: handleSubmit(onSubmit),
+  });
+};
+
+export const getStaticProps: GetStaticProps<AllPageProps> = async () => {
+  const account = isStaticMode ? null : await fetchAccount().catch(() => null);
+  const ctf = await fetchCTF();
+  return {
+    props: {
+      account: account,
+      ctf: ctf,
+    },
+  };
 };
 
 export default ResetRequest;

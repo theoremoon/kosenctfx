@@ -1,24 +1,20 @@
 import { fetchCTF } from "lib/api/ctf";
 import { AllPageProps } from "lib/pages";
-import { isStaticMode } from "lib/static";
 import { GetStaticProps } from "next";
 import Loading from "../../components/loading";
-import useAccount, { fetchAccount } from "../../lib/api/account";
+import useAccount from "../../lib/api/account";
 import useTasks, { fetchTasks, Task } from "../../lib/api/tasks";
-import TasksView from "theme/tasks";
 import { useCallback } from "react";
 import { filterTask, sortTask, isSolved } from "lib/tasks";
+import TasksView from "theme/tasks";
 
 type tasksProps = {
   tasks: Task[];
 } & AllPageProps;
 
-const TasksDefault = ({
-  tasks: defaultTasks,
-  account: defaultAccount,
-}: tasksProps) => {
+const TasksDefault = ({ tasks: defaultTasks }: tasksProps) => {
   const { data: tasks } = useTasks(defaultTasks);
-  const { data: account } = useAccount(defaultAccount);
+  const { data: account } = useAccount(null);
   const isSolvedByTeam = useCallback(isSolved(account || null), [account]);
 
   if (!tasks || account === undefined) {
@@ -38,13 +34,11 @@ const TasksDefault = ({
 };
 
 export const getStaticProps: GetStaticProps<tasksProps> = async () => {
-  const account = isStaticMode ? null : await fetchAccount().catch(() => null);
   const tasks = await fetchTasks().catch(() => []);
   const ctf = await fetchCTF();
   return {
     props: {
       tasks: tasks,
-      account: account,
       ctf: ctf,
     },
   };

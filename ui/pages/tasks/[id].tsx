@@ -7,28 +7,25 @@ import Loading from "../../components/loading";
 import useAccount, { Account, fetchAccount } from "../../lib/api/account";
 import useTasks, { fetchTasks, Task } from "../../lib/api/tasks";
 import parentpath from "../../lib/parentpath";
-import TaskView from "theme/task";
 import useMessage from "lib/useMessage";
-import { FlagSubmitParams } from "props/task";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { api } from "lib/api";
 import { filterTask, sortTask, isSolved } from "lib/tasks";
 import { useCallback } from "react";
 
+import TasksView from "theme/tasks";
+import TaskModalView from "theme/taskmodal";
+import { FlagSubmitParams } from "props/taskmodal";
+
 type taskProps = {
   taskID: number;
   tasks: Task[];
-  account: Account | null;
 } & AllPageProps;
 
-const TasksDefault = ({
-  taskID,
-  tasks: defaultTasks,
-  account: defaultAccount,
-}: taskProps) => {
+const TasksDefault = ({ taskID, tasks: defaultTasks }: taskProps) => {
   const router = useRouter();
   const { data: tasks, mutate } = useTasks(defaultTasks);
-  const { data: account } = useAccount(defaultAccount);
+  const { data: account } = useAccount(null);
   const { message, error } = useMessage();
   const { register, handleSubmit } = useForm<FlagSubmitParams>();
   const isSolvedByTeam = useCallback(isSolved(account || null), [account]);
@@ -53,18 +50,26 @@ const TasksDefault = ({
     return <Loading />;
   }
   const task = filterdTasks[0];
+  const tasksPath = parentpath(router.pathname); // /tasks
 
   return (
     <>
-      <TaskView
-        task={task}
+      <TasksView
         tasks={tasks}
-        tasksPath={parentpath(router.pathname)}
-        registerFlag={register}
-        onFlagSubmit={handleSubmit(onSubmit)}
         filterTask={filterTask}
         sortTask={sortTask}
         isSolved={isSolvedByTeam}
+      />
+      <TaskModalView
+        task={task}
+        onClose={() =>
+          router.push(tasksPath, undefined, {
+            scroll: false,
+            shallow: true,
+          })
+        }
+        registerFlag={register}
+        onFlagSubmit={handleSubmit(onSubmit)}
       />
     </>
   );
@@ -72,14 +77,12 @@ const TasksDefault = ({
 
 export const getStaticProps: GetStaticProps<taskProps> = async (context) => {
   const id = context.params?.id;
-  const account = isStaticMode ? null : await fetchAccount();
   const tasks = await fetchTasks();
   const ctf = await fetchCTF();
   return {
     props: {
       taskID: Number(id),
       tasks: tasks,
-      account: account,
       ctf: ctf,
     },
     revalidate: isStaticMode ? undefined : 30, // revalidate every 1 seconds

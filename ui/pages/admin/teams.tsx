@@ -208,4 +208,6 @@ export const getStaticProps: GetStaticProps<AdminTeamsProps> = async () => {
   };
 };
 
+Teams.getLayout = AdminLayout;
+
 export default Teams;

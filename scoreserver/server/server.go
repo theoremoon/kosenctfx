@@ -187,7 +187,7 @@ func (s *server) tokenCookie(token *model.LoginToken) *http.Cookie {
 		Value:    token.Token,
 		Expires:  time.Unix(token.ExpiresAt, 0),
 		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	}
 }
 

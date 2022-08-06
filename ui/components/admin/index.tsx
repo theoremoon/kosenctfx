@@ -15,9 +15,8 @@ import InlineFormControl from "components/inlineformcontrol";
 import Right from "components/right";
 import ReactECharts from "echarts-for-react";
 import useMessage from "lib/useMessage";
-import React, { useState } from "react";
+import React, { ReactElement, useState } from "react";
 import { useForm } from "react-hook-form";
-import Area from "../../components/area";
 import { api } from "../../lib/api";
 import useConfig, { Config } from "../../lib/api/admin/config";
 import { dateFormat, parseDateString } from "../../lib/date";
@@ -25,6 +24,11 @@ import AdminLayout from "components/adminLayout";
 import useScoreboard from "../../lib/api/scoreboard";
 import Loading from "../../components/loading";
 import useTasks from "lib/api/tasks";
+import { isStaticMode } from "lib/static";
+import { fetchCTF } from "lib/api/ctf";
+import { GetStaticProps } from "next";
+import { AllPageProps } from "lib/pages";
+import { fetchAccount } from "lib/api/account";
 
 type ConfigParams = {
   start_at: string;
@@ -188,7 +192,7 @@ const AdminConfig = ({ config: defaultConfig }: AdminConfigProps) => {
             <Textarea {...register("score_expr")} />
           </FormControl>
 
-          <Area>
+          <Box mt={10}>
             <InlineFormControl>
               <FormLabel htmlFor="end_at">Max Solves</FormLabel>
               <Input
@@ -223,7 +227,7 @@ const AdminConfig = ({ config: defaultConfig }: AdminConfigProps) => {
                 ],
               }}
             />
-          </Area>
+          </Box>
 
           <FormControl>
             <Right>
@@ -269,5 +273,7 @@ const AdminConfigDefault = () => {
   }
   return <AdminConfig config={config} />;
 };
+
+AdminConfigDefault.getLayout = (page: ReactElement) => page;
 
 export default AdminConfigDefault;

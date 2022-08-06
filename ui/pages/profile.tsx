@@ -4,17 +4,15 @@ import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import Loading from "../components/loading";
 import { api } from "../lib/api";
-import useAccount, { Account, fetchAccount } from "../lib/api/account";
+import useAccount from "../lib/api/account";
 import useMessage from "../lib/useMessage";
 import ProfileView from "theme/profile";
+import { fetchCTF } from "lib/api/ctf";
+import { AllPageProps } from "lib/pages";
 
-interface ProfileProps {
-  account: Account | null;
-}
-
-const Profile = ({ account: defaultAccount }: ProfileProps) => {
+const Profile = () => {
   const { message, error } = useMessage();
-  const { data: account, mutate } = useAccount(defaultAccount);
+  const { data: account, mutate } = useAccount(null);
   const [country, setCountry] = useState(account?.country || "");
   const { register, setValue, handleSubmit } = useForm<ProfileUpdateParams>({
     defaultValues: {
@@ -48,11 +46,11 @@ const Profile = ({ account: defaultAccount }: ProfileProps) => {
   });
 };
 
-export const getStaticProps: GetStaticProps<ProfileProps> = async () => {
-  const account = await fetchAccount().catch(() => null);
+export const getStaticProps: GetStaticProps<AllPageProps> = async () => {
+  const ctf = await fetchCTF();
   return {
     props: {
-      account: account,
+      ctf,
     },
   };
 };

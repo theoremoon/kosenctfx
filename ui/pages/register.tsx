@@ -1,8 +1,6 @@
 import { api } from "lib/api";
-import { fetchAccount } from "lib/api/account";
 import { fetchCTF } from "lib/api/ctf";
 import { AllPageProps } from "lib/pages";
-import { isStaticMode } from "lib/static";
 import useMessage from "lib/useMessage";
 import { GetStaticProps } from "next";
 import { useRouter } from "next/router";
@@ -41,11 +39,9 @@ const Register = () => {
 };
 
 export const getStaticProps: GetStaticProps<AllPageProps> = async () => {
-  const account = isStaticMode ? null : await fetchAccount().catch(() => null);
   const ctf = await fetchCTF();
   return {
     props: {
-      account: account,
       ctf: ctf,
     },
   };

@@ -7,15 +7,9 @@ export type FlagSubmitParams = {
   flag: string;
 };
 
-export interface TaskProps {
+export interface TaskModalProps {
   task: Task;
-  tasks: Task[];
-  tasksPath: string;
-
+  onClose: () => void;
   registerFlag: UseFormRegister<FlagSubmitParams>;
   onFlagSubmit: FormEventHandler<HTMLFormElement>;
-
-  filterTask: (tasks: Task[], filterText: string) => Task[];
-  sortTask: (tasks: Task[]) => Task[];
-  isSolved: (task: Task) => boolean;
 }

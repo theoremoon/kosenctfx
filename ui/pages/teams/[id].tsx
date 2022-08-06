@@ -50,7 +50,6 @@ export const getStaticProps: GetStaticProps<teamProps> = async (context) => {
       scoreboard: scoreboard,
       series: series,
       ctf: ctf,
-      account: null,
     },
     revalidate: isStaticMode ? undefined : 1,
   };

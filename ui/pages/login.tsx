@@ -2,9 +2,8 @@ import { api } from "lib/api";
 import useMessage from "lib/useMessage";
 import { useRouter } from "next/router";
 import { SubmitHandler, useForm } from "react-hook-form";
-import useAccount, { fetchAccount } from "lib/api/account";
+import useAccount from "lib/api/account";
 import LoginView from "theme/login";
-import { isStaticMode } from "lib/static";
 import { fetchCTF } from "lib/api/ctf";
 import { AllPageProps } from "lib/pages";
 import { GetStaticProps } from "next";
@@ -35,11 +34,9 @@ const Login = () => {
 };
 
 export const getStaticProps: GetStaticProps<AllPageProps> = async () => {
-  const account = isStaticMode ? null : await fetchAccount().catch(() => null);
   const ctf = await fetchCTF();
   return {
     props: {
-      account: account,
       ctf: ctf,
     },
   };

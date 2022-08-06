@@ -5,11 +5,14 @@ import {
   ColorModeProviderProps,
   Container,
   extendTheme,
+  useToast,
   withDefaultVariant,
 } from "@chakra-ui/react";
 import Menu from "./components/menu";
 import React from "react";
 import { AppProps } from "props/app";
+import { ToastContext } from "lib/useMessage";
+import ToastProvider from "./lib/toast";
 
 const theme = extendTheme(
   {
@@ -70,6 +73,27 @@ const App = ({
   leftMenuItems,
   rightMenuItems,
 }: AppProps) => {
+  const toast = useToast();
+  return (
+    <ToastContext.Provider value={ToastProvider(toast)}>
+      <Box className="h-full">
+        <Menu
+          siteName={siteName}
+          leftMenuItems={leftMenuItems}
+          rightMenuItems={rightMenuItems}
+        />
+        <Container maxW="container.xl" minH="100vh">
+          <Component {...pageProps} />
+        </Container>
+        <Center color="#ffffff66" mt={10} mb={1}>
+          powered by kosenctfx
+        </Center>
+      </Box>
+    </ToastContext.Provider>
+  );
+};
+
+const AppWrapper = (props: AppProps) => {
   const forceDarkMode: ColorModeProviderProps["colorModeManager"] = {
     get: () => "dark",
     set: () => {
@@ -78,24 +102,10 @@ const App = ({
     type: "localStorage",
   };
   return (
-    <>
-      <ChakraProvider theme={theme} colorModeManager={forceDarkMode}>
-        <Box className="h-full">
-          <Menu
-            siteName={siteName}
-            leftMenuItems={leftMenuItems}
-            rightMenuItems={rightMenuItems}
-          />
-          <Container maxW="container.xl" minH="100vh">
-            <Component {...pageProps} />
-          </Container>
-          <Center color="#ffffff66" mt={10} mb={1}>
-            powered by kosenctfx
-          </Center>
-        </Box>
-      </ChakraProvider>
-    </>
+    <ChakraProvider theme={theme} colorModeManager={forceDarkMode}>
+      <App {...props} />
+    </ChakraProvider>
   );
 };
 
-export default App;
+export default AppWrapper;

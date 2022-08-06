@@ -26,6 +26,7 @@ const Login = () => {
       mutate();
       router.push("/");
     } catch (e) {
+      console.log(e);
       error(e);
     }
   };

@@ -1,48 +1,38 @@
-import { useToast } from "@chakra-ui/react";
 import axios, { AxiosError, AxiosResponse } from "axios";
+import React, { useContext } from "react";
 import { ErrorResponse, MessageResponse } from "./api";
 
+export const ToastContext = React.createContext({
+  info: (msg: string) => {
+    alert(msg);
+  },
+  error: (msg: string) => {
+    alert(msg);
+  },
+});
+
 const useMessage = () => {
-  const toast = useToast();
+  const { info: infoToast, error: errorToast } = useContext(ToastContext);
+
   const err = (e: unknown) => {
     const message = (e as AxiosResponse<ErrorResponse>).data?.message;
     if (message) {
-      toast({
-        description: message,
-        status: "error",
-        duration: 2000,
-        isClosable: true,
-      });
+      errorToast(message);
     } else if (axios.isAxiosError(e)) {
       const data = e.response?.data as AxiosError;
-      toast({
-        description: data.message || JSON.stringify(e.message),
-        status: "error",
-        duration: 2000,
-        isClosable: true,
-      });
+      errorToast(data.message || JSON.stringify(e.message));
     }
   };
 
   const msg = (e: unknown) => {
     const message = (e as AxiosResponse<MessageResponse>).data.message;
     if (message) {
-      toast({
-        description: message,
-        status: "info",
-        duration: 2000,
-        isClosable: true,
-      });
+      infoToast(message);
     }
   };
 
   const text = (m: string) => {
-    toast({
-      description: m,
-      status: "info",
-      duration: 2000,
-      isClosable: true,
-    });
+    infoToast(m);
   };
 
   return { error: err, message: msg, text: text };

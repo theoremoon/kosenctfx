@@ -1,19 +1,4 @@
-import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  Stack,
-  Table,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-} from "@chakra-ui/react";
 import AdminLayout from "components/adminLayout";
-import Right from "components/right";
 import useMessage from "lib/useMessage";
 import { GetStaticProps } from "next";
 import React, { useState } from "react";
@@ -78,7 +63,7 @@ const Teams = ({ scoreboard: defaultScoreboard }: AdminTeamsProps) => {
         email: teamEmail,
       });
       message(data);
-      setTeamName(team.team_id);
+      setTeamName(team.teamname);
       search(team.teamname);
     } catch (e) {
       error(e);
@@ -86,116 +71,116 @@ const Teams = ({ scoreboard: defaultScoreboard }: AdminTeamsProps) => {
   };
 
   return (
-    <AdminLayout>
-      <Box w="md" mx="auto">
-        <FormControl>
-          <FormLabel htmlFor="teamname">teamname</FormLabel>
-          <Input
-            id="teamname"
-            variant="flushed"
-            value={teamName}
-            onChange={(e) => setTeamName(e.target.value)}
-          />
-        </FormControl>
-        <FormControl pt={4}>
-          <Right>
-            <Button onClick={() => search(teamName)}>Search</Button>
-          </Right>
-        </FormControl>
-      </Box>
+    <>
+      <h5 className="mt-4">Search Team by Name</h5>
+      <div className="input-group">
+        <input
+          className="form-control"
+          placeholder="teamname"
+          value={teamName}
+          onChange={(e) => setTeamName(e.target.value)}
+        />
+
+        <button className="btn btn-primary" onClick={() => search(teamName)}>
+          Search
+        </button>
+      </div>
 
       {team && (
-        <Box p={2}>
-          <FormControl>
-            <Input
+        <>
+          <h5 className="mt-4">Team Profile</h5>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>id</th>
+                <th>name</th>
+                <th>email</th>
+                <th>country</th>
+              </tr>
+            </thead>
+            <tbody style={{ maxHeight: "400px" }}>
+              <tr>
+                <td>{team.team_id}</td>
+                <td>{team.teamname}</td>
+                <td>{team.email}</td>
+                <td>{team.country}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="input-group">
+            <input
+              className="form-control"
               value={teamEmail}
               onChange={(e) => setTeamEmail(e.target.value)}
               placeholder={team.email}
             />
-          </FormControl>
-          <FormControl pt={4}>
-            <Right>
-              <Button
-                onClick={() => {
-                  updateEmail();
-                }}
-              >
-                Update Team Email
-              </Button>
-            </Right>
-          </FormControl>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>id</Th>
-                <Th>name</Th>
-                <Th>email</Th>
-                <Th>country</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              <Tr>
-                <Td>{team.team_id}</Td>
-                <Td>{team.teamname}</Td>
-                <Td>{team.email}</Td>
-                <Td>{team.country}</Td>
-              </Tr>
-            </Tbody>
-          </Table>
-        </Box>
+
+            <button className="btn btn-primary" onClick={() => updateEmail()}>
+              Update
+            </button>
+          </div>
+        </>
       )}
 
       {team && team.submissions.length > 0 && (
-        <Box pt={8}>
-          <Table size="sm">
-            <Thead>
-              <Tr>
-                <Th>flag</Th>
-                <Th>is_correct</Th>
-                <Th>is_valid</Th>
-                <Th>ip address</Th>
-                <Th>time</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
+        <>
+          <h5 className="mt-4">Submitted Flags</h5>
+          <table className="table table-sm">
+            <thead>
+              <tr>
+                <th>flag</th>
+                <th>is_correct</th>
+                <th>is_valid</th>
+                <th>ip address</th>
+                <th>time</th>
+              </tr>
+            </thead>
+            <tbody>
               {team.submissions.map((s) => (
-                <Tr key={s.SubmittedAt}>
-                  <Td maxW="200px" textOverflow="ellipsis" overflow="hidden">
-                    <pre title={s.Flag}>{s.Flag}</pre>
-                  </Td>
-                  <Td>{s.IsCorrect ? "⭕" : "❌"}</Td>
-                  <Td>{s.IsValid ? "⭕" : "❌"}</Td>
-                  <Td>{s.IPAddress}</Td>
-                  <Td>{dateFormat(s.SubmittedAt)}</Td>
-                </Tr>
+                <tr key={s.SubmittedAt}>
+                  <td>
+                    <code>
+                      <pre
+                        title={s.Flag}
+                        className="text-truncate"
+                        style={{ maxWidth: "200px" }}
+                      >
+                        {s.Flag}
+                      </pre>
+                    </code>
+                  </td>
+                  <td>{s.IsCorrect ? "⭕" : "❌"}</td>
+                  <td>{s.IsValid ? "⭕" : "❌"}</td>
+                  <td>{s.IPAddress}</td>
+                  <td>{dateFormat(s.SubmittedAt)}</td>
+                </tr>
               ))}
-            </Tbody>
-          </Table>
-        </Box>
+            </tbody>
+          </table>
+        </>
       )}
 
-      <Box pt={8}>
-        <Table size="sm">
-          <Thead>
-            <Tr>
-              <Th>Pos</Th>
-              <Th>Score</Th>
-              <Th>Team</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {scoreboard &&
-              scoreboard.map((t) => (
-                <Tr key={t.team_id} onClick={() => search(t.team)}>
-                  <Td>{t.pos}</Td>
-                  <Td>{t.score}</Td>
-                  <Td>{t.team}</Td>
-                </Tr>
-              ))}
-          </Tbody>
-        </Table>
-      </Box>
-    </AdminLayout>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Pos</th>
+            <th>Score</th>
+            <th>Team</th>
+          </tr>
+        </thead>
+        <tbody>
+          {scoreboard &&
+            scoreboard.map((t) => (
+              <tr key={t.team_id} onClick={() => search(t.team)}>
+                <td>{t.pos}</td>
+                <td>{t.score}</td>
+                <td>{t.team}</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </>
   );
 };
 

@@ -1,13 +1,12 @@
 import { useRouter } from "next/router";
 import Loading from "../../../components/loading";
 import parentpath from "../../../lib/parentpath";
-import Tasks from "./index";
 import useAdminTasks from "../../../lib/api/admin/tasks";
 import TaskModalView from "theme/taskmodal";
 import { FlagSubmitParams } from "props/taskmodal";
 import { useForm } from "react-hook-form";
 
-const TasksDefault = () => {
+const Task = () => {
   const router = useRouter();
   const { id } = router.query;
   const { register } = useForm<FlagSubmitParams>();
@@ -26,7 +25,6 @@ const TasksDefault = () => {
 
   return (
     <>
-      <Tasks />
       <TaskModalView
         task={task}
         onClose={() =>
@@ -44,4 +42,4 @@ const TasksDefault = () => {
   );
 };
 
-export default TasksDefault;
+export default Task;

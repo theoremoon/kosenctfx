@@ -52,20 +52,18 @@ const App = ({ Component, pageProps }: AppPropsWithLayout) => {
     { item: { href: "/logout", innerText: "LOGOUT" }, available: account },
   ].flatMap((x) => (x.available && !isStaticMode ? [x.item] : []));
 
-  const getLayout = Component.getLayout ?? ((page: ReactElement) => page);
+  if (Component.getLayout !== undefined) {
+    return <>{Component.getLayout(<Component />)}</>;
+  }
 
   return (
-    <>
-      {getLayout(
-        <AppView
-          Component={Component}
-          pageProps={pageProps}
-          siteName={siteName}
-          leftMenuItems={leftMenuItems}
-          rightMenuItems={rightMenuItems}
-        />
-      )}
-    </>
+    <AppView
+      Component={Component}
+      pageProps={pageProps}
+      siteName={siteName}
+      leftMenuItems={leftMenuItems}
+      rightMenuItems={rightMenuItems}
+    />
   );
 };
 

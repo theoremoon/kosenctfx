@@ -1,30 +1,10 @@
-import {
-  Button,
-  Code,
-  HStack,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalOverlay,
-  Stack,
-  Switch,
-  Table,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-  useDisclosure,
-} from "@chakra-ui/react";
 import Loading from "components/loading";
-import TaskModalBody from "components/taskmodalbody";
 import useMessage from "lib/useMessage";
 import React, { useCallback, useState } from "react";
-import Right from "../../../components/right";
-import { api } from "../../../lib/api";
 import useAdminTasks, { Task } from "../../../lib/api/admin/tasks";
 import { useRouter } from "next/router";
 import AdminLayout from "components/adminLayout";
+import { api } from "lib/api";
 
 type taskElementProps = {
   task: Task;
@@ -38,30 +18,35 @@ const TaskElement = ({
   isOpened,
   onUpdateOpened,
   onClickCallback,
-  ...props
 }: taskElementProps) => {
   return (
     <>
-      <Td title={task.name}>{task.name}</Td>
-      <Td>{task.score}</Td>
-      <Td>{task.solved_by.length}</Td>
-      <Td>{task.category}</Td>
-      <Td>{task.author}</Td>
-      <Td>
-        <Switch
-          isChecked={isOpened}
+      <td title={task.name}>{task.name}</td>
+      <td>{task.score}</td>
+      <td>{task.solved_by.length}</td>
+      <td>{task.category}</td>
+      <td>{task.author}</td>
+      <td className="form-switch">
+        <input
+          className="form-check-input"
+          type="checkbox"
+          role="switch"
+          style={{ margin: 0 }}
+          checked={isOpened}
           onChange={() => {
             onUpdateOpened(!isOpened);
           }}
         />
-      </Td>
-      <Td>{task.is_survey && "🗒️"}</Td>
-      <Td style={{ cursor: "pointer" }} onClick={onClickCallback}>
+      </td>
+      <td>{task.is_survey && "🗒️"}</td>
+      <td style={{ cursor: "pointer" }} onClick={onClickCallback}>
         👀
-      </Td>
-      <Td>
-        <Code title={task.flag}>{task.flag}</Code>
-      </Td>
+      </td>
+      <td>
+        <code title={task.flag}>
+          <pre>{task.flag}</pre>
+        </code>
+      </td>
     </>
   );
 };
@@ -127,28 +112,43 @@ const Tasks = ({ tasks }: TasksProps) => {
   }, [api]);
 
   return (
-    <AdminLayout>
-      <HStack>
-        <Button onClick={generateTasksMD}>tasks.md</Button>
-        <Button onClick={generateCheckPortPy}>check-port.py</Button>
-      </HStack>
-      <Table maxW="100%" size="sm">
-        <Thead>
-          <Tr>
-            <Th>Name</Th>
-            <Th>Score</Th>
-            <Th>#Solve</Th>
-            <Th>Category</Th>
-            <Th>Author</Th>
-            <Th>Is Open?</Th>
-            <Th>Is Survey?</Th>
-            <Th>Preview</Th>
-            <Th>Flag</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
+    <>
+      <h5 className="mt-4">Download Scripts</h5>
+      <div>
+        <button
+          type="button"
+          className="btn btn-primary mx-2"
+          onClick={generateTasksMD}
+        >
+          tasks.md
+        </button>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={generateCheckPortPy}
+        >
+          check-port.py
+        </button>
+      </div>
+
+      <h5 className="mt-4">Tasks</h5>
+      <table className="table table-responsive">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Score</th>
+            <th>#Solve</th>
+            <th>Category</th>
+            <th>Author</th>
+            <th>Is Open?</th>
+            <th>Is Survey?</th>
+            <th>Preview</th>
+            <th>Flag</th>
+          </tr>
+        </thead>
+        <tbody>
           {tasks.map((task) => (
-            <Tr key={task.name}>
+            <tr key={task.name}>
               <TaskElement
                 task={task}
                 isOpened={taskOpenState.get(task.id) || false}
@@ -164,15 +164,19 @@ const Tasks = ({ tasks }: TasksProps) => {
                   });
                 }}
               />
-            </Tr>
+            </tr>
           ))}
-        </Tbody>
-      </Table>
+        </tbody>
+      </table>
 
-      <Right>
-        <Button onClick={openCloseChallenge}>Open/Close Challenges</Button>
-      </Right>
-    </AdminLayout>
+      <button
+        type="button"
+        className="btn btn-primary"
+        onClick={openCloseChallenge}
+      >
+        Open/Close Challenges
+      </button>
+    </>
   );
 };
 
@@ -184,5 +188,7 @@ const TasksDefault = () => {
   }
   return <Tasks tasks={tasks} />;
 };
+
+TasksDefault.getLayout = AdminLayout;
 
 export default TasksDefault;

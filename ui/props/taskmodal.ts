@@ -12,4 +12,5 @@ export interface TaskModalProps {
   onClose: () => void;
   registerFlag: UseFormRegister<FlagSubmitParams>;
   onFlagSubmit: FormEventHandler<HTMLFormElement>;
+  isSolved: boolean;
 }

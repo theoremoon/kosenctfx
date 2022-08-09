@@ -7,6 +7,7 @@ import AppView from "theme/app";
 import { CTF } from "lib/api/ctf";
 import useAccount from "lib/api/account";
 import { NextPage } from "next";
+import "theme/styles.css";
 
 export type NextPageWithLayout = NextPage & {
   getLayout?: (page: ReactElement) => ReactNode;

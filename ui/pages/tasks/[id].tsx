@@ -54,12 +54,6 @@ const TasksDefault = ({ taskID, tasks: defaultTasks }: taskProps) => {
 
   return (
     <>
-      <TasksView
-        tasks={tasks}
-        filterTask={filterTask}
-        sortTask={sortTask}
-        isSolved={isSolvedByTeam}
-      />
       <TaskModalView
         task={task}
         onClose={() =>
@@ -70,6 +64,13 @@ const TasksDefault = ({ taskID, tasks: defaultTasks }: taskProps) => {
         }
         registerFlag={register}
         onFlagSubmit={handleSubmit(onSubmit)}
+        isSolved={isSolvedByTeam(task)}
+      />
+      <TasksView
+        tasks={tasks}
+        filterTask={filterTask}
+        sortTask={sortTask}
+        isSolved={isSolvedByTeam}
       />
     </>
   );

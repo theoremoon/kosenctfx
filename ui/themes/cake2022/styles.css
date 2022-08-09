@@ -1,0 +1,21 @@
+html,body{
+  min-height: 100vh;
+  height: 100%;
+}
+#__next {
+  min-height: 100%;
+}
+input {
+  text-align: "center";
+}
+.input-form {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.form-item {
+  margin-top: 1em;
+}
+.form-input {
+  display: block;
+  width: 100%;
+}

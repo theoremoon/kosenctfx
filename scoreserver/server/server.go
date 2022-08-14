@@ -142,6 +142,7 @@ func (s *server) build(isTest bool) *echo.Echo {
 
 	// TODO: adminMiddlewareをagentMiddlewareにおきかえる
 	e.POST("/agent/beat", s.agentBeatHandler(), s.adminMiddleware)
+	e.GET("/admin/list-agents", s.listAgentsHandler(), s.adminMiddleware)
 
 	// prometheus exporter
 	e.GET("/admin/metrics", s.metricsHandler(), s.adminMiddleware)

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/mailer"
-	"github.com/theoremoon/kosenctfx/scoreserver/repository"
+	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -15,7 +15,7 @@ const (
 	testDB = "testuser:testpassword@tcp(db-test:3306)/testtable"
 )
 
-func newRepository(t *testing.T) repository.Repository {
+func newApp(t *testing.T) service.App {
 	t.Helper()
 
 	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{
@@ -24,16 +24,7 @@ func newRepository(t *testing.T) repository.Repository {
 	if err != nil {
 		panic(err)
 	}
-
-	repo := repository.New(db)
-	repo.Migrate()
-	return repo
-}
-
-func newApp(t *testing.T) service.App {
-	t.Helper()
-
-	repo := newRepository(t)
+	model.Migrate(db)
 	mailer := mailer.NewFakeMailer()
-	return service.New(repo, mailer)
+	return service.New(db, mailer)
 }

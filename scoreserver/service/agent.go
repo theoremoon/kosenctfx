@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"time"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
@@ -9,6 +10,7 @@ import (
 
 type AgentApp interface {
 	AgentHeartbeat(agentID, publicIP string) error
+	ListAvailableAgents() ([]*model.Agent, error)
 }
 
 func (app *app) GetAgentByID(agentID string) (*model.Agent, error) {
@@ -20,6 +22,10 @@ func (app *app) GetAgentByID(agentID string) (*model.Agent, error) {
 }
 
 func (app *app) AgentHeartbeat(agentID, publicIP string) error {
+	if agentID == "" {
+		return errors.New("agent id must be specified")
+	}
+
 	// build agent model
 	agent := &model.Agent{
 		AgentID:        agentID,
@@ -33,4 +39,13 @@ func (app *app) AgentHeartbeat(agentID, publicIP string) error {
 		return err
 	}
 	return nil
+}
+
+func (app *app) ListAvailableAgents() ([]*model.Agent, error) {
+	var agents []*model.Agent
+	t := time.Now().Add(-10 * time.Second).Unix()
+	if err := app.db.Where("last_activity_at >= ?", t).Find(&agents).Error; err != nil {
+		return nil, err
+	}
+	return agents, nil
 }

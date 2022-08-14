@@ -16,7 +16,7 @@ func Migrate(db *gorm.DB) error {
 		&Submission{},
 		&ValidSubmission{},
 		&SubmissionLock{},
-		&Message{},
+		&Agent{},
 		&Config{},
 	)
 	if err != nil {

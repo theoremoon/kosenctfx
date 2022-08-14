@@ -47,7 +47,10 @@ const App = ({ Component, pageProps }: AppPropsWithLayout) => {
       item: { href: "/admin", innerText: "ADMIN" },
       available: account && account.is_admin,
     },
-    { item: { href: "/profile", innerText: "PROFILE" }, available: account },
+    {
+      item: { href: "/profile", innerText: account?.teamname || "" },
+      available: account,
+    },
     { item: { href: "/login", innerText: "LOGIN" }, available: !account },
     { item: { href: "/register", innerText: "REGISTER" }, available: !account },
     { item: { href: "/logout", innerText: "LOGOUT" }, available: account },

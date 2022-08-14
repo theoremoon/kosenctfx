@@ -58,6 +58,14 @@ const AdminLayout = (page: React.ReactNode) => {
                   </a>
                 </NextLink>
               </li>
+
+              <li className="nav-item">
+                <NextLink href="/admin/agents">
+                  <a className="nav-link active" aria-current="page">
+                    agents
+                  </a>
+                </NextLink>
+              </li>
             </ul>
           </nav>
           {page}

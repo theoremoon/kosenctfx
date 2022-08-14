@@ -16,7 +16,6 @@ import (
 	jsonpath "github.com/steinfletcher/apitest-jsonpath"
 	"github.com/theoremoon/kosenctfx/scoreserver/mailer"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
-	"github.com/theoremoon/kosenctfx/scoreserver/repository"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"github.com/theoremoon/kosenctfx/scoreserver/webhook"
 	"gorm.io/driver/sqlite"
@@ -29,7 +28,7 @@ const (
 	FRONTEND_URL = ""
 )
 
-func newRepository(t *testing.T) repository.Repository {
+func newApp(t *testing.T) service.App {
 	t.Helper()
 
 	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{
@@ -38,18 +37,10 @@ func newRepository(t *testing.T) repository.Repository {
 	if err != nil {
 		panic(err)
 	}
+	model.Migrate(db)
 
-	repo := repository.New(db)
-	repo.Migrate()
-	return repo
-}
-
-func newApp(t *testing.T) service.App {
-	t.Helper()
-
-	repo := newRepository(t)
 	mailer := mailer.NewFakeMailer()
-	return service.New(repo, mailer)
+	return service.New(db, mailer)
 }
 
 func newServer(t *testing.T, app service.App) *echo.Echo {

@@ -106,9 +106,9 @@ type SubmissionLock struct {
 type Agent struct {
 	Model
 
-	AgentID        string `gorm:"unique"`
-	PublicIP       string
-	LastActivityAt int64
+	AgentID        string `gorm:"unique" json:"agent_id"`
+	PublicIP       string `json:"public_ip"`
+	LastActivityAt int64  `json:"last_activity_at"`
 }
 
 type Config struct {

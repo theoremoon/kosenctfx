@@ -48,17 +48,16 @@ type PasswordResetToken struct {
 type Challenge struct {
 	Model `json:"model"`
 
-	Name        string  `gorm:"unique" json:"name"`
-	Flag        string  `gorm:"unique" json:"flag"`
-	Description string  `gorm:"size:10000" json:"description"`
-	Category    string  `json:"category"`
-	Author      string  `json:"author"`
-	Host        *string `json:"host"`
-	Port        *int    `json:"port"`
+	Name        string `gorm:"unique" json:"name"`
+	Flag        string `gorm:"unique" json:"flag"`
+	Description string `gorm:"size:10000" json:"description"`
+	Category    string `json:"category"`
+	Author      string `json:"author"`
+	Compose     string `json:"compose"`
+	Deployment  string `json:"deployment"` // "one", "many", "" のいずれか
 
-	IsOpen    bool `json:"is_open"`
-	IsRunning bool `json:"is_running"`
-	IsSurvey  bool `json:"is_survey"`
+	IsOpen   bool `json:"is_open"`
+	IsSurvey bool `json:"is_survey"`
 }
 
 type Tag struct {
@@ -111,6 +110,17 @@ type Agent struct {
 	LastActivityAt int64  `json:"last_activity_at"`
 }
 
+type Deployment struct {
+	Model
+
+	ChallengeId uint32
+	AgentID     uint32
+	Port        int64
+	Status      string
+
+	RetiresAt int64
+}
+
 type Config struct {
 	Model
 
@@ -126,6 +136,11 @@ type Config struct {
 	LockCount    int64
 	LockSecond   int
 	LockDuration int
+
+	// docker registryの設定
+	RegistryURL      string
+	RegistryUser     string
+	RegistryPassword string
 
 	ScoreExpr string `gorm:"size:10000"`
 }

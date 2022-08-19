@@ -6,7 +6,7 @@ help:
 	@cat Makefile | grep -E "^[A-Za-z0-9-]+:"
 
 up:
-	docker-compose up --build
+	env UID=$(UID) GID=$(GID) docker-compose up --build
 
 down:
 	docker-compose down --remove-orphans

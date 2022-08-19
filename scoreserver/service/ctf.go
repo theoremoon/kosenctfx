@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
+	"github.com/theoremoon/kosenctfx/scoreserver/task/imagebuilder"
 	"golang.org/x/xerrors"
 	"gorm.io/gorm"
 )
@@ -20,6 +21,7 @@ const (
 type CTFApp interface {
 	GetCTFConfig() (*model.Config, error)
 	SetCTFConfig(config *model.Config) error
+	SetRegistryConfig(*imagebuilder.RegistryConfig) error
 }
 
 func CalcCTFStatus(conf *model.Config) CTFStatus {
@@ -70,4 +72,23 @@ func (app *app) GetCTFConfig() (*model.Config, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	return &conf, nil
+}
+
+func (app *app) SetRegistryConfig(registry *imagebuilder.RegistryConfig) error {
+	conf, err := app.GetCTFConfig()
+	if err != nil {
+		return err
+	}
+
+	// 認証情報が正しいかのチェックをここでいれる
+
+	conf.RegistryURL = registry.URL
+	conf.RegistryUser = registry.Username
+	conf.RegistryPassword = registry.Password
+
+	err = app.SetCTFConfig(conf)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -76,7 +76,6 @@ func (s *seeder) Challenge(flagFormat string) (*model.Challenge, error) {
 		Author:      faker.Name().LastName(),
 		Score:       0,
 		IsOpen:      true,
-		IsRunning:   true,
 		IsSurvey:    isSurvey,
 		Tags:        tags,
 	}); err != nil {

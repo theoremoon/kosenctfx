@@ -148,6 +148,7 @@ func (app *app) ScoreFeed(chals []*model.Challenge, teams []*model.Team, submiss
 			Category:    c.Category,
 			Description: c.Description,
 			Author:      c.Author,
+			Deployment:  c.Deployment,
 			Score:       uint32(score),
 			Tags:        tagMap[c.ID],
 			Attachments: attachmentMap[c.ID],

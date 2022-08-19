@@ -8,11 +8,18 @@ import (
 	"time"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/agent"
+	"github.com/theoremoon/kosenctfx/scoreserver/client"
 )
 
-func mainLoop(agent agent.Agent) {
+func mainLoop(client *client.Client) {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+
+	hostname, err := agent.GetHostname()
+	if err != nil {
+		log.Printf("%+v\n", err)
+		return
+	}
 
 	t := time.NewTicker(5 * time.Second)
 	defer t.Stop()
@@ -20,7 +27,7 @@ func mainLoop(agent agent.Agent) {
 	for {
 		select {
 		case <-t.C:
-			_, err := agent.Client().Beat(ctx)
+			_, err := client.Beat(ctx, hostname)
 			if err != nil {
 				log.Printf("%+v\n", err)
 				break

@@ -24,6 +24,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
+	"github.com/theoremoon/kosenctfx/scoreserver/task/imagebuilder"
 	"github.com/theoremoon/kosenctfx/scoreserver/util"
 )
 
@@ -577,17 +578,17 @@ func (s *server) closeChallengeHandler() echo.HandlerFunc {
 func (s *server) updateChallengeHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
-			ID          uint32
-			Name        string
-			Flag        string
-			Category    string
-			Description string
-			Author      string
-			IsSurvey    bool `json:"is_survey"`
-			Tags        []string
-			Attachments []service.Attachment
-			Host        *string
-			Port        *int
+			ID          uint32               `json:"id"`
+			Name        string               `json:"name"`
+			Flag        string               `json:"flag"`
+			Category    string               `json:"category"`
+			Description string               `json:"description"`
+			Author      string               `json:"author"`
+			IsSurvey    bool                 `json:"is_survey"`
+			Tags        []string             `json:"tags"`
+			Attachments []service.Attachment `json:"attachments"`
+			Compose     string               `json:"compose"`
+			Deployment  string               `json:"deployment"`
 		})
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, err)
@@ -603,8 +604,8 @@ func (s *server) updateChallengeHandler() echo.HandlerFunc {
 				IsSurvey:    req.IsSurvey,
 				Tags:        req.Tags,
 				Attachments: req.Attachments,
-				Host:        req.Host,
-				Port:        req.Port,
+				Compose:     req.Compose,
+				Deployment:  req.Deployment,
 			})
 		if err != nil {
 			return errorHandle(c, err)
@@ -622,16 +623,16 @@ func (s *server) updateChallengeHandler() echo.HandlerFunc {
 func (s *server) newChallengeHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
-			Name        string
-			Flag        string
-			Category    string
-			Description string
-			Author      string
-			IsSurvey    bool `json:"is_survey"`
-			Tags        []string
-			Attachments []service.Attachment
-			Host        *string
-			Port        *int
+			Name        string               `json:"name"`
+			Flag        string               `json:"flag"`
+			Category    string               `json:"category"`
+			Description string               `json:"description"`
+			Author      string               `json:"author"`
+			IsSurvey    bool                 `json:"is_survey"`
+			Tags        []string             `json:"tags"`
+			Attachments []service.Attachment `json:"attachments"`
+			Compose     string               `json:"compose"`
+			Deployment  string               `json:"deployment"`
 		})
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
@@ -648,9 +649,9 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 				IsSurvey:    req.IsSurvey,
 				Tags:        req.Tags,
 				Attachments: req.Attachments,
+				Compose:     req.Compose,
+				Deployment:  req.Deployment,
 				IsOpen:      chal.IsOpen,
-				Host:        req.Host,
-				Port:        req.Port,
 			}); err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
@@ -672,8 +673,7 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 				IsSurvey:    req.IsSurvey,
 				Tags:        req.Tags,
 				Attachments: req.Attachments,
-				Host:        req.Host,
-				Port:        req.Port,
+				Compose:     req.Compose,
 			}); err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
@@ -926,6 +926,45 @@ func (s *server) getPresignedURLHandler() echo.HandlerFunc {
 			"presignedURL": presignedURL,
 			"downloadURL":  downloadURL,
 		})
+	}
+}
+
+func (s *server) getRegistryConfHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		conf, err := s.app.GetCTFConfig()
+		if err != nil {
+			return errorHandle(c, err)
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"url":      conf.RegistryURL,
+			"user":     conf.RegistryUser,
+			"password": conf.RegistryPassword,
+		})
+	}
+}
+
+func (s *server) setRegistryConfHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		req := new(struct {
+			URL      string `json:"url"`
+			User     string `json:"user"`
+			Password string `json:"password"`
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, err)
+		}
+
+		err := s.app.SetRegistryConfig(&imagebuilder.RegistryConfig{
+			URL:      req.URL,
+			Username: req.User,
+			Password: req.Password,
+		})
+		if err != nil {
+			return errorHandle(c, err)
+		}
+
+		return c.NoContent(http.StatusOK)
 	}
 }
 

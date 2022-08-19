@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/labstack/gommon/log"
@@ -35,13 +36,11 @@ type Challenge struct {
 	Tags        []string     `json:"tags"`
 	Attachments []Attachment `json:"attachments"`
 	SolvedBy    []SolvedBy   `json:"solved_by"`
+	Compose     string       `json:"compose"`
+	Deployment  string       `json:"deployment"`
 
-	Host *string `json:"host"`
-	Port *int    `json:"port"`
-
-	IsOpen    bool `json:"is_open"`
-	IsRunning bool `json:"is_running"`
-	IsSurvey  bool `json:"is_survey"`
+	IsOpen   bool `json:"is_open"`
+	IsSurvey bool `json:"is_survey"`
 }
 
 type ChallengeApp interface {
@@ -194,13 +193,12 @@ func (app *app) rawChallengesToChallenges(cs []*model.Challenge) ([]*Challenge, 
 			Flag:        c.Flag,
 			Description: c.Description,
 			Author:      c.Author,
+			Compose:     c.Compose,
+			Deployment:  c.Deployment,
 			Score:       0,            //TODO
 			SolvedBy:    []SolvedBy{}, // TODO
 			IsOpen:      c.IsOpen,
-			IsRunning:   false, // TODO
 			IsSurvey:    c.IsSurvey,
-			Host:        c.Host,
-			Port:        c.Port,
 
 			Tags:        tagMap[c.ID],
 			Attachments: attachmentMap[c.ID],
@@ -216,13 +214,12 @@ func (app *app) rawChallengeToChallenge(c *model.Challenge) (*Challenge, error) 
 		Flag:        c.Flag,
 		Description: c.Description,
 		Author:      c.Author,
+		Compose:     c.Compose,
+		Deployment:  c.Deployment,
 		Score:       0,            //TODO
 		SolvedBy:    []SolvedBy{}, // TODO
 		IsOpen:      c.IsOpen,
-		IsRunning:   false, // TODO
 		IsSurvey:    c.IsSurvey,
-		Host:        c.Host,
-		Port:        c.Port,
 	}
 
 	tags, err := app.listTagsByChallengeIDs([]uint32{c.ID})
@@ -373,6 +370,9 @@ func (app *app) deleteAttachmentByChallengeId(challengeId uint32) error {
 }
 
 func (app *app) AddChallenge(c *Challenge) error {
+	if err := validateDeployment(c.Deployment); err != nil {
+		return err
+	}
 	chal := model.Challenge{
 		Name:        c.Name,
 		Flag:        c.Flag,
@@ -381,8 +381,8 @@ func (app *app) AddChallenge(c *Challenge) error {
 		Author:      c.Author,
 		IsOpen:      false,
 		IsSurvey:    c.IsSurvey,
-		Host:        c.Host,
-		Port:        c.Port,
+		Compose:     c.Compose,
+		Deployment:  c.Deployment,
 	}
 	if err := app.db.Create(&chal).Error; err != nil {
 		if isDuplicatedError(err) {
@@ -411,6 +411,10 @@ func (app *app) AddChallenge(c *Challenge) error {
 }
 
 func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
+	if err := validateDeployment(c.Deployment); err != nil {
+		return err
+	}
+
 	chal := model.Challenge{
 		Name:        c.Name,
 		Flag:        c.Flag,
@@ -419,8 +423,8 @@ func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
 		Author:      c.Author,
 		IsSurvey:    c.IsSurvey,
 		IsOpen:      c.IsOpen,
-		Host:        c.Host,
-		Port:        c.Port,
+		Compose:     c.Compose,
+		Deployment:  c.Deployment,
 	}
 	chal.ID = challengeID
 
@@ -537,4 +541,17 @@ func CalcChallengeScore(solveCount int, scoreExpr string) (int, error) {
 	default:
 		return 0, xerrors.Errorf("score calculation returns invalid type: %T", r)
 	}
+}
+
+func validateDeployment(deploymentType string) error {
+	if deploymentType == "" {
+		return nil
+	}
+	if deploymentType == "one" {
+		return nil
+	}
+	if deploymentType == "many" {
+		return nil
+	}
+	return errors.New("deployment type should be one of `one`, `many`, ``")
 }

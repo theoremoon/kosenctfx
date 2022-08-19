@@ -137,6 +137,8 @@ func (s *server) build(isTest bool) *echo.Echo {
 	e.POST("/admin/update-email", s.updateTeamEmail(), s.adminMiddleware)
 	e.POST("/admin/recalc-series", s.recalcSeries(), s.adminMiddleware)
 	e.GET("/admin/all-team-series", s.allTeamSeries(), s.adminMiddleware)
+	e.GET("/admin/registry-conf", s.getRegistryConfHandler(), s.adminMiddleware)
+	e.POST("/admin/set-registry-conf", s.setRegistryConfHandler(), s.adminMiddleware)
 	e.POST("/admin/get-presigned-url", s.getPresignedURLHandler(), s.adminMiddleware)
 	e.POST("/admin/sql", s.sqlHandler(), s.adminMiddleware)
 

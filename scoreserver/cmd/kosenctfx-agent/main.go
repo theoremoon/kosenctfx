@@ -5,15 +5,14 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/theoremoon/kosenctfx/scoreserver/agent"
 	"github.com/theoremoon/kosenctfx/scoreserver/client"
 	cli "github.com/urfave/cli/v2"
 )
 
 func main() {
 	app := &cli.App{
-		Name:  "circ-agent",
-		Usage: "circ agent",
+		Name:  "kosenctfx-agent",
+		Usage: "kosenctfx agent",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "url",
@@ -36,12 +35,7 @@ func main() {
 			// 	return nil
 			// }
 
-			agent, err := agent.New(client)
-			if err != nil {
-				return nil
-			}
-
-			mainLoop(agent)
+			mainLoop(client)
 			return nil
 		},
 	}

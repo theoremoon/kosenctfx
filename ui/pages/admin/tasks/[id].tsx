@@ -27,6 +27,7 @@ const Task = () => {
     <>
       <TaskModalView
         task={task}
+        isSolved={false}
         onClose={() =>
           router.push(tasksPath, undefined, {
             scroll: false,

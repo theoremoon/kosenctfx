@@ -1,7 +1,7 @@
 import Loading from "components/loading";
 import useMessage from "lib/useMessage";
 import React, { useCallback, useState } from "react";
-import useAdminTasks, { Task } from "../../../lib/api/admin/tasks";
+import useAdminTasks, { Task } from "lib/api/admin/tasks";
 import { useRouter } from "next/router";
 import AdminLayout from "components/adminLayout";
 import { api } from "lib/api";
@@ -26,6 +26,7 @@ const TaskElement = ({
       <td>{task.solved_by.length}</td>
       <td>{task.category}</td>
       <td>{task.author}</td>
+      <td>{task.deployment}</td>
       <td className="form-switch">
         <input
           className="form-check-input"
@@ -140,6 +141,7 @@ const Tasks = ({ tasks }: TasksProps) => {
             <th>#Solve</th>
             <th>Category</th>
             <th>Author</th>
+            <th>Deployment Type</th>
             <th>Is Open?</th>
             <th>Is Survey?</th>
             <th>Preview</th>

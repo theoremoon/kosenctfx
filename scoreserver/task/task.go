@@ -23,6 +23,7 @@ type TaskDefinition struct {
 	IsSurvey    bool `yaml:"is_survey" json:"is_survey"`
 	Compose     string
 	Deployment  string
+	Lifespan    int // インスタンスが起動してから自動でシャットダウンされるまでの時間（秒） / 0なら無限
 }
 
 func LoadTaskDefinition(path string) (*TaskDefinition, error) {

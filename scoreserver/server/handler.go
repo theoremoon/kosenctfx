@@ -24,6 +24,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
+	"github.com/theoremoon/kosenctfx/scoreserver/task"
 	"github.com/theoremoon/kosenctfx/scoreserver/task/imagebuilder"
 	"github.com/theoremoon/kosenctfx/scoreserver/util"
 )
@@ -575,64 +576,20 @@ func (s *server) closeChallengeHandler() echo.HandlerFunc {
 	}
 }
 
-func (s *server) updateChallengeHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		req := new(struct {
-			ID          uint32               `json:"id"`
-			Name        string               `json:"name"`
-			Flag        string               `json:"flag"`
-			Category    string               `json:"category"`
-			Description string               `json:"description"`
-			Author      string               `json:"author"`
-			IsSurvey    bool                 `json:"is_survey"`
-			Tags        []string             `json:"tags"`
-			Attachments []service.Attachment `json:"attachments"`
-			Compose     string               `json:"compose"`
-			Deployment  string               `json:"deployment"`
-		})
-		if err := c.Bind(req); err != nil {
-			return errorHandle(c, err)
-		}
-		err := s.app.UpdateChallenge(
-			req.ID,
-			&service.Challenge{
-				Name:        req.Name,
-				Flag:        req.Flag,
-				Category:    req.Category,
-				Description: req.Description,
-				Author:      req.Author,
-				IsSurvey:    req.IsSurvey,
-				Tags:        req.Tags,
-				Attachments: req.Attachments,
-				Compose:     req.Compose,
-				Deployment:  req.Deployment,
-			})
-		if err != nil {
-			return errorHandle(c, err)
-		}
-		conf, err := s.app.GetCTFConfig()
-		if err != nil {
-			log.Printf("%+v\n", err)
-			return errorHandle(c, err)
-		}
-		s.refreshCache(conf)
-		return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeUpdateTemplate, req.Name))
-	}
-}
-
 func (s *server) newChallengeHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
-			Name        string               `json:"name"`
-			Flag        string               `json:"flag"`
-			Category    string               `json:"category"`
-			Description string               `json:"description"`
-			Author      string               `json:"author"`
-			IsSurvey    bool                 `json:"is_survey"`
-			Tags        []string             `json:"tags"`
-			Attachments []service.Attachment `json:"attachments"`
-			Compose     string               `json:"compose"`
-			Deployment  string               `json:"deployment"`
+			Name        string            `json:"name"`
+			Flag        string            `json:"flag"`
+			Category    string            `json:"category"`
+			Description string            `json:"description"`
+			Author      string            `json:"author"`
+			IsSurvey    bool              `json:"is_survey"`
+			Tags        []string          `json:"tags"`
+			Attachments []task.Attachment `json:"attachments"`
+			Compose     string            `json:"compose"`
+			Deployment  string            `json:"deployment"`
+			Lifespan    int               `json:"lifespan"`
 		})
 		if err := c.Bind(req); err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
@@ -640,7 +597,7 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 
 		if chal, err := s.app.GetRawChallengeByName(req.Name); err == nil {
 			// UPDATE
-			if err := s.app.UpdateChallenge(chal.ID, &service.Challenge{
+			if err := s.app.UpdateChallenge(chal.ID, &task.TaskDefinition{
 				Name:        req.Name,
 				Flag:        req.Flag,
 				Category:    req.Category,
@@ -651,8 +608,8 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 				Attachments: req.Attachments,
 				Compose:     req.Compose,
 				Deployment:  req.Deployment,
-				IsOpen:      chal.IsOpen,
-			}); err != nil {
+				Lifespan:    req.Lifespan,
+			}, chal.IsOpen); err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}
 			conf, err := s.app.GetCTFConfig()
@@ -664,7 +621,7 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 			return c.JSON(http.StatusOK, fmt.Sprintf(ChallengeUpdateTemplate, req.Name))
 		} else {
 			// ADD
-			if err := s.app.AddChallenge(&service.Challenge{
+			if err := s.app.AddChallenge(&task.TaskDefinition{
 				Name:        req.Name,
 				Flag:        req.Flag,
 				Category:    req.Category,
@@ -674,6 +631,7 @@ func (s *server) newChallengeHandler() echo.HandlerFunc {
 				Tags:        req.Tags,
 				Attachments: req.Attachments,
 				Compose:     req.Compose,
+				Lifespan:    req.Lifespan,
 			}); err != nil {
 				return errorHandle(c, xerrors.Errorf(": %w", err))
 			}

@@ -10,6 +10,7 @@ import (
 	_ "github.com/mattn/anko/packages"
 	"github.com/mattn/anko/vm"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
+	"github.com/theoremoon/kosenctfx/scoreserver/task"
 	"golang.org/x/xerrors"
 	"gorm.io/gorm"
 )
@@ -38,6 +39,7 @@ type Challenge struct {
 	SolvedBy    []SolvedBy   `json:"solved_by"`
 	Compose     string       `json:"compose"`
 	Deployment  string       `json:"deployment"`
+	RetiresAt   int64        `json:"retires_at"`
 
 	IsOpen   bool `json:"is_open"`
 	IsSurvey bool `json:"is_survey"`
@@ -52,10 +54,10 @@ type ChallengeApp interface {
 	ListOpenedRawChallenges() ([]*model.Challenge, error)
 	ListAllRawChallenges() ([]*model.Challenge, error)
 
-	AddChallenge(c *Challenge) error
+	AddChallenge(c *task.TaskDefinition) error
+	UpdateChallenge(challengeID uint32, c *task.TaskDefinition, isOpen bool) error
 	OpenChallenge(challengeID uint32) error
 	CloseChallenge(challengeID uint32) error
-	UpdateChallenge(challengeID uint32, c *Challenge) error
 
 	SubmitFlag(team *model.Team, ipaddress string, flag string, ctfRunning bool, submitted_at int64) (*model.Challenge, bool, bool, error)
 }
@@ -369,7 +371,7 @@ func (app *app) deleteAttachmentByChallengeId(challengeId uint32) error {
 	return nil
 }
 
-func (app *app) AddChallenge(c *Challenge) error {
+func (app *app) AddChallenge(c *task.TaskDefinition) error {
 	if err := validateDeployment(c.Deployment); err != nil {
 		return err
 	}
@@ -383,6 +385,7 @@ func (app *app) AddChallenge(c *Challenge) error {
 		IsSurvey:    c.IsSurvey,
 		Compose:     c.Compose,
 		Deployment:  c.Deployment,
+		Lifespan:    c.Lifespan,
 	}
 	if err := app.db.Create(&chal).Error; err != nil {
 		if isDuplicatedError(err) {
@@ -410,7 +413,7 @@ func (app *app) AddChallenge(c *Challenge) error {
 	return nil
 }
 
-func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
+func (app *app) UpdateChallenge(challengeID uint32, c *task.TaskDefinition, isOpen bool) error {
 	if err := validateDeployment(c.Deployment); err != nil {
 		return err
 	}
@@ -422,9 +425,10 @@ func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
 		Description: c.Description,
 		Author:      c.Author,
 		IsSurvey:    c.IsSurvey,
-		IsOpen:      c.IsOpen,
+		IsOpen:      isOpen,
 		Compose:     c.Compose,
 		Deployment:  c.Deployment,
+		Lifespan:    c.Lifespan,
 	}
 	chal.ID = challengeID
 

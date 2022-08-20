@@ -127,7 +127,6 @@ func (s *server) build(isTest bool) *echo.Echo {
 	e.POST("/admin/set-config", s.ctfConfigHandler(), s.adminMiddleware)
 	e.POST("/admin/open-challenge", s.openChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/close-challenge", s.closeChallengeHandler(), s.adminMiddleware)
-	e.POST("/admin/update-challenge", s.updateChallengeHandler(), s.adminMiddleware)
 	e.POST("/admin/new-challenge", s.newChallengeHandler(), s.adminMiddleware)
 	e.GET("/admin/list-challenges", s.listChallengesHandler(), s.adminMiddleware)
 	e.GET("/admin/tasks.md", s.tasksMDHandler(), s.adminMiddleware)
@@ -140,6 +139,9 @@ func (s *server) build(isTest bool) *echo.Echo {
 	e.GET("/admin/registry-conf", s.getRegistryConfHandler(), s.adminMiddleware)
 	e.POST("/admin/set-registry-conf", s.setRegistryConfHandler(), s.adminMiddleware)
 	e.POST("/admin/get-presigned-url", s.getPresignedURLHandler(), s.adminMiddleware)
+
+	e.GET("/admin/list-living-deployments", s.adminListLivingDeploymentsHandler(), s.adminMiddleware)
+	e.POST("/admin/request-deploy", s.adminRequestDeployHandler(), s.adminMiddleware)
 	e.POST("/admin/sql", s.sqlHandler(), s.adminMiddleware)
 
 	// TODO: adminMiddlewareをagentMiddlewareにおきかえる

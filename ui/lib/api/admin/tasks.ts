@@ -22,6 +22,7 @@ export interface Task {
   tags: string[];
   attachments: Attachment[];
   solved_by: SolvedBy[];
+  deployment: string;
 
   is_open: boolean;
   is_survey: boolean;

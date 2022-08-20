@@ -4,13 +4,17 @@ import (
 	"errors"
 	"time"
 
+	"github.com/theoremoon/kosenctfx/scoreserver/deployment"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"gorm.io/gorm/clause"
 )
 
 type AgentApp interface {
+	GetAgentByID(agentID string) (*model.Agent, error)
+	ListAgentsByIDs(ids []string) ([]*model.Agent, error)
 	AgentHeartbeat(agentID, publicIP string) error
 	ListAvailableAgents() ([]*model.Agent, error)
+	RequestDeploy(agent *model.Agent, task *model.Challenge, teamID *uint32) (*model.Deployment, error)
 }
 
 func (app *app) GetAgentByID(agentID string) (*model.Agent, error) {
@@ -19,6 +23,14 @@ func (app *app) GetAgentByID(agentID string) (*model.Agent, error) {
 		return nil, err
 	}
 	return &agent, nil
+}
+
+func (app *app) ListAgentsByIDs(ids []string) ([]*model.Agent, error) {
+	var agents []*model.Agent
+	if err := app.db.Where("agent_id IN ?", ids).Find(&agents).Error; err != nil {
+		return nil, err
+	}
+	return agents, nil
 }
 
 func (app *app) AgentHeartbeat(agentID, publicIP string) error {
@@ -48,4 +60,29 @@ func (app *app) ListAvailableAgents() ([]*model.Agent, error) {
 		return nil, err
 	}
 	return agents, nil
+}
+
+// rate limit とかはこのメソッドでは気にしてない
+func (app *app) RequestDeploy(agent *model.Agent, task *model.Challenge, teamID *uint32) (*model.Deployment, error) {
+	now := time.Now()
+	d := model.Deployment{
+		ChallengeId: task.ID,
+		AgentId:     agent.AgentID,
+		Port:        -1,
+		Status:      deployment.STATUS_WAITING,
+		RequestedAt: now.Unix(),
+		RetiresAt:   0,
+		TeamId:      teamID,
+	}
+	// lifespanがあればretires atを定義する
+	if task.Lifespan > 0 {
+		d.RetiresAt = now.Add(time.Duration(task.Lifespan) * time.Second).Unix()
+	}
+
+	// gorm2ではこのタイミングでIDが埋められる
+	err := app.db.Create(&d).Error
+	if err != nil {
+		return nil, err
+	}
+	return &d, nil
 }

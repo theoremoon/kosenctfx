@@ -55,6 +55,7 @@ type Challenge struct {
 	Author      string `json:"author"`
 	Compose     string `json:"compose"`
 	Deployment  string `json:"deployment"` // "one", "many", "" のいずれか
+	Lifespan    int    `json:"lifespan"`
 
 	IsOpen   bool `json:"is_open"`
 	IsSurvey bool `json:"is_survey"`
@@ -113,12 +114,14 @@ type Agent struct {
 type Deployment struct {
 	Model
 
-	ChallengeId uint32
-	AgentID     uint32
-	Port        int64
-	Status      string
+	ChallengeId uint32  `json:"challenge_id"`
+	AgentId     string  `json:"agent_id"`
+	Port        int64   `json:"port"`
+	Status      string  `gorm:"index" json:"status"` // waiting, deploying, available, retired, error
+	TeamId      *uint32 `json:"team_id"`
 
-	RetiresAt int64
+	RequestedAt int64 `json:"requested_at"`
+	RetiresAt   int64 `gorm:"index:,sort:desc" json:"retires_at"`
 }
 
 type Config struct {

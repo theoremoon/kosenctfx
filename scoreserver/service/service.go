@@ -39,6 +39,7 @@ type App interface {
 	CTFApp
 	SubmissionApp
 	AgentApp
+	DeploymentApp
 	ScoreFeed(chals []*model.Challenge, teams []*model.Team, submissions []*model.Submission) ([]*Challenge, []*ScoreFeedEntry, error)
 	TaskSolves() (map[*model.Challenge]int64, error)
 }

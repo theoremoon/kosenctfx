@@ -74,7 +74,7 @@ func (s *server) adminListLivingDeploymentsHandler() echo.HandlerFunc {
 				Challenge:   chal,
 				Port:        d.Port,
 				Status:      d.Status,
-				RequestedAt: d.RetiresAt,
+				RequestedAt: d.RequestedAt,
 				RetiresAt:   d.RetiresAt,
 			})
 		}
@@ -90,7 +90,7 @@ func (s *server) adminRequestDeployHandler() echo.HandlerFunc {
 			TaskID  uint32 `json:"task_id"`
 			AgentID string `json:"agent_id"`
 		})
-		if err := c.Bind(&req); err != nil {
+		if err := c.Bind(req); err != nil {
 			return c.NoContent(http.StatusBadRequest)
 		}
 

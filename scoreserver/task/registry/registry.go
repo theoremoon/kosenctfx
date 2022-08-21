@@ -1,4 +1,4 @@
-package imagebuilder
+package registry
 
 import (
 	"encoding/base64"

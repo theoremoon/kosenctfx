@@ -140,13 +140,15 @@ func (s *server) build(isTest bool) *echo.Echo {
 	e.POST("/admin/set-registry-conf", s.setRegistryConfHandler(), s.adminMiddleware)
 	e.POST("/admin/get-presigned-url", s.getPresignedURLHandler(), s.adminMiddleware)
 
+	e.GET("/admin/list-agents", s.listAgentsHandler(), s.adminMiddleware)
 	e.GET("/admin/list-living-deployments", s.adminListLivingDeploymentsHandler(), s.adminMiddleware)
 	e.POST("/admin/request-deploy", s.adminRequestDeployHandler(), s.adminMiddleware)
 	e.POST("/admin/sql", s.sqlHandler(), s.adminMiddleware)
 
 	// TODO: adminMiddlewareをagentMiddlewareにおきかえる
 	e.POST("/agent/beat", s.agentBeatHandler(), s.adminMiddleware)
-	e.GET("/admin/list-agents", s.listAgentsHandler(), s.adminMiddleware)
+	e.POST("/agent/start-deployment", s.agentStartDeploymentHandler(), s.adminMiddleware)
+	e.POST("/agent/update-deployment-status", s.agentUpdateDeploymentStatusHandler(), s.adminMiddleware)
 
 	// prometheus exporter
 	e.GET("/admin/metrics", s.metricsHandler(), s.adminMiddleware)

@@ -28,20 +28,22 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/theoremoon/kosenctfx/scoreserver/task"
+	"github.com/theoremoon/kosenctfx/scoreserver/task/registry"
 )
 
 const driverName = "default"
 
 type ImageBuilder interface {
 	BuildAndPush(ctx context.Context, t *task.TaskDefinition, compose *types.Project) error
+	CleanContainerName(compose *types.Project) error
 }
 
 type imageBuilder struct {
 	dockerClient *client.Client
-	registry     *RegistryConfig
+	registry     *registry.RegistryConfig
 }
 
-func New(registry *RegistryConfig) (ImageBuilder, error) {
+func New(registry *registry.RegistryConfig) (ImageBuilder, error) {
 	c, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return nil, err
@@ -51,6 +53,15 @@ func New(registry *RegistryConfig) (ImageBuilder, error) {
 		dockerClient: c,
 		registry:     registry,
 	}, nil
+}
+
+// container nameを指定されていると別々に起動できなくて都合が悪い
+// docker buildとかするとcontainer_nameを勝手に埋められてしまうので上書きする
+func (b *imageBuilder) CleanContainerName(compose *types.Project) error {
+	for i, _ := range compose.AllServices() {
+		compose.Services[i].ContainerName = ""
+	}
+	return nil
 }
 
 /// build docker images by docker-compose and push it into container registery

@@ -25,7 +25,7 @@ import (
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 	"github.com/theoremoon/kosenctfx/scoreserver/task"
-	"github.com/theoremoon/kosenctfx/scoreserver/task/imagebuilder"
+	"github.com/theoremoon/kosenctfx/scoreserver/task/registry"
 	"github.com/theoremoon/kosenctfx/scoreserver/util"
 )
 
@@ -913,7 +913,7 @@ func (s *server) setRegistryConfHandler() echo.HandlerFunc {
 			return errorHandle(c, err)
 		}
 
-		err := s.app.SetRegistryConfig(&imagebuilder.RegistryConfig{
+		err := s.app.SetRegistryConfig(&registry.RegistryConfig{
 			URL:      req.URL,
 			Username: req.User,
 			Password: req.Password,

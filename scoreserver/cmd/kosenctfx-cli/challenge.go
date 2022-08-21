@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/theoremoon/kosenctfx/scoreserver/task"
 	"github.com/theoremoon/kosenctfx/scoreserver/task/imagebuilder"
+	"github.com/theoremoon/kosenctfx/scoreserver/task/registry"
 	"gopkg.in/yaml.v2"
 )
 
@@ -52,7 +53,7 @@ func challengeMain(dir string) error {
 		return err
 	}
 
-	builder, err := imagebuilder.New(&imagebuilder.RegistryConfig{
+	builder, err := imagebuilder.New(&registry.RegistryConfig{
 		URL:      registryConf.URL,
 		Username: registryConf.Username,
 		Password: registryConf.Password,
@@ -108,6 +109,10 @@ func uploadTask(ctx context.Context, builder imagebuilder.ImageBuilder, dir stri
 		// docker build
 		// このタイミングでconfigが書き換わってる（！）
 		err = builder.BuildAndPush(ctx, taskDef, config)
+		if err != nil {
+			return err
+		}
+		err = builder.CleanContainerName(config)
 		if err != nil {
 			return err
 		}

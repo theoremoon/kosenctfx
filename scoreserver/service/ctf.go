@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
-	"github.com/theoremoon/kosenctfx/scoreserver/task/imagebuilder"
+	"github.com/theoremoon/kosenctfx/scoreserver/task/registry"
 	"golang.org/x/xerrors"
 	"gorm.io/gorm"
 )
@@ -21,7 +21,8 @@ const (
 type CTFApp interface {
 	GetCTFConfig() (*model.Config, error)
 	SetCTFConfig(config *model.Config) error
-	SetRegistryConfig(*imagebuilder.RegistryConfig) error
+	SetRegistryConfig(*registry.RegistryConfig) error
+	GetRegistryConfig() (*registry.RegistryConfig, error)
 }
 
 func CalcCTFStatus(conf *model.Config) CTFStatus {
@@ -74,13 +75,12 @@ func (app *app) GetCTFConfig() (*model.Config, error) {
 	return &conf, nil
 }
 
-func (app *app) SetRegistryConfig(registry *imagebuilder.RegistryConfig) error {
+// registryConfigが正しいかどうかはこのメソッドの責務の範囲外
+func (app *app) SetRegistryConfig(registry *registry.RegistryConfig) error {
 	conf, err := app.GetCTFConfig()
 	if err != nil {
 		return err
 	}
-
-	// 認証情報が正しいかのチェックをここでいれる
 
 	conf.RegistryURL = registry.URL
 	conf.RegistryUser = registry.Username
@@ -91,4 +91,19 @@ func (app *app) SetRegistryConfig(registry *imagebuilder.RegistryConfig) error {
 		return err
 	}
 	return nil
+}
+
+func (app *app) GetRegistryConfig() (*registry.RegistryConfig, error) {
+	conf, err := app.GetCTFConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	reg := registry.RegistryConfig{
+		URL:      conf.RegistryURL,
+		Username: conf.RegistryUser,
+		Password: conf.RegistryPassword,
+	}
+
+	return &reg, nil
 }

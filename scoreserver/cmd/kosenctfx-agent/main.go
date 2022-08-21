@@ -21,6 +21,11 @@ func main() {
 			&cli.StringFlag{
 				Name: "api-key",
 			},
+			&cli.StringFlag{
+				Name:    "dir",
+				Usage:   "working directory",
+				Aliases: []string{"d"},
+			},
 		},
 		Action: func(c *cli.Context) error {
 			u, err := url.Parse(c.String("url"))
@@ -35,7 +40,7 @@ func main() {
 			// 	return nil
 			// }
 
-			mainLoop(client)
+			mainLoop(client, c.String("dir"))
 			return nil
 		},
 	}

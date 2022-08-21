@@ -39,6 +39,7 @@ func (c *Client) NewChallenge(ctx context.Context, taskdef *task.TaskDefinition)
 		"attachments": taskdef.Attachments,
 		"compose":     taskdef.Compose,
 		"deployment":  taskdef.Deployment,
+		"lifespan":    taskdef.Lifespan,
 	})
 	if err != nil {
 		return err

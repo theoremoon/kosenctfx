@@ -4,11 +4,11 @@ import (
 	"os"
 
 	yaml "github.com/goccy/go-yaml"
-	"github.com/theoremoon/kosenctfx/scoreserver/task/imagebuilder"
+	"github.com/theoremoon/kosenctfx/scoreserver/task/registry"
 )
 
 type ConfigDefinition struct {
-	Registry imagebuilder.RegistryConfig `yaml:"registry"`
+	Registry registry.RegistryConfig `yaml:"registry"`
 }
 
 func LoadConfigFile(path string) (*ConfigDefinition, error) {

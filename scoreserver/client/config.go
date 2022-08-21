@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	"github.com/theoremoon/kosenctfx/scoreserver/task/imagebuilder"
+	"github.com/theoremoon/kosenctfx/scoreserver/task/registry"
 )
 
 type GetRegistryConfResult struct {
@@ -26,7 +26,7 @@ func (c *Client) GetRegistryConf(ctx context.Context) (*GetRegistryConfResult, e
 	return &result, nil
 }
 
-func (c *Client) SetRegistryConf(ctx context.Context, registry *imagebuilder.RegistryConfig) error {
+func (c *Client) SetRegistryConf(ctx context.Context, registry *registry.RegistryConfig) error {
 	res, err := c.Post(ctx, "/admin/set-registry-conf", map[string]interface{}{
 		"url":      registry.URL,
 		"user":     registry.Username,

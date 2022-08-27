@@ -38,19 +38,22 @@ const App = ({ Component, pageProps }: AppPropsWithLayout) => {
     ctf.is_open && (ctf.is_over || (ctf.is_running && account));
 
   const leftMenuItems = [
-    { item: { href: "/tasks", innerText: "TASKS" }, available: canShowTasks },
-    { item: { href: "/ranking", innerText: "RANKING" }, available: true },
+    { item: { href: "/tasks", innerText: "Tasks" }, available: canShowTasks },
+    { item: { href: "/ranking", innerText: "Ranking" }, available: true },
   ].flatMap((x) => (x.available ? [x.item] : []));
 
   const rightMenuItems = [
     {
-      item: { href: "/admin", innerText: "ADMIN" },
+      item: { href: "/admin", innerText: "Admin" },
       available: account && account.is_admin,
     },
-    { item: { href: "/profile", innerText: "PROFILE" }, available: account },
-    { item: { href: "/login", innerText: "LOGIN" }, available: !account },
-    { item: { href: "/register", innerText: "REGISTER" }, available: !account },
-    { item: { href: "/logout", innerText: "LOGOUT" }, available: account },
+    {
+      item: { href: "/profile", innerText: account?.teamname || "" },
+      available: account,
+    },
+    { item: { href: "/login", innerText: "Login" }, available: !account },
+    { item: { href: "/register", innerText: "Register" }, available: !account },
+    { item: { href: "/logout", innerText: "Logout" }, available: account },
   ].flatMap((x) => (x.available && !isStaticMode ? [x.item] : []));
 
   if (Component.getLayout !== undefined) {

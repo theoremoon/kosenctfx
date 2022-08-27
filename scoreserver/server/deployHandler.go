@@ -2,11 +2,153 @@ package server
 
 import (
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/theoremoon/kosenctfx/scoreserver/deployment"
 	"github.com/theoremoon/kosenctfx/scoreserver/model"
 	"github.com/theoremoon/kosenctfx/scoreserver/service"
 )
+
+const (
+	SIMULTANEOUS_DEPLOYMENT_LIMIT = 4
+)
+
+func (s *server) getDeploymentHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		lc := c.(*loginContext)
+		taskID, err := strconv.ParseUint(c.Param("task_id"), 10, 32)
+		if err != nil {
+			return errorHandle(c, err)
+		}
+		hostAndPort, err := s.app.GetHostAndPortByTeamAndTaskID(lc.Team.ID, uint32(taskID))
+		if err != nil {
+			return errorHandle(c, err)
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"host": hostAndPort.Host,
+			"port": hostAndPort.Port,
+		})
+	}
+}
+
+func (s *server) requestDeployHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		lc := c.(*loginContext)
+		req := new(struct {
+			TaskID uint32 `json:"task_id"`
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, err)
+		}
+
+		// check the task is opened and deployable
+		chal, err := s.app.GetRawChallengeByID(req.TaskID)
+		if err != nil || !chal.IsOpen {
+			return errorMessageHandle(c, http.StatusBadRequest, NoSuchTaskMessage)
+		}
+		if chal.Deployment != deployment.TYPE_EACH {
+			// message さぼってる
+			return errorMessageHandle(c, http.StatusBadRequest, InvalidRequestMessage)
+		}
+
+		deployments, err := s.app.ListLivingDeploymentsByTeamID(lc.Team.ID)
+		if err != nil {
+			return errorHandle(c, err)
+		}
+		// rate limit check
+		if len(deployments) >= SIMULTANEOUS_DEPLOYMENT_LIMIT {
+			return errorMessageHandle(c, http.StatusTooManyRequests, TooManyDeploymentsMessage)
+		}
+		now := time.Now()
+		for _, d := range deployments {
+			if now.Sub(time.Unix(d.UpdatedAt, 0)) < 1*time.Second {
+				return errorMessageHandle(c, http.StatusTooManyRequests, TooFrequentlyDeploymentMessage)
+			}
+		}
+
+		// duplicate check（同じタスクを2個デプロイさせない）
+		for _, d := range deployments {
+			if d.ChallengeId == chal.ID {
+				// message さぼってる
+				return errorMessageHandle(c, http.StatusBadRequest, InvalidRequestMessage)
+			}
+		}
+
+		// なんかエージェントに割り当てるアルゴリズム
+		agent, err := s.app.GetAgentForRequestDeployment()
+		if err != nil {
+			return errorHandle(c, err)
+		}
+
+		// do request
+		tid := lc.Team.ID
+		_, err = s.app.RequestDeploy(agent, chal, &tid)
+		if err != nil {
+			return errorHandle(c, err)
+		}
+
+		// message ID振るのサボってる
+		return messageHandle(c, "Your request is queued. Please wait...")
+	}
+}
+
+func (s *server) requestRetireHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		lc := c.(*loginContext)
+		req := new(struct {
+			TaskID uint32 `json:"task_id"`
+		})
+		if err := c.Bind(req); err != nil {
+			return errorHandle(c, err)
+		}
+
+		// check the task is opened and deployable
+		chal, err := s.app.GetRawChallengeByID(req.TaskID)
+		if err != nil || !chal.IsOpen {
+			return errorMessageHandle(c, http.StatusBadRequest, NoSuchTaskMessage)
+		}
+		if chal.Deployment != deployment.TYPE_EACH {
+			// message さぼってる
+			return errorMessageHandle(c, http.StatusBadRequest, InvalidRequestMessage)
+		}
+
+		deployments, err := s.app.ListLivingDeploymentsByTeamID(lc.Team.ID)
+		if err != nil {
+			return errorHandle(c, err)
+		}
+		// rate limit check
+		now := time.Now()
+		for _, d := range deployments {
+			if now.Sub(time.Unix(d.UpdatedAt, 0)) < 1*time.Second {
+				return errorMessageHandle(c, http.StatusTooManyRequests, TooFrequentlyDeploymentMessage)
+			}
+		}
+
+		// タスクが存在することを確認したらretire requestを詰む
+		var targetDeployment *model.Deployment = nil
+		for _, d := range deployments {
+			if d.ChallengeId == chal.ID {
+				targetDeployment = d
+				break
+			}
+		}
+		if targetDeployment == nil {
+			return errorMessageHandle(c, http.StatusBadRequest, InvalidRequestMessage)
+		}
+
+		// do request
+		err = s.app.RequestRetire(targetDeployment)
+		if err != nil {
+			return errorHandle(c, err)
+		}
+
+		// message ID振るのサボってる
+		return messageHandle(c, "Your request is queued. Please wait...")
+	}
+}
 
 type livingDeployment struct {
 	ID uint32 `json:"id"`

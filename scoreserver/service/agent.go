@@ -11,15 +11,36 @@ import (
 
 type AgentApp interface {
 	GetAgentByID(agentID string) (*model.Agent, error)
+	GetAgentForRequestDeployment() (*model.Agent, error)
 	ListAgentsByIDs(ids []string) ([]*model.Agent, error)
 	AgentHeartbeat(agentID, publicIP string) error
 	ListAvailableAgents() ([]*model.Agent, error)
-	RequestDeploy(agent *model.Agent, task *model.Challenge, teamID *uint32) (*model.Deployment, error)
 }
+
+// この時間以内に最終アクセスがあったエージェントは活きているとみなす
+const (
+	LIVING_THRESHOLD = 15 * time.Second
+)
 
 func (app *app) GetAgentByID(agentID string) (*model.Agent, error) {
 	var agent model.Agent
 	if err := app.db.Where("agent_id = ?", agentID).First(&agent).Error; err != nil {
+		return nil, err
+	}
+	return &agent, nil
+}
+
+// このメソッドで引いてきたエージェントにタスクをデプロイすることになる
+// ある程度負荷がばらけるように引いてくる
+func (app *app) GetAgentForRequestDeployment() (*model.Agent, error) {
+	var agent model.Agent
+	// 生きてるエージェントの中で
+	// 一番動いてるタスクが少ないエージェントを引いてくる
+	err := app.db.Joins("JOIN deployments ON deployments.agent_id = agents.agent_id").
+		Where("deployments.status in ? AND agents.last_activity_at >= ?", deployment.LivingStatuses, time.Now().Add(-LIVING_THRESHOLD)).
+		Order("COUNT(deployments) DESC").
+		First(&agent).Error
+	if err != nil {
 		return nil, err
 	}
 	return &agent, nil
@@ -55,34 +76,9 @@ func (app *app) AgentHeartbeat(agentID, publicIP string) error {
 
 func (app *app) ListAvailableAgents() ([]*model.Agent, error) {
 	var agents []*model.Agent
-	t := time.Now().Add(-10 * time.Second).Unix()
+	t := time.Now().Add(-LIVING_THRESHOLD).Unix()
 	if err := app.db.Where("last_activity_at >= ?", t).Find(&agents).Error; err != nil {
 		return nil, err
 	}
 	return agents, nil
-}
-
-// rate limit とかはこのメソッドでは気にしてない
-func (app *app) RequestDeploy(agent *model.Agent, task *model.Challenge, teamID *uint32) (*model.Deployment, error) {
-	now := time.Now()
-	d := model.Deployment{
-		ChallengeId: task.ID,
-		AgentId:     agent.AgentID,
-		Port:        -1,
-		Status:      deployment.STATUS_WAITING,
-		RequestedAt: now.Unix(),
-		RetiresAt:   0,
-		TeamId:      teamID,
-	}
-	// lifespanがあればretires atを定義する
-	if task.Lifespan > 0 {
-		d.RetiresAt = now.Add(time.Duration(task.Lifespan) * time.Second).Unix()
-	}
-
-	// gorm2ではこのタイミングでIDが埋められる
-	err := app.db.Create(&d).Error
-	if err != nil {
-		return nil, err
-	}
-	return &d, nil
 }

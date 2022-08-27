@@ -57,6 +57,9 @@ var (
 	WrongSubmissionAdminMessage         = "`%s` submits a wrong flag: `%s`"
 	WrongSubmissionMessage              = "Wrong flag..."
 	NoSuchTeamMessage                   = "No such team"
+	NoSuchTaskMessage                   = "No such task"
+	TooManyDeploymentsMessage           = "You are rate-limited the number of deployable instances. Please stop any other instance"
+	TooFrequentlyDeploymentMessage      = "You are rate-limited in the frequency of requesting deployment instances. Please try again later"
 )
 
 const (
@@ -121,6 +124,9 @@ func (s *server) build(isTest bool) *echo.Echo {
 	e.GET("/team/:id", s.teamHandler())
 
 	e.POST("/submit", s.submitHandler(), s.loginMiddleware, s.ctfStartedMiddleware)
+	e.GET("/deployment/:id", s.getDeploymentHandler(), s.loginMiddleware, s.ctfStartedMiddleware)
+	e.POST("/request-deploy", s.requestDeployHandler(), s.loginMiddleware, s.ctfStartedMiddleware)
+	e.POST("/request-retire", s.requestRetireHandler(), s.loginMiddleware, s.ctfStartedMiddleware)
 
 	e.GET("/admin/score-emulate", s.scoreEmulateHandler(), s.adminMiddleware)
 	e.GET("/admin/get-config", s.getConfigHandler(), s.adminMiddleware)

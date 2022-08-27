@@ -31,9 +31,14 @@ func (s *server) agentBeatHandler() echo.HandlerFunc {
 		if err != nil {
 			return errorHandle(c, err)
 		}
+		retires, err := s.app.ListRetireRequestForAgent(req.AgentID)
+		if err != nil {
+			return errorHandle(c, err)
+		}
 
 		return c.JSON(http.StatusOK, order.Order{
 			Deployments: deployments,
+			Retires:     retires,
 		})
 	}
 }

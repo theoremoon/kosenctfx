@@ -117,7 +117,7 @@ type Deployment struct {
 	ChallengeId uint32  `json:"challenge_id"`
 	AgentId     string  `json:"agent_id"`
 	Port        int64   `json:"port"`
-	Status      string  `gorm:"index" json:"status"` // waiting, deploying, available, retired, error
+	Status      string  `gorm:"index" json:"status"` // waiting, deploying, available, retire_requesting, retired, error
 	TeamId      *uint32 `json:"team_id"`
 
 	RequestedAt int64 `json:"requested_at"`

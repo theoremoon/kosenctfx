@@ -62,6 +62,18 @@ func mainLoop(client *client.Client, dir string) {
 				}(d)
 			}
 
+			// do retire
+			for _, d := range order.Retires {
+				cancel, exists := deployments[d.ID]
+				if exists {
+					// retire
+					cancel()
+				} else {
+					// make error
+					client.UpdateDeploymentStatus(ctx, d, deployment.STATUS_ERROR)
+				}
+			}
+
 			// 結局ここで今管理しているtaskを管理する必要がありそう
 
 		case <-ctx.Done():

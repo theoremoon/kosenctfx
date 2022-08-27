@@ -4,7 +4,7 @@ import { isStaticMode } from "lib/static";
 import { GetStaticPaths, GetStaticProps } from "next";
 import { useRouter } from "next/router";
 import Loading from "../../components/loading";
-import useAccount, { Account, fetchAccount } from "../../lib/api/account";
+import useAccount from "../../lib/api/account";
 import useTasks, { fetchTasks, Task } from "../../lib/api/tasks";
 import parentpath from "../../lib/parentpath";
 import useMessage from "lib/useMessage";
@@ -32,6 +32,16 @@ const TasksDefault = ({ taskID, tasks: defaultTasks }: taskProps) => {
   if (!tasks || account === undefined) {
     return <Loading />;
   }
+
+  const requestDeploy = async() => {
+    try {
+      const res = await api.post("/request-deploy", {
+      });
+      message(res);
+    } catch (e) {
+      error(e);
+    }
+  };
 
   const onSubmit: SubmitHandler<FlagSubmitParams> = async (values) => {
     try {

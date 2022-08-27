@@ -29,11 +29,16 @@ services:
     ports:
       - "9000:9000"  # minio
 
+
   scoreserver:
-    build:
-      context: scoreserver
-      dockerfile: Dockerfile.dev
+    image: golang
+    working_dir: /go/src/github.com/theoremoon/kosenctfx/scoreserver
+    user: "${UID}:${GID}"
+    volumes:
+      - ./scoreserver:/go/src/github.com/theoremoon/kosenctfx/scoreserver
+    command: "sh -c 'go install github.com/cosmtrek/air@v1.30.0; air'"
     environment:
+      GOCACHE: '/tmp'
       DBDSN: 'kosenctfxuser:kosenctfxpassword@tcp(db:3306)/kosenctfx'
       REDIS: 'redis://redis:6379'
       FRONT: 'http://localhost:8080'
@@ -51,13 +56,9 @@ services:
       BUCKET_NAME: "kosenctfx-challenges"
       BUCKET_INSECURE: "1"
       ADMIN_TOKEN: "admin"
-    command: >
-      reflex -r '\.go$$' -s -- sh -c '/wayt sql -dsn "$$DBDSN" && go run main.go'
-    volumes:
-      - ./scoreserver:/scoreserver
     ports:
       - "5000:5000"  # scoreserver
-  
+
   nginx:
     image: nginx
     volumes:
@@ -71,6 +72,7 @@ services:
   ui:
     image: node
     command: 'sh -c "cd /src; yarn && yarn dev"'
+    user: "${UID}:${GID}"
     environment:
       SSR_API_HOST: "http://nginx:80/api/"
     volumes:
@@ -99,4 +101,3 @@ services:
     volumes:
       - /etc/hosts:/etc/hosts
     command: 'sh /script.sh'
-

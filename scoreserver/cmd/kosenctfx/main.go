@@ -108,18 +108,34 @@ func run() error {
 		srv.SolveLogWebhook = webhook.NewDiscord(conf.SolveLogWebhookURL, 1*time.Second)
 	}
 	if conf.BucketName != "" {
-		b := bucket.NewS3Bucket(
-			conf.BucketName,
-			conf.BucketEndpoint,
-			conf.BucketRegion,
-			conf.BucketAccessKey,
-			conf.BucketSecretKey,
-			conf.InsecureBucket,
-		)
-		if err := b.CreateBucket(); err != nil {
-			return xerrors.Errorf(": %w", err)
+		if conf.BucketEndpoint == "storage.googleapis.com" {
+			b, err := bucket.NewGCPBucket(
+				conf.BucketName,
+				conf.BucketRegion,
+				conf.BucketAccessKey, // project
+				conf.BucketSecretKey,
+			)
+			if err != nil {
+				return err
+			}
+			if err := b.CreateBucket(); err != nil {
+				return err
+			}
+			srv.Bucket = b
+		} else {
+			b := bucket.NewS3Bucket(
+				conf.BucketName,
+				conf.BucketEndpoint,
+				conf.BucketRegion,
+				conf.BucketAccessKey,
+				conf.BucketSecretKey,
+				conf.InsecureBucket,
+			)
+			if err := b.CreateBucket(); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+			srv.Bucket = b
 		}
-		srv.Bucket = b
 	}
 
 	return srv.Start(conf.Addr)

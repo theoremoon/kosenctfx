@@ -117,3 +117,4 @@ func (b *s3Bucket) buildEndpoint() *string {
 func (b *s3Bucket) buildKeyURL(key string) string {
 	return fmt.Sprintf("%s/%s/%s", *b.buildEndpoint(), b.bucketName, key)
 }
+

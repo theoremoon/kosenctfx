@@ -5,6 +5,7 @@ import useAdminTasks from "../../../lib/api/admin/tasks";
 import TaskModalView from "theme/taskmodal";
 import { FlagSubmitParams } from "props/taskmodal";
 import { useForm } from "react-hook-form";
+import useConfig from "lib/api/admin/config";
 
 const Task = () => {
   const router = useRouter();
@@ -12,6 +13,13 @@ const Task = () => {
   const { register } = useForm<FlagSubmitParams>();
 
   const { data: tasks } = useAdminTasks();
+
+  // admin-check
+  const { data: config, error: configError } = useConfig();
+  if (config === undefined || configError !== undefined) {
+    return <></>;
+  }
+
   if (!tasks) {
     return <Loading />;
   }
@@ -37,6 +45,7 @@ const Task = () => {
         onFlagSubmit={() => {
           // noop
         }}
+        isSolved={false}
       />
     </>
   );

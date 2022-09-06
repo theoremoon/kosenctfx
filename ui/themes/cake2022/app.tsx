@@ -7,6 +7,7 @@ import Link from "next/link";
 import { pink } from "lib/color";
 import Head from "next/head";
 import "react-toastify/dist/ReactToastify.css";
+import styles from "./app.module.scss";
 
 const toastProvider = {
   info: (msg: string) => {
@@ -32,7 +33,10 @@ const App = ({
 }: AppProps) => {
   return (
     <ToastContext.Provider value={toastProvider}>
-      <div style={{ margin: "0 auto", maxWidth: "1920px" }}>
+      <div
+        style={{ margin: "0 auto", maxWidth: "1920px" }}
+        className={styles["contents"]}
+      >
         <header>
           <h1
             style={{
@@ -73,6 +77,7 @@ const App = ({
           marginTop: "50px",
           maxWidth: "1280px",
         }}
+        className={styles["contents"]}
       >
         <Component {...pageProps} />
       </main>
@@ -100,6 +105,32 @@ const AppWrapper = (props: AppProps) => {
         <link
           href="https://fonts.googleapis.com/css2?family=Parisienne&display=swap"
           rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Roboto&display=swap"
+          rel="stylesheet"
+        />
+        <title>CakeCTF 2022</title>
+        <link rel="shortcut icon" href="/favicon-neko.ico" />
+        <meta property="og:url" content="https://2022.cakectf.com/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="CakeCTF 2022" />
+        <meta
+          property="og:description"
+          content="2022-09-03 14:00:00 +09:00 – 2022-09-04 14:00:00 +09:00"
+        />
+        <meta property="og:image" content="https://2022.cakectf.com/neko.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta property="twitter:domain" content="2022.cakectf.com" />
+        <meta property="twitter:url" content="https://2022.cakectf.com/" />
+        <meta name="twitter:title" content="CakeCTF 2022" />
+        <meta
+          name="twitter:description"
+          content="2022-09-03 14:00:00 +09:00 – 2022-09-04 14:00:00 +09:00"
+        />
+        <meta
+          name="twitter:image"
+          content="https://2022.cakectf.com/neko.png"
         />
       </Head>
       <App {...props} />

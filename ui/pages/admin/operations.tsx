@@ -1,5 +1,6 @@
 import AdminLayout from "components/adminLayout";
 import { api } from "lib/api";
+import useConfig from "lib/api/admin/config";
 import useScoreboard from "lib/api/scoreboard";
 import useTasks from "lib/api/tasks";
 import useMessage from "lib/useMessage";
@@ -44,6 +45,11 @@ const AdminOperations = () => {
       }
     }, 1000);
   };
+
+  const { data: config, error: configError } = useConfig();
+  if (config === undefined || configError !== undefined) {
+    return <></>;
+  }
 
   return (
     <>

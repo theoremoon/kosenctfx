@@ -19,18 +19,42 @@ const Index = ({ ctf, status }: IndexProps) => {
 
       <h2>[ About ]</h2>
       <section>
-        Welcome to CakeCTF 2021! CakeCTF 2021 is a Jeopardy-style Capture The
-        Flag competition hosted by yoshiking, theoremoon, and ptr-yudai. There
-        will be some challenges of pwn, web, rev, crypto, and so on. These
-        challenges range in difficulty from beginner to intermediate level.
+        Welcome to CakeCTF 2022! CakeCTF 2022 is a Jeopardy-style Capture The
+        Flag competition hosted by{" "}
+        <a
+          href="https://twitter.com/y05h1k1ng"
+          target="_blank"
+          rel="noreferrer"
+        >
+          yoshiking
+        </a>
+        ,{" "}
+        <a
+          href="https://twitter.com/theoremoon"
+          target="_blank"
+          rel="noreferrer"
+        >
+          theoremoon
+        </a>
+        , and{" "}
+        <a href="https://twitter.com/ptrYudai" target="_blank" rel="noreferrer">
+          ptr-yudai
+        </a>
+        . There will be challenges in categories such as pwn, web, rev, crypto,
+        etc. The challenges are of a difficulty level targeting beginner to
+        intermediate players.
+        <br />
+        This year we have reduced the difficulty level and the number of
+        challenges a little more than in previous years. Advanced players are
+        encouraged to participate solo or in teams with a couple of people.
       </section>
 
       <h2>[ Task Release Schedule ]</h2>
       <section>
         <p>
-          We announce the schedule of the challenge release in{" "}
+          We will announce the schedule of the challenge release in{" "}
           <a
-            href="https://discord.gg/mKbt7vje"
+            href="https://discord.gg/mP7TqJastk"
             target="_blank"
             rel="noreferrer"
           >
@@ -39,54 +63,71 @@ const Index = ({ ctf, status }: IndexProps) => {
           .
         </p>
         <ul>
-          <li>1st wave: 2021-08-28 08:00:00 JST (UTC+9)</li>
-          <li>2nd wave: 2021-08-28 14:00:00 JST (UTC+9)</li>
-          <li>3rd wave: 2021-08-28 20:00:00 JST (UTC+9)</li>
+          <li>1st wave: 2022-09-03 14:00:00 JST (UTC+9)</li>
+          <li>2nd wave: 2022-09-03 16:00:00 JST (UTC+9)</li>
+          <li>Survey: 2022-09-04 02:00:00 JST (UTC+9)</li>
         </ul>
       </section>
 
       <h2>[ Prize ]</h2>
       <section>
         <p>
-          The following teams can get some small gifts this year.
+          Small gifts will be awarded to teams that
           <ul>
+            <li>Solved a specified problem within the second place</li>
             <li>
-              Top 3 prize-eligible teams on the scoreboard (Swag &times; 4)
-            </li>
-            <li>
-              Prize-eligible teams that got first-blood on some specific
-              challenges (Swag &times; 1)
+              Can receive prizes in Japan (Select Japan as your team country to
+              be eligible)
             </li>
           </ul>
-          4 challenges from each main category (crypto, pwn, web, rev) will be
-          subject to the first-blood prize. We&#39;ll announce which challenges
-          you can get the first-blood prize in{" "}
-          <a
-            href="https://discord.gg/mKbt7vje"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Discord
-          </a>{" "}
-          before the CTF starts.
+          <b>One set of prizes</b> will be sent per team. A total five
+          challenges, one in each of the five categories (crypto, pwn, web, rev,
+          cheat) will be subject to the first/second-blood prizes.
+          <b>
+            We will announce which challenges are eligible to the
+            first/second-blood prizes in{" "}
+            <a
+              href="https://discord.gg/mP7TqJastk"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Discord
+            </a>{" "}
+          </b>{" "}
+          before the CTF starts. All of them will be{" "}
+          <b>released in the 2nd wave</b>. (2022-09-03 16:00:00 UTC+9)
           <br />
-          As we cannot send the prize abroad, at least one of your team members
-          needs to live in Japan to be eligible.
+          We may increase the number of prize slots according to the number of sponsors. <br />
+          We cannot send the prize abroad. Please understand at least one of
+          your team members needs to reside in Japan to be eligible, as
+          mentioned above.
         </p>
         <p>
-          今年はささやかな賞品を用意しています。以下のチームが対象です。
+          以下のチームにはささやかな賞品を用意しています。
           <ul>
-            <li>(賞品を受け取れる)上位3チーム (Prizeセット &times; 4)</li>
+            <li>特定の問題を2位以内に解いた</li>
             <li>
-              特定の問題を最初に解いた(賞品を受け取れる)チーム (First-Blood
-              Prizeセット &times; 1)
+              日本国内で賞品を受け取れる（チームの国をJapanに設定してください）
             </li>
           </ul>
-          メインカテゴリ（crypto, pwn, web, rev）の4つの問題がFirst-Blood
-          Prizeの対象になります。 どの問題がFirst-Blood
-          Prizeの対象かは、CTFが始まる前にDiscord上で連絡します。
+          5つのカテゴリ（crypto, pwn, web, rev,
+          cheat）の各1問、合計5問がfirst/second-blood賞品の対象です。賞品はチームの人数によらず1問につき1セットです。
+          <b>
+            どの問題がfirst/second-blood賞品の対象になるかは、{" "}
+            <a
+              href="https://discord.gg/mP7TqJastk"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Discord
+            </a>{" "}
+            でCTF開始前に公表
+          </b>
+          します。 これらの問題は<b>2nd waveで公開</b>
+          される予定です。（2022-09-03 16:00:00 UTC+9）
           <br />
-          海外への賞品発送には対応していないので、賞品を受け取るにはチームメンバーの少なくとも1人が日本に居住している必要があります。
+          スポンサーの数に応じて、賞品の枠は増える可能性があります。<br />
+          海外への賞品発送には対応していません。前述した通り、賞品を受け取るにはチームメンバーの少なくとも1人が日本国内に居住している必要があります。
         </p>
       </section>
 
@@ -97,12 +138,26 @@ const Index = ({ ctf, status }: IndexProps) => {
           support in organizing this event!
         </p>
         <ul>
+          <li>atpons</li>
+          <li>xrekkusu</li>
+          <li>udon</li>
+          <li>Edwow Math</li>
           <li>3socha</li>
           <li>kusano_k</li>
-          <li>rkm0959</li>
-          <li>prof_siba</li>
-          <li>匿名希望</li>
+          <li>joseph</li>
+          <li>y011d4</li>
         </ul>
+        <p>
+          Also, the infrastructure of this CTF is sponsored by{" "}
+          <a
+            href="https://goo.gle/ctfsponsorship"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Google CTF Sponsorship
+          </a>
+          . Thank you!
+        </p>
       </section>
 
       <h2>[ Contact ]</h2>
@@ -110,11 +165,11 @@ const Index = ({ ctf, status }: IndexProps) => {
         <p>
           Discord:{" "}
           <a
-            href="https://discord.gg/mKbt7vje"
+            href="https://discord.gg/mP7TqJastk"
             target="_blank"
             rel="noreferrer"
           >
-            https://discord.gg/mKbt7vje
+            https://discord.gg/mP7TqJastk
           </a>
         </p>
       </section>
@@ -166,6 +221,10 @@ const Index = ({ ctf, status }: IndexProps) => {
               CakeCTF\{"{"}[\x20-\x7e]+\{"}"}
             </code>{" "}
             unless specified otherwise.
+          </li>
+          <li>
+            You can ask us in Discord if you have any questions.
+            <b>We can't give you hints of the challenges</b>, however.
           </li>
           <li>Most importantly: good luck and have fun!</li>
         </ul>

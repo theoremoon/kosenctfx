@@ -237,8 +237,8 @@ const AdminConfig = ({ config: defaultConfig }: AdminConfigProps) => {
 };
 
 const AdminConfigDefault = () => {
-  const { data: config } = useConfig();
-  if (config === undefined) {
+  const { data: config, error } = useConfig();
+  if (config === undefined || error !== undefined) {
     return <></>;
   }
   return <AdminConfig config={config} />;

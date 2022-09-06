@@ -396,7 +396,7 @@ func (app *app) AddChallenge(c *Challenge) error {
 		_ = app.addChallengeTag(&model.Tag{
 			ChallengeId: chal.ID,
 			Tag:         t,
-		}).Error
+		})
 	}
 
 	for _, a := range c.Attachments {
@@ -458,7 +458,7 @@ func (app *app) UpdateChallenge(challengeID uint32, c *Challenge) error {
 /// 返り値は 解いたchallenge（is_correctがfalseならnil)、 is_correct, is_valid, error
 func (app *app) SubmitFlag(team *model.Team, ipaddress string, flag string, ctfRunning bool, submitted_at int64) (*model.Challenge, bool, bool, error) {
 	chal, err := app.GetChallengeByFlag(flag)
-	if err != nil && !xerrors.As(err, gorm.ErrRecordNotFound) {
+	if err != nil && !xerrors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, false, false, xerrors.Errorf(": %w", err)
 	}
 

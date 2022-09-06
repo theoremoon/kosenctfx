@@ -11,7 +11,7 @@ const Team = ({ team, scorefeed, series }: TeamProps) => {
       name: key,
       ...taskStat,
     })),
-    ["solved_at"],
+    ["time"],
     ["desc"]
   );
   return (

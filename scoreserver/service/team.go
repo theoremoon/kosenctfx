@@ -227,11 +227,11 @@ func (app *app) PasswordReset(token, newpassword string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	if err := app.PasswordUpdate(t, hashPassword(newpassword)); err != nil {
+	if err := app.PasswordUpdate(t, newpassword); err != nil {
 		return err
 	}
 	// revoke *ALL* password reset token
-	if err := app.db.Where("team_id = ?", t.ID).Delete(model.PasswordResetToken{}).Error; err != nil {
+	if err := app.db.Where("team_id = ?", t.ID).Delete(&model.PasswordResetToken{}).Error; err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 

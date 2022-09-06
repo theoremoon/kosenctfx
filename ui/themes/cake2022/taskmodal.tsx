@@ -3,6 +3,7 @@ import Input from "./components/input";
 import Button from "./components/button";
 import styles from "./taskmodal.module.scss";
 import Link from "next/link";
+import { orderBy } from "lodash";
 
 const TaskModal = ({
   task,
@@ -11,6 +12,7 @@ const TaskModal = ({
   onClose,
   isSolved,
 }: TaskModalProps) => {
+  const solvedBy = orderBy(task.solved_by, ["solved_at"], ["asc"]);
   return (
     <>
       <div className={styles["dialog-wrapper"]}>
@@ -52,11 +54,11 @@ const TaskModal = ({
           <div className={styles["dialog-right"]}>
             <div className={styles["dialog-right-inner"]}>
               <div className={styles["dialog-solvenum"]}>
-                {task.solved_by.length} solves
+                {solvedBy.length} solves
               </div>
 
               <div className={styles["dialog-solves"]}>
-                {task.solved_by.map((t) => (
+                {solvedBy.map((t) => (
                   <div className={styles["dialog-solve-team"]} key={t.team_id}>
                     <Link href={"/teams/" + t.team_id}>{t.team_name}</Link>
                   </div>

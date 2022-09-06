@@ -27,7 +27,6 @@ const Profile = ({ register, onSubmit, country, setCountry }: ProfileProps) => {
         ></Input>
       </div>
       <div className="form-item">
-        <label htmlFor="password">password</label>
         <label htmlFor="country">country</label>
         <CountrySelector
           id="country"

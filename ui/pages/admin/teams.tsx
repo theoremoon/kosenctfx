@@ -1,4 +1,5 @@
 import AdminLayout from "components/adminLayout";
+import useConfig from "lib/api/admin/config";
 import useMessage from "lib/useMessage";
 import { GetStaticProps } from "next";
 import React, { useState } from "react";
@@ -69,6 +70,12 @@ const Teams = ({ scoreboard: defaultScoreboard }: AdminTeamsProps) => {
       error(e);
     }
   };
+
+  // admin-check
+  const { data: config, error: configError } = useConfig();
+  if (config === undefined || configError !== undefined) {
+    return <></>;
+  }
 
   return (
     <>

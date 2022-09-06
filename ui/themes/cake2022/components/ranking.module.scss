@@ -32,6 +32,7 @@ $border-style: 2px dashed #42132A;
     white-space: pre;
     position: relative;
     border-right: none;
+    min-width: 1.5em;
     div {
       position: absolute;
       transform-origin: left;

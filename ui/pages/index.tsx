@@ -34,15 +34,16 @@ const useCountdown = (ctf: CTF): string => {
   useEffect(calcProgress, []);
   useInterval(calcProgress, 1000);
 
-  if (!ctf.is_open) {
-    if (now < ctf.start_at) {
-      return `CTF will start in ${countdown}`;
-    }
+  if (ctf.is_open && now < ctf.start_at) {
+    return `CTF will start in ${countdown}`;
+  } else if (!ctf.is_open) {
     return "CTF is closed now";
   } else if (ctf.is_running) {
     return `CTF is now running! ${countdown} remains`;
-  } else {
+  } else if (ctf.is_over) {
     return "CTF is over. Thanks for playing!";
+  } else {
+    return "";
   }
 };
 

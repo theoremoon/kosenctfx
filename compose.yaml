@@ -64,7 +64,7 @@ services:
       - ui
 
   ui:
-    image: node
+    image: node:16
     command: 'sh -c "cd /src; yarn && yarn dev"'
     user: "${UID}:${GID}"
     environment:

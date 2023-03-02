@@ -29,7 +29,7 @@ $ make up
 
 ## License
 
-- TBD
+- Apache Licence 2.0
 
 ## Author
 

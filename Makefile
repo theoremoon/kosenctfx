@@ -21,3 +21,6 @@ test:
 	(cd scoreserver; go mod tidy)
 	env UID=$(UID) GID=$(GID) docker compose -f compose.test.yaml down --remove-orphans
 	env UID=$(UID) GID=$(GID) docker compose -f compose.test.yaml run --rm go-test
+
+build:
+	(cd scoreserver; go build -o ../bin/. ./...)

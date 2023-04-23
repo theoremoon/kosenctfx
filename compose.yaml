@@ -23,6 +23,10 @@ services:
     command: ["server", "/data"]
     ports:
       - "9000:9000"  # minio
+    networks:
+      default:
+        aliases:
+          - minio.localhost
 
   scoreserver:
     image: golang
@@ -30,7 +34,7 @@ services:
     user: "${UID}:${GID}"
     volumes:
       - ./scoreserver:/go/src/github.com/theoremoon/kosenctfx/scoreserver
-    command: "sh -c 'go install github.com/cosmtrek/air@v1.30.0; air'"
+    command: "sh -c 'go install github.com/cosmtrek/air@v1.43.0; air'"
     environment:
       GOCACHE: '/tmp'
       DBDSN: 'kosenctfxuser:kosenctfxpassword@tcp(db:3306)/kosenctfx'
@@ -43,7 +47,7 @@ services:
       ADMIN_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
       SOLVE_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
       TASK_OPEN_WEBHOOK: 'https://discord.com/api/webhooks/XXXXX/XXXXX'
-      BUCKET_ENDPOINT: "minio:9000"
+      BUCKET_ENDPOINT: "minio.localhost:9000"
       BUCKET_REGION: "us-east-1"
       BUCKET_ACCESS_KEY: "minio"
       BUCKET_SECRET_KEY: "minio123"
@@ -88,10 +92,3 @@ services:
       - ./grafana/dashboard.json:/var/lib/grafana//dashboards/dashboard.json
     ports:
       - 3000:3000
-
-  etchosts:
-    build:
-      context: hosts
-    volumes:
-      - /etc/hosts:/etc/hosts
-    command: 'sh /script.sh'

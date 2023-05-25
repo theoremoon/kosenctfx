@@ -22,6 +22,7 @@ type Config struct {
 	BucketAccessKey    string
 	BucketSecretKey    string
 	BucketName         string
+	BucketType         string
 	InsecureBucket     bool
 	AdminToken         string
 }
@@ -32,6 +33,14 @@ func getEnv(name string) (string, error) {
 		return "", fmt.Errorf("Environmental vairable '%s' is required", name)
 	}
 	return val, nil
+}
+
+func getEnvWithDefault(name, dvalue string) string {
+	val := os.Getenv(name)
+	if val == "" {
+		return dvalue
+	}
+	return val
 }
 
 func Load() (*Config, error) {
@@ -77,11 +86,26 @@ func Load() (*Config, error) {
 	solveLogWebhookURL, _ := getEnv("SOLVE_WEBHOOK")
 	taskOpenWebhookURL, _ := getEnv("TASK_OPEN_WEBHOOK")
 
-	bucketEndpoint, _ := getEnv("BUCKET_ENDPOINT")
-	bucketRegion, _ := getEnv("BUCKET_REGION")
+	bucketEndpoint, err := getEnv("BUCKET_ENDPOINT")
+	if err != nil {
+		return nil, err
+	}
+	bucketRegion, err := getEnv("BUCKET_REGION")
+	if err != nil {
+		return nil, err
+	}
+	// GCSの場合は、AccessKey, SecretKeyは空。かわりにGOOGLE_APPICATION_CREDENTIALSを設定する
 	bucketAccessKey, _ := getEnv("BUCKET_ACCESS_KEY")
 	bucketSecretKey, _ := getEnv("BUCKET_SECRET_KEY")
-	bucketName, _ := getEnv("BUCKET_NAME")
+	bucketName, err := getEnv("BUCKET_NAME")
+	if err != nil {
+		return nil, err
+	}
+	bucketType := getEnvWithDefault("BUCKET_TYPE", "S3")
+	if bucketType != "S3" && bucketType != "GCS" {
+		return nil, fmt.Errorf("BUCKET_TYPE must be 'S3' or 'GCS'")
+	}
+
 	insecureBucket := false
 	if _, err := getEnv("BUCKET_INSECURE"); err == nil {
 		insecureBucket = true
@@ -105,6 +129,7 @@ func Load() (*Config, error) {
 		BucketAccessKey:    bucketAccessKey,
 		BucketSecretKey:    bucketSecretKey,
 		BucketName:         bucketName,
+		BucketType:         bucketType,
 		InsecureBucket:     insecureBucket,
 		AdminToken:         adminToken,
 	}, nil

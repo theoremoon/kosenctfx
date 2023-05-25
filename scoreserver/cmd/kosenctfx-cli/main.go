@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -36,8 +37,9 @@ type TaskYaml struct {
 
 func uploadFile(url, token, filename string, blob []byte) (string, error) {
 	type Data struct {
-		PresignedURL string `json:"presignedURL"`
-		DownloadURL  string `json:"downloadURL"`
+		PresignedURL string            `json:"presignedURL"`
+		FormData     map[string]string `json:"formData"`
+		DownloadURL  string            `json:"downloadURL"`
 	}
 
 	var data Data
@@ -49,11 +51,27 @@ func uploadFile(url, token, filename string, blob []byte) (string, error) {
 		return "", xerrors.Errorf(": %w", err)
 	}
 
-	_, err = resty.New().R().
-		SetBody(blob).
-		Put(data.PresignedURL)
-	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+	if data.FormData == nil {
+		resp, err := resty.New().R().
+			SetBody(blob).
+			Put(data.PresignedURL)
+		if err != nil {
+			return "", xerrors.Errorf(": %w", err)
+		}
+		if resp.IsError() {
+			log.Printf("Error: %s, %s\n", resp.Status(), string(resp.Body()))
+		}
+	} else {
+		resp, err := resty.New().R().
+			SetFormData(data.FormData).
+			SetFileReader("file", filename, bytes.NewBuffer(blob)).
+			Post(data.PresignedURL)
+		if err != nil {
+			return "", xerrors.Errorf(": %w", err)
+		}
+		if resp.IsError() {
+			log.Printf("Error: %s, %s\n", resp.Status(), string(resp.Body()))
+		}
 	}
 
 	return data.DownloadURL, nil

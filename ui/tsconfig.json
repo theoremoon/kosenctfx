@@ -17,7 +17,7 @@
     "paths": {
       "props/*": ["props/*"],
       "lib/*": ["lib/*"],
-      "theme/*": ["themes/cake2022/*"]
+      "theme/*": ["themes/zer0pts/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],

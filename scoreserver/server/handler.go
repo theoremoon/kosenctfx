@@ -175,8 +175,8 @@ func (s *server) tasksHandler() echo.HandlerFunc {
 	}
 }
 
-/// チームの点数のグラフ出すやつ
-/// 長くなりうる配列パラメータを受け取るためにPOST
+// チームの点数のグラフ出すやつ
+// 長くなりうる配列パラメータを受け取るためにPOST
 func (s *server) seriesHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := new(struct {
@@ -917,13 +917,14 @@ func (s *server) getPresignedURLHandler() echo.HandlerFunc {
 		}
 
 		key := uuid.New().String() + "/" + req.Key
-		presignedURL, downloadURL, err := s.Bucket.GeneratePresignedURL(key)
+		presignedURL, formData, downloadURL, err := s.Bucket.GeneratePresignedURL(key)
 		if err != nil {
 			return errorHandle(c, xerrors.Errorf(": %w", err))
 		}
 
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"presignedURL": presignedURL,
+			"formData":     formData,
 			"downloadURL":  downloadURL,
 		})
 	}
@@ -1146,7 +1147,7 @@ func (s *server) setChallenges(config *model.Config, challenges []*service.Chall
 	return nil
 }
 
-///プレイヤー向けに、openなtaskのリストを返す / redisを読む
+// プレイヤー向けに、openなtaskのリストを返す / redisを読む
 func (s *server) getRawChallenges(config *model.Config) ([]*service.Challenge, error) {
 	key := challengesKey(config.CTFName)
 	challengesStr, err := s.redis.Get(context.Background(), key).Result()
@@ -1170,7 +1171,7 @@ func (s *server) getRawChallenges(config *model.Config) ([]*service.Challenge, e
 	return challenges, nil
 }
 
-/// 非ログインユーザ向けに色々を消したchallengesを渡す
+// 非ログインユーザ向けに色々を消したchallengesを渡す
 func (s *server) getNonsensitiveChallenges(config *model.Config) ([]*service.Challenge, error) {
 	challenges, err := s.getRawChallenges(config)
 	if err != nil {
@@ -1187,7 +1188,7 @@ func (s *server) getNonsensitiveChallenges(config *model.Config) ([]*service.Cha
 	return challenges, nil
 }
 
-/// ユーザ向けにflagを消したchallengesを渡す
+// ユーザ向けにflagを消したchallengesを渡す
 func (s *server) getChallenges(config *model.Config) ([]*service.Challenge, error) {
 	challenges, err := s.getRawChallenges(config)
 	if err != nil {
@@ -1252,7 +1253,7 @@ type TeamScoreSeriesEntry struct {
 
 type TeamScoreSeries []*TeamScoreSeriesEntry
 
-/// チーム毎に時系列ランキングを更新
+// チーム毎に時系列ランキングを更新
 func (s *server) appendScoreSeries(config *model.Config, standings []*service.ScoreFeedEntry, now time.Time) error {
 	for _, team := range standings {
 		series := TeamScoreSeriesEntry{

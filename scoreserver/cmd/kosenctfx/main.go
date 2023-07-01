@@ -107,8 +107,9 @@ func run() error {
 	if conf.SolveLogWebhookURL != "" {
 		srv.SolveLogWebhook = webhook.NewDiscord(conf.SolveLogWebhookURL, 1*time.Second)
 	}
-	if conf.BucketName != "" {
-		b := bucket.NewS3Bucket(
+
+	if conf.BucketType == "S3" {
+		b, err := bucket.NewS3Bucket(
 			conf.BucketName,
 			conf.BucketEndpoint,
 			conf.BucketRegion,
@@ -116,10 +117,26 @@ func run() error {
 			conf.BucketSecretKey,
 			conf.InsecureBucket,
 		)
-		if err := b.CreateBucket(); err != nil {
+		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 		srv.Bucket = b
+	} else if conf.BucketType == "GCS" {
+		b, err := bucket.NewGCSBucket(
+			conf.BucketName,
+			conf.BucketEndpoint,
+			conf.BucketRegion,
+			conf.InsecureBucket,
+		)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		srv.Bucket = b
+	}
+
+	// CreateBucketは既に存在する場合はエラーを返さない
+	if err := srv.Bucket.CreateBucket(); err != nil {
+		return xerrors.Errorf(": %w", err)
 	}
 
 	return srv.Start(conf.Addr)

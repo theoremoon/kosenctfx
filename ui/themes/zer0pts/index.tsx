@@ -19,7 +19,7 @@ const Index = ({ ctf, status }: IndexProps) => {
         <Box maxW="3xs" mx="auto">
           <Image unoptimized={true} src={zer0pts_svg} />
         </Box>
-        <Center fontSize="4xl">zer0pts CTF 2022</Center>
+        <Center fontSize="4xl">zer0pts CTF 2023</Center>
 
         {ctf && (
           <>
@@ -37,7 +37,7 @@ const Index = ({ ctf, status }: IndexProps) => {
         [ About ]
       </Text>
       <Text pl={4}>
-        Welcome to zer0pts CTF 2022! <br />
+        Welcome to zer0pts CTF 2023! <br />
         zer0pts CTF is a jeopardy-style CTF.
         <br />
         We provide many fun challenges of varying difficulty and categories, and

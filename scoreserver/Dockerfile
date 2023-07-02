@@ -5,10 +5,9 @@ RUN wget https://github.com/orisano/wayt/releases/download/v0.3.1/wayt_0.3.1_Lin
 
 WORKDIR /go/src/github.com/theoremoon/kosenctfx/scoreserver
 COPY . .
-RUN go build -o /scoreserver ./cmd/kosenctfx
+RUN go build -o /scoreserver -a -tags netgo -installsuffix netgo -ldflags="-extldflags \"-static\"" ./cmd/kosenctfx 
 
-FROM alpine:3.12
-RUN apk add --update --no-cache ca-certificates tzdata
+FROM debian:12-slim
 COPY --from=builder /wayt /wayt
 COPY --from=builder /scoreserver /scoreserver
 

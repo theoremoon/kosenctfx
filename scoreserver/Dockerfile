@@ -8,8 +8,10 @@ COPY . .
 RUN go build -o /scoreserver -a -tags netgo -installsuffix netgo -ldflags="-extldflags \"-static\"" ./cmd/kosenctfx 
 
 FROM debian:12-slim
+ENV DEBIAN_FRONTEND=noninteractive
 COPY --from=builder /wayt /wayt
 COPY --from=builder /scoreserver /scoreserver
+RUN apt update && apt install -yqq ca-certificates
 
 
 CMD sh -c '/wayt sql -dsn "$DBDSN" && /scoreserver'

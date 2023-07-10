@@ -60,13 +60,13 @@ const Index = ({ ctf, status }: IndexProps) => {
       <Stack pl={4}>
         <UnorderedList>
           <ListItem>
-            <Text fontWeight="bold">&#129351; 1024 USD + 1 year HTB voucher (VIP+) &#215; 4</Text>
+            <Text fontWeight="bold">&#129351; 1000 USD + 1 year HTB voucher (VIP+) &#215; 4</Text>
           </ListItem>
           <ListItem>
-            <Text fontWeight="bold">&#129352; 512 USD + 1 year HTB voucher (VIP) &#215; 4</Text>
+            <Text fontWeight="bold">&#129352; 500 USD + 1 year HTB voucher (VIP) &#215; 4</Text>
           </ListItem>
           <ListItem>
-            <Text fontWeight="bold">&#129353; 256 USD + 6 months HTB voucher (VIP) &#215; 4</Text>
+            <Text fontWeight="bold">&#129353; 250 USD + 6 months HTB voucher (VIP) &#215; 4</Text>
           </ListItem>
         </UnorderedList>
       </Stack>

@@ -40,8 +40,8 @@ const Index = ({ ctf, status }: IndexProps) => {
         Welcome to zer0pts CTF 2023! <br />
         zer0pts CTF is a jeopardy-style CTF.
         <br />
-        We provide many fun challenges of varying difficulty and categories, and
-        none of them require any guessing skills.
+        We offer a diverse range of enjoyable challenges across various difficulty levels and categories,
+        all without the need for any guessing skills. 
       </Text>
 
       <Text fontSize="xl" mt={10}>
@@ -60,19 +60,13 @@ const Index = ({ ctf, status }: IndexProps) => {
       <Stack pl={4}>
         <UnorderedList>
           <ListItem>
-            <Text fontWeight="bold">1st: 800 USD</Text>
+            <Text fontWeight="bold">&#129351; 1024 USD + 1 year HTB voucher (VIP+) &#215; 4</Text>
           </ListItem>
           <ListItem>
-            <Text fontWeight="bold">2nd: 500 USD</Text>
+            <Text fontWeight="bold">&#129352; 512 USD + 1 year HTB voucher (VIP) &#215; 4</Text>
           </ListItem>
           <ListItem>
-            <Text fontWeight="bold">3rd: 300 USD</Text>
-          </ListItem>
-          <ListItem>
-            <Text fontWeight="bold">4th: 200 USD</Text>
-          </ListItem>
-          <ListItem>
-            <Text fontWeight="bold">5th: 200 USD</Text>
+            <Text fontWeight="bold">&#129353; 256 USD + 6 months HTB voucher (VIP) &#215; 4</Text>
           </ListItem>
         </UnorderedList>
       </Stack>
@@ -82,27 +76,26 @@ const Index = ({ ctf, status }: IndexProps) => {
       </Text>
       <Text pl={4}>
         <UnorderedList>
-          <ListItem>No limit on your team size.</ListItem>
+          <ListItem>There is no limit on your team size.</ListItem>
           <ListItem>
-            Anyone can participate in this CTF: no restriction on your age or
-            nationality.
+            Anyone can participate in this CTF: there are no restrictions
+            based on age or nationality.
           </ListItem>
           <ListItem>
-            Your rank on the scoreboard depends on: 1) your total number of
-            points (higher is better); 2) the timestamp of your last solved
-            challenge (erlier is better).
+            Your rank on the scoreboard depends on two factors:
+            1) your total number of points (higher is better);
+            2) the timestamp of your last solved challenge (erlier is better).
           </ListItem>
           <ListItem>
-            The survey challenge is special: it does award you some points, but
-            it doesn't update your "last solved challenge" timestamp. You can't
-            get ahead simply by solving the survey faster.
+            The survey challenge is special: it awards you some points,
+            but it doesn't update your "last solved challenge" timestamp.
+            You can't get ahead simply by solving the survey faster.
           </ListItem>
           <ListItem>
-            You can't brute-force the flags. If you submit 5 incorrect flags in
-            a short succession, the flag submission form will get locked for 5
-            minutes.
+            Brute-forcing the flags is not allowed. If you submit 5 incorrect flags
+            in quick succession, the flag submission form will be locked for 5 minutes.
           </ListItem>
-          <ListItem>One person can participate in only one team.</ListItem>
+          <ListItem>Each person can participate in only one team.</ListItem>
           <ListItem>
             Sharing solutions, hints, or flags with other teams during the
             competition is strictly forbidden.
@@ -110,7 +103,7 @@ const Index = ({ ctf, status }: IndexProps) => {
           <ListItem>You are not allowed to attack the scoreserver.</ListItem>
           <ListItem>You are not allowed to attack other teams.</ListItem>
           <ListItem>
-            You are not allowed to have multiple accounts. If you can't log in
+            Having multiple accounts is not allowed. If you are unable to log in
             to your account, please contact us on Discord.
           </ListItem>
           <ListItem>
@@ -132,6 +125,6 @@ const Index = ({ ctf, status }: IndexProps) => {
         [ Sponsors ]
       </Text>
     </Stack>
-  );
+);
 };
 export default Index;

@@ -33,7 +33,7 @@ const App = ({ Component, pageProps }: AppPropsWithLayout) => {
     // return <Loading />;
   }
 
-  const siteName = "zer0pts CTF 2022";
+  const siteName = "zer0pts CTF 2023";
   const canShowTasks =
     ctf.is_open && (ctf.is_over || (ctf.is_running && account));
 

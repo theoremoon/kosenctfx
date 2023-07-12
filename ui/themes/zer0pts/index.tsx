@@ -1,5 +1,9 @@
 import zer0pts_svg from "public/zer0pts_logo_white.svg";
+import ottersec_png from "public/ottersec.png";
+import htb_svg from "public/htb.svg";
+import google_png from "public/google.png";
 import Image from "next/image";
+import NextLink from "next/link";
 import {
   Stack,
   Box,
@@ -8,6 +12,9 @@ import {
   UnorderedList,
   ListItem,
   Code,
+  OrderedList,
+  Flex,
+  Link,
 } from "@chakra-ui/react";
 import { dateFormat } from "lib/date";
 import { IndexProps } from "props/index";
@@ -58,17 +65,34 @@ const Index = ({ ctf, status }: IndexProps) => {
         [ Prizes ]
       </Text>
       <Stack pl={4}>
-        <UnorderedList>
+        <OrderedList>
           <ListItem>
-            <Text fontWeight="bold">&#129351; 1000 USD + 1 year HTB voucher (VIP+) &#215; 4</Text>
+            <Text>There are prizes for the top-performing teams.</Text>
+            <UnorderedList>
+              <ListItem>
+                <Text fontWeight="bold">
+                  &#129351; 1000 USD + 1 year HTB voucher (VIP+) &#215; 4
+                </Text>
+              </ListItem>
+              <ListItem>
+                <Text fontWeight="bold">
+                  &#129352; 500 USD + 1 year HTB voucher (VIP) &#215; 4
+                </Text>
+              </ListItem>
+              <ListItem>
+                <Text fontWeight="bold">
+                  &#129353; 250 USD + 6 months HTB voucher (VIP) &#215; 4
+                </Text>
+              </ListItem>
+            </UnorderedList>
           </ListItem>
           <ListItem>
-            <Text fontWeight="bold">&#129352; 500 USD + 1 year HTB voucher (VIP) &#215; 4</Text>
+            <Text>
+              The team that secures the first place will qualify for the SECCON
+              CTF 2023 Finals (International division).
+            </Text>
           </ListItem>
-          <ListItem>
-            <Text fontWeight="bold">&#129353; 250 USD + 6 months HTB voucher (VIP) &#215; 4</Text>
-          </ListItem>
-        </UnorderedList>
+        </OrderedList>
       </Stack>
 
       <Text fontSize="xl" mt={4}>
@@ -124,7 +148,52 @@ const Index = ({ ctf, status }: IndexProps) => {
       <Text fontSize="xl" mt={10}>
         [ Sponsors ]
       </Text>
+      <Stack pl={4}>
+        <Text>Generous sponsors:</Text>
+        <Flex justify={"center"} align={"center"}>
+          <Box mx="auto" maxW="xs" w="20vw">
+            <Link as={NextLink} href="https://osec.io/" target="_blank">
+              <Image unoptimized={true} src={ottersec_png} alt="OtterSec" />
+            </Link>
+          </Box>
+
+          <Box mx="auto" maxW="xs" w="20vw">
+            <Link
+              as={NextLink}
+              href="https://www.hackthebox.com/"
+              target="_blank"
+            >
+              <Image unoptimized={true} src={htb_svg} alt="HackTheBox" />
+            </Link>
+          </Box>
+
+          <Box mx="auto" maxW="xs" w="16vw">
+            <Link
+              as={NextLink}
+              href="https://goo.gle/ctfsponsorship"
+              target="_blank"
+            >
+              <Image
+                unoptimized={true}
+                src={google_png}
+                alt="Google CTF Sponsorship"
+              />
+            </Link>
+          </Box>
+        </Flex>
+        <Center>
+          Infra sponsored by{" "}
+          <Link
+            as={NextLink}
+            href="https://goo.gle/ctfsponsorship"
+            about="_blank"
+          >
+            Google CTF Sponsorship
+          </Link>
+          .
+        </Center>
+      </Stack>
     </Stack>
-);
+  );
 };
 export default Index;

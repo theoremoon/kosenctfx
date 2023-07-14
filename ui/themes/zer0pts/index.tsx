@@ -1,6 +1,7 @@
 import zer0pts_svg from "public/zer0pts_logo_white.svg";
 import ottersec_png from "public/ottersec.png";
 import htb_svg from "public/htb.svg";
+import tw_png from "public/tokyowesterns.png";
 import google_png from "public/google.png";
 import Image from "next/image";
 import NextLink from "next/link";
@@ -47,8 +48,9 @@ const Index = ({ ctf, status }: IndexProps) => {
         Welcome to zer0pts CTF 2023! <br />
         zer0pts CTF is a jeopardy-style CTF.
         <br />
-        We offer a diverse range of enjoyable challenges across various difficulty levels and categories,
-        all without the need for any guessing skills. 
+        We offer a diverse range of enjoyable challenges across various
+        difficulty levels and categories, all without the need for any guessing
+        skills.
       </Text>
 
       <Text fontSize="xl" mt={10}>
@@ -102,22 +104,23 @@ const Index = ({ ctf, status }: IndexProps) => {
         <UnorderedList>
           <ListItem>There is no limit on your team size.</ListItem>
           <ListItem>
-            Anyone can participate in this CTF: there are no restrictions
-            based on age or nationality.
+            Anyone can participate in this CTF: there are no restrictions based
+            on age or nationality.
           </ListItem>
           <ListItem>
-            Your rank on the scoreboard depends on two factors:
-            1) your total number of points (higher is better);
-            2) the timestamp of your last solved challenge (erlier is better).
+            Your rank on the scoreboard depends on two factors: 1) your total
+            number of points (higher is better); 2) the timestamp of your last
+            solved challenge (erlier is better).
           </ListItem>
           <ListItem>
-            The survey challenge is special: it awards you some points,
-            but it doesn't update your "last solved challenge" timestamp.
-            You can't get ahead simply by solving the survey faster.
+            The survey challenge is special: it awards you some points, but it
+            doesn't update your "last solved challenge" timestamp. You can't get
+            ahead simply by solving the survey faster.
           </ListItem>
           <ListItem>
-            Brute-forcing the flags is not allowed. If you submit 5 incorrect flags
-            in quick succession, the flag submission form will be locked for 5 minutes.
+            Brute-forcing the flags is not allowed. If you submit 5 incorrect
+            flags in quick succession, the flag submission form will be locked
+            for 5 minutes.
           </ListItem>
           <ListItem>Each person can participate in only one team.</ListItem>
           <ListItem>
@@ -150,33 +153,51 @@ const Index = ({ ctf, status }: IndexProps) => {
       </Text>
       <Stack pl={4}>
         <Text>Generous sponsors:</Text>
-        <Flex justify={"center"} align={"center"}>
-          <Box mx="auto" maxW="xs" w="20vw">
-            <Link as={NextLink} href="https://osec.io/" target="_blank">
-              <Image unoptimized={true} src={ottersec_png} alt="OtterSec" />
+        <Flex justifyContent={"center"} alignItems={"center"} h="4em">
+          <Box flex="1" p={5} pos="relative">
+            <Link target="_blank" href="https://osec.io/">
+              <Image
+                unoptimized={true}
+                src={ottersec_png}
+                alt="OtterSec"
+                layout="fill"
+                objectFit="contain"
+              />
             </Link>
           </Box>
 
-          <Box mx="auto" maxW="xs" w="20vw">
-            <Link
-              as={NextLink}
-              href="https://www.hackthebox.com/"
-              target="_blank"
-            >
-              <Image unoptimized={true} src={htb_svg} alt="HackTheBox" />
+          <Box flex="1" p={5} pos="relative">
+            <Link href="https://www.hackthebox.com/" target="_blank">
+              <Image
+                unoptimized={true}
+                src={htb_svg}
+                alt="HackTheBox"
+                layout="fill"
+                objectFit="contain"
+              />
             </Link>
           </Box>
 
-          <Box mx="auto" maxW="xs" w="16vw">
-            <Link
-              as={NextLink}
-              href="https://goo.gle/ctfsponsorship"
-              target="_blank"
-            >
+          <Box flex="1" p={10} pos="relative">
+            <Link href="https://goo.gle/ctfsponsorship" target="_blank">
               <Image
                 unoptimized={true}
                 src={google_png}
                 alt="Google CTF Sponsorship"
+                layout="fill"
+                objectFit="contain"
+              />
+            </Link>
+          </Box>
+
+          <Box flex="1" p={10} pos="relative">
+            <Link href="https://twitter.com/tokyowesterns" target="_blank">
+              <Image
+                unoptimized={true}
+                src={tw_png}
+                alt="TokyoWesterns"
+                layout="fill"
+                objectFit="contain"
               />
             </Link>
           </Box>

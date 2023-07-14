@@ -7,6 +7,7 @@ import useTasks, { fetchTasks, Task } from "../../lib/api/tasks";
 import { useCallback } from "react";
 import { filterTask, sortTask, isSolved } from "lib/tasks";
 import TasksView from "theme/tasks";
+import { isStaticMode, revalidateInterval } from "lib/static";
 
 type tasksProps = {
   tasks: Task[];
@@ -41,6 +42,7 @@ export const getStaticProps: GetStaticProps<tasksProps> = async () => {
       tasks: tasks,
       ctf: ctf,
     },
+    revalidate: isStaticMode ? false : 10, // override revalidateInterval
   };
 };
 

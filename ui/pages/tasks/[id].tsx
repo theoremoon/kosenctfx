@@ -1,6 +1,6 @@
 import { fetchCTF } from "lib/api/ctf";
 import { AllPageProps } from "lib/pages";
-import { isStaticMode } from "lib/static";
+import { isStaticMode, revalidateInterval } from "lib/static";
 import { GetStaticPaths, GetStaticProps } from "next";
 import { useRouter } from "next/router";
 import Loading from "../../components/loading";
@@ -86,7 +86,8 @@ export const getStaticProps: GetStaticProps<taskProps> = async (context) => {
       tasks: tasks,
       ctf: ctf,
     },
-    revalidate: isStaticMode ? undefined : 30, // revalidate every 1 seconds
+    // staticModeでないときはクライアントのSWRが使われるはずなので、情報の更新間隔はクライアントのSWRのrevalidate間隔に従う
+    revalidate: isStaticMode ? false : revalidateInterval,
   };
 };
 

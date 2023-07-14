@@ -1,6 +1,6 @@
 import { GetStaticPaths, GetStaticProps } from "next";
 import Loading from "components/loading";
-import { isStaticMode } from "lib/static";
+import { isStaticMode, revalidateInterval } from "lib/static";
 import { AllPageProps } from "lib/pages";
 import { fetchCTF } from "lib/api/ctf";
 import { fetchSeries } from "lib/api/series";
@@ -51,7 +51,7 @@ export const getStaticProps: GetStaticProps<teamProps> = async (context) => {
       series: series,
       ctf: ctf,
     },
-    revalidate: isStaticMode ? undefined : 1,
+    revalidate: isStaticMode ? false : revalidateInterval,
   };
 };
 

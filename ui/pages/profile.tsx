@@ -1,4 +1,4 @@
-import { GetStaticProps } from "next";
+import { GetServerSideProps, GetStaticProps } from "next";
 import { ProfileUpdateParams } from "props/profile";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -9,6 +9,7 @@ import useMessage from "../lib/useMessage";
 import ProfileView from "theme/profile";
 import { fetchCTF } from "lib/api/ctf";
 import { AllPageProps } from "lib/pages";
+import { isStaticMode, revalidateInterval } from "lib/static";
 
 const Profile = () => {
   const { message, error } = useMessage();
@@ -60,6 +61,8 @@ export const getStaticProps: GetStaticProps<AllPageProps> = async () => {
     props: {
       ctf,
     },
+    notFound: isStaticMode,
+    revalidate: isStaticMode ? false : revalidateInterval,
   };
 };
 

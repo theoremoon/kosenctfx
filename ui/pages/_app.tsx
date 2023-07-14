@@ -4,7 +4,7 @@ import React, { ReactElement, ReactNode } from "react";
 import { SWRConfig } from "swr";
 import { isStaticMode } from "lib/static";
 import AppView from "theme/app";
-import { CTF } from "lib/api/ctf";
+import useCTF from "lib/api/ctf";
 import useAccount from "lib/api/account";
 import { NextPage } from "next";
 import "theme/styles.css";
@@ -18,7 +18,7 @@ type AppPropsWithLayout = AppProps & {
 };
 
 const App = ({ Component, pageProps }: AppPropsWithLayout) => {
-  let ctf: CTF | undefined = pageProps.ctf;
+  let { data: ctf } = useCTF(pageProps.ctf);
   const { data: account } = useAccount(null);
 
   if (!ctf) {

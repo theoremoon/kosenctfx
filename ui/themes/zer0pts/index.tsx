@@ -95,6 +95,11 @@ const Index = ({ ctf, status }: IndexProps) => {
             </Text>
           </ListItem>
         </OrderedList>
+        <Text>
+          The top 3 teams must submit writeups of some challenges to{" "}
+          <code>zer0ptsctf@gmail.com</code> within 24h after the CTF ends. We
+          will specify which challenges need writeups after the CTF.
+        </Text>
       </Stack>
 
       <Text fontSize="xl" mt={4}>

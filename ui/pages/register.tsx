@@ -1,6 +1,7 @@
 import { api } from "lib/api";
 import { fetchCTF } from "lib/api/ctf";
 import { AllPageProps } from "lib/pages";
+import { isStaticMode, revalidateInterval } from "lib/static";
 import useMessage from "lib/useMessage";
 import { GetStaticProps } from "next";
 import { useRouter } from "next/router";
@@ -44,6 +45,7 @@ export const getStaticProps: GetStaticProps<AllPageProps> = async () => {
     props: {
       ctf: ctf,
     },
+    revalidate: isStaticMode ? false : revalidateInterval,
   };
 };
 

@@ -8,6 +8,7 @@ import { fetchCTF } from "lib/api/ctf";
 import { AllPageProps } from "lib/pages";
 import { GetStaticProps } from "next";
 import { LoginParams } from "props/login";
+import { isStaticMode, revalidateInterval } from "lib/static";
 
 const Login = () => {
   const router = useRouter();
@@ -40,6 +41,7 @@ export const getStaticProps: GetStaticProps<AllPageProps> = async () => {
     props: {
       ctf: ctf,
     },
+    revalidate: isStaticMode ? false : revalidateInterval,
   };
 };
 

@@ -2,6 +2,7 @@ import Loading from "components/loading";
 import { api } from "lib/api";
 import { fetchCTF } from "lib/api/ctf";
 import { AllPageProps } from "lib/pages";
+import { isStaticMode, revalidateInterval } from "lib/static";
 import { GetStaticProps } from "next";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
@@ -27,6 +28,7 @@ export const getStaticProps: GetStaticProps<AllPageProps> = async () => {
     props: {
       ctf: ctf,
     },
+    revalidate: isStaticMode ? false : revalidateInterval,
   };
 };
 

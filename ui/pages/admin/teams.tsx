@@ -1,5 +1,6 @@
 import AdminLayout from "components/adminLayout";
 import useConfig from "lib/api/admin/config";
+import { isStaticMode, revalidateInterval } from "lib/static";
 import useMessage from "lib/useMessage";
 import { GetStaticProps } from "next";
 import React, { useState } from "react";
@@ -197,6 +198,7 @@ export const getStaticProps: GetStaticProps<AdminTeamsProps> = async () => {
     props: {
       scoreboard: scoreboard,
     },
+    revalidate: isStaticMode ? false : revalidateInterval,
   };
 };
 

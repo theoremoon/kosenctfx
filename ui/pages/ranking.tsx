@@ -10,6 +10,7 @@ import useScoreboard, { fetchScoreboard } from "lib/api/scoreboard";
 import useTasks, { fetchTasks, Task } from "lib/api/tasks";
 import RankingView from "theme/ranking";
 import { RankingProps } from "props/ranking";
+import { isStaticMode, revalidateInterval } from "lib/static";
 
 type rankingProps = Omit<RankingProps & AllPageProps, "chartTeams" | "account">;
 const Ranking = ({
@@ -63,6 +64,8 @@ export const getStaticProps: GetStaticProps<rankingProps> = async () => {
       chartSeries: series,
       ctf: ctf,
     },
+    // staticModeでないときはクライアントのSWRが使われるはずなので、情報の更新間隔はクライアントのSWRのrevalidate間隔に従う
+    revalidate: isStaticMode ? false : revalidateInterval,
   };
 };
 

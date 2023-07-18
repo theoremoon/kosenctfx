@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"cloud.google.com/go/iam"
 	"cloud.google.com/go/storage"
 	"golang.org/x/xerrors"
+	"google.golang.org/api/iterator"
 )
 
 const (
@@ -20,6 +20,7 @@ const (
 type credential struct {
 	PrivateKey string `json:"private_key"`
 	Email      string `json:"client_email"`
+	ProjectID  string `json:"project_id"`
 }
 
 type gcsBucket struct {
@@ -61,13 +62,27 @@ func NewGCSBucket(bucketName, endpoint, region string, insecure bool) (Bucket, e
 
 func (b *gcsBucket) CreateBucket() error {
 	bucket := b.client.Bucket(b.bucketName)
+
+	isBucketExist := false
 	_, err := bucket.Objects(context.Background(), nil).Next()
-	if err != nil {
-		log.Printf("%+v", err)
+	if err == nil || err == iterator.Done {
+		isBucketExist = true
+	} else if err == storage.ErrBucketNotExist {
+		// Bucketが存在しないので後で作る
+	} else {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	if !isBucketExist {
+		err = bucket.Create(context.Background(), b.creds.ProjectID, &storage.BucketAttrs{
+			Location: b.region,
+		})
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
 	}
 
 	iamHandler := bucket.IAM()
-
 	policy, err := iamHandler.Policy(context.Background())
 	if err != nil {
 		return xerrors.Errorf(": %w", err)

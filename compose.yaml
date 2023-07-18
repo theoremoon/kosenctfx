@@ -59,6 +59,9 @@ services:
       ADMIN_TOKEN: "admin"
     ports:
       - "5000:5000"  # scoreserver
+    depends_on:
+      - db
+      - redis
 
   nginx:
     image: nginx
@@ -68,7 +71,6 @@ services:
       - "8000:80"    # nginx
     depends_on:
       - scoreserver
-      - ui
 
   ui:
     image: node:16
@@ -78,8 +80,6 @@ services:
       SSR_API_HOST: "http://nginx:80/api/"
     volumes:
       - ./ui:/src
-    depends_on:
-      - scoreserver
 
   prometheus:
     image: prom/prometheus

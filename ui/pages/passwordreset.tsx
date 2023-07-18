@@ -4,11 +4,10 @@ import { useRouter } from "next/router";
 import { ResetParams } from "props/passwordreset";
 import { SubmitHandler, useForm } from "react-hook-form";
 import PasswordResetView from "theme/passwordreset";
-import { isStaticMode } from "lib/static";
 import { fetchCTF } from "lib/api/ctf";
 import { GetStaticProps } from "next";
 import { AllPageProps } from "lib/pages";
-import { fetchAccount } from "lib/api/account";
+import { isStaticMode, revalidateInterval } from "lib/static";
 
 const PasswordReset = () => {
   const { register, handleSubmit } = useForm<ResetParams>();
@@ -33,13 +32,12 @@ const PasswordReset = () => {
 };
 
 export const getStaticProps: GetStaticProps<AllPageProps> = async () => {
-  const account = isStaticMode ? null : await fetchAccount().catch(() => null);
   const ctf = await fetchCTF();
   return {
     props: {
-      account: account,
       ctf: ctf,
     },
+    revalidate: isStaticMode ? false : revalidateInterval,
   };
 };
 

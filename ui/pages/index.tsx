@@ -1,9 +1,10 @@
 import { AllPageProps } from "lib/pages";
-import type { GetStaticProps } from "next";
+import type { GetServerSideProps, GetStaticProps } from "next";
 import useCTF, { CTF, fetchCTF } from "../lib/api/ctf";
 import { useEffect, useState } from "react";
 import { useInterval } from "usehooks-ts";
 import IndexView from "theme/index";
+import { isStaticMode, revalidateInterval } from "lib/static";
 
 const useCountdown = (ctf: CTF): string => {
   const [now, setNow] = useState(0);
@@ -60,6 +61,7 @@ export const getStaticProps: GetStaticProps<AllPageProps> = async () => {
     props: {
       ctf: ctf,
     },
+    revalidate: isStaticMode ? false : revalidateInterval,
   };
 };
 

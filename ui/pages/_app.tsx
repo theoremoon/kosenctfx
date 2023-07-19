@@ -8,12 +8,13 @@ import useCTF from "lib/api/ctf";
 import useAccount from "lib/api/account";
 import { NextPage } from "next";
 import "theme/styles.css";
+import { AllPageProps } from "lib/pages";
 
 export type NextPageWithLayout = NextPage & {
   getLayout?: (page: ReactElement) => ReactNode;
 };
 
-type AppPropsWithLayout = AppProps & {
+type AppPropsWithLayout = AppProps<AllPageProps> & {
   Component: NextPageWithLayout;
 };
 

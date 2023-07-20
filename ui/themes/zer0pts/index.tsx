@@ -31,7 +31,8 @@ const Index = ({ ctf, status }: IndexProps) => {
 
         {ctf && (
           <>
-            <Center>
+            {/* クライアントとサーバでtimezoneが違うのは仕方ないので許容する */}
+            <Center suppressHydrationWarning>
               {dateFormat(ctf.start_at)} - {dateFormat(ctf.end_at)}
             </Center>
             <Center>
@@ -105,7 +106,7 @@ const Index = ({ ctf, status }: IndexProps) => {
       <Text fontSize="xl" mt={4}>
         [ Rules ]
       </Text>
-      <Text pl={4}>
+      <Stack pl={4}>
         <UnorderedList>
           <ListItem>There is no limit on your team size.</ListItem>
           <ListItem>
@@ -151,7 +152,7 @@ const Index = ({ ctf, status }: IndexProps) => {
           </ListItem>
           <ListItem>Most importantly: good luck and have fun!</ListItem>
         </UnorderedList>
-      </Text>
+      </Stack>
 
       <Text fontSize="xl" mt={10}>
         [ Sponsors ]

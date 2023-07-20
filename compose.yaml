@@ -73,7 +73,7 @@ services:
       - scoreserver
 
   ui:
-    image: node:16
+    image: node:18
     command: 'sh -c "cd /src; yarn && yarn dev"'
     user: "${UID}:${GID}"
     environment:

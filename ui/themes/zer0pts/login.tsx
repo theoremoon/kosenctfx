@@ -5,11 +5,10 @@ import {
   Input,
   Button,
   Text,
-  Link,
   VStack,
 } from "@chakra-ui/react";
+import { Link } from "@chakra-ui/next-js";
 import Right from "./components/right";
-import NextLink from "next/link";
 import { LoginProps } from "props/login";
 
 const Login = ({ register, onSubmit }: LoginProps) => {
@@ -39,7 +38,7 @@ const Login = ({ register, onSubmit }: LoginProps) => {
             </Right>
           </FormControl>
           <Text>
-            <Link as={NextLink} href="/passwordreset_request">
+            <Link href="/passwordreset_request">
               Forgot your password? You can reset your password here.
             </Link>
           </Text>

@@ -1,7 +1,6 @@
 import {
   Box,
   Flex,
-  Link,
   Spacer,
   Menu as ChakraMenu,
   MenuButton,
@@ -9,9 +8,9 @@ import {
   MenuItem,
   IconButton,
 } from "@chakra-ui/react";
+import { Link } from "@chakra-ui/next-js";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
-import NextLink from "next/link";
 import { MenuProps } from "props/menu";
 
 type responsiveMenuWrapperProps = Pick<
@@ -36,20 +35,16 @@ const ResponsiveMenuWrapper = ({
       >
         {siteName}
         {leftMenuItems.map((item) => (
-          <NextLink href={item.href} passHref key={item.href}>
-            <Link fontSize="xl" p={1} mr={4}>
-              {item.innerText}
-            </Link>
-          </NextLink>
+          <Link href={item.href} key={item.href} fontSize="xl" p={1} mr={4}>
+            {item.innerText}
+          </Link>
         ))}
         <Spacer />
         <Flex>
           {rightMenuItems.map((item) => (
-            <NextLink href={item.href} passHref key={item.href}>
-              <Link fontSize="xl" p={1} mr={4}>
-                {item.innerText}
-              </Link>
-            </NextLink>
+            <Link href={item.href} key={item.href} fontSize="xl" p={1} mr={4}>
+              {item.innerText}
+            </Link>
           ))}
         </Flex>
       </Flex>
@@ -69,20 +64,28 @@ const ResponsiveMenuWrapper = ({
           <MenuList>
             {leftMenuItems.map((item) => (
               <MenuItem key={item.href}>
-                <NextLink href={item.href} passHref>
-                  <Link fontSize="xl" p={1} mr={4}>
-                    {item.innerText}
-                  </Link>
-                </NextLink>
+                <Link
+                  href={item.href}
+                  key={item.href}
+                  fontSize="xl"
+                  p={1}
+                  mr={4}
+                >
+                  {item.innerText}
+                </Link>
               </MenuItem>
             ))}
             {rightMenuItems.map((item) => (
               <MenuItem key={item.href}>
-                <NextLink href={item.href} passHref>
-                  <Link fontSize="xl" p={1} mr={4}>
-                    {item.innerText}
-                  </Link>
-                </NextLink>
+                <Link
+                  href={item.href}
+                  key={item.href}
+                  fontSize="xl"
+                  p={1}
+                  mr={4}
+                >
+                  {item.innerText}
+                </Link>
               </MenuItem>
             ))}
           </MenuList>
@@ -97,11 +100,9 @@ const Menu = ({ siteName, leftMenuItems, rightMenuItems }: MenuProps) => {
     <Box w="100%" borderBottom="1px solid #4491cf">
       <ResponsiveMenuWrapper
         siteName={
-          <NextLink href="/" passHref>
-            <Link fontSize="xl" p={1} mr={4}>
-              {siteName}
-            </Link>
-          </NextLink>
+          <Link href="/" fontSize="xl" p={1} mr={4}>
+            {siteName}
+          </Link>
         }
         leftMenuItems={leftMenuItems}
         rightMenuItems={rightMenuItems}

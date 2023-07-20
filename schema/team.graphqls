@@ -1,7 +1,0 @@
-type Team {
-  id: ID!
-  name: String!
-  email: String
-  countryCode: String!
-  isAdmin: Boolean!
-}

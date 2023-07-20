@@ -3,8 +3,7 @@ import ottersec_png from "public/ottersec.png";
 import htb_svg from "public/htb.svg";
 import tw_png from "public/tokyowesterns.png";
 import google_png from "public/google.png";
-import Image from "next/image";
-import NextLink from "next/link";
+import Image from "next/legacy/image";
 import {
   Stack,
   Box,
@@ -15,23 +14,24 @@ import {
   Code,
   OrderedList,
   Flex,
-  Link,
 } from "@chakra-ui/react";
 import { dateFormat } from "lib/date";
 import { IndexProps } from "props/index";
+import { Link } from "@chakra-ui/next-js";
 
 const Index = ({ ctf, status }: IndexProps) => {
   return (
     <Stack mt={5}>
       <Box maxW="container.sm" mx="auto">
         <Box maxW="3xs" mx="auto">
-          <Image unoptimized={true} src={zer0pts_svg} />
+          <Image unoptimized={true} src={zer0pts_svg} alt="zer0pts" />
         </Box>
         <Center fontSize="4xl">zer0pts CTF 2023</Center>
 
         {ctf && (
           <>
-            <Center>
+            {/* クライアントとサーバでtimezoneが違うのは仕方ないので許容する */}
+            <Center suppressHydrationWarning>
               {dateFormat(ctf.start_at)} - {dateFormat(ctf.end_at)}
             </Center>
             <Center>
@@ -105,7 +105,7 @@ const Index = ({ ctf, status }: IndexProps) => {
       <Text fontSize="xl" mt={4}>
         [ Rules ]
       </Text>
-      <Text pl={4}>
+      <Stack pl={4}>
         <UnorderedList>
           <ListItem>There is no limit on your team size.</ListItem>
           <ListItem>
@@ -151,7 +151,7 @@ const Index = ({ ctf, status }: IndexProps) => {
           </ListItem>
           <ListItem>Most importantly: good luck and have fun!</ListItem>
         </UnorderedList>
-      </Text>
+      </Stack>
 
       <Text fontSize="xl" mt={10}>
         [ Sponsors ]
@@ -209,11 +209,7 @@ const Index = ({ ctf, status }: IndexProps) => {
         </Flex>
         <Center>
           Infra sponsored by{" "}
-          <Link
-            as={NextLink}
-            href="https://goo.gle/ctfsponsorship"
-            about="_blank"
-          >
+          <Link href="https://goo.gle/ctfsponsorship" about="_blank">
             Google CTF Sponsorship
           </Link>
           .

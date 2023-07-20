@@ -1,4 +1,4 @@
-import { ChakraProps, Text } from "@chakra-ui/react";
+import { Box, ChakraProps } from "@chakra-ui/react";
 import { lookup } from "country-data";
 
 type CountryFlagProps = {
@@ -11,9 +11,9 @@ const CountryFlag = ({ country, ...props }: CountryFlagProps) => {
     return <></>;
   }
   return (
-    <Text {...props} title={c.name}>
+    <Box {...props} title={c.name}>
       {c.emoji}
-    </Text>
+    </Box>
   );
 };
 

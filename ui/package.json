@@ -8,6 +8,7 @@
     "export": "next export"
   },
   "dependencies": {
+    "@chakra-ui/next-js": "^2.1.5",
     "@chakra-ui/react": "^2.8.0",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
@@ -24,12 +25,13 @@
     "dayjs": "^1.10.7",
     "echarts": "^5.2.1",
     "echarts-for-react": "^3.0.1",
+    "eslint-config-next": "^13.4.10",
     "framer-motion": "^10.13.0",
     "imagemin-mozjpeg": "^9.0.0",
     "imagemin-optipng": "^8.0.0",
     "imagemin-svgo": "^9.0.0",
     "lodash": "^4.17.21",
-    "next": "12",
+    "next": "^13.4.10",
     "next-compose-plugins": "^2.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -41,12 +43,12 @@
   },
   "devDependencies": {
     "@types/node": "20.4.2",
-    "@types/react": "^17.0.27",
+    "@types/react": "^18.2.15",
     "@typescript-eslint/eslint-plugin": "^5.13.0",
     "@typescript-eslint/parser": "^5.13.0",
     "eslint": "^8.10.0",
     "eslint-plugin-react": "^7.29.3",
     "prettier": "^2.5.1",
-    "typescript": "^4.4.3"
+    "typescript": "^5.1.6"
   }
 }

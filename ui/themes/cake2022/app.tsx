@@ -48,18 +48,17 @@ const App = ({
               margin: "0.67em 0",
             }}
           >
-            <Link href="/" passHref>
-              <a
-                style={{
-                  display: "block",
-                  borderBottom: `2px solid ${pink}`,
-                  textDecoration: "none",
-                  color: "inherit",
-                  fontFamily: "Parisienne, cursive",
-                }}
-              >
-                CakeCTF
-              </a>
+            <Link
+              href="/"
+              style={{
+                display: "block",
+                borderBottom: `2px solid ${pink}`,
+                textDecoration: "none",
+                color: "inherit",
+                fontFamily: "Parisienne, cursive",
+              }}
+            >
+              CakeCTF
             </Link>
           </h1>
           <Menu

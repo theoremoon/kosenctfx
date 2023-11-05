@@ -1,21 +1,21 @@
-import Link from "next/link";
+import Link, { LinkProps } from "next/link";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { ReactNode } from "react";
 import styles from "./menu.module.scss";
 import cx from "classnames";
 import { MenuProps } from "props/menu";
 
-type AnchorProps = JSX.IntrinsicElements["a"];
+type ActiveLinkProps = LinkProps & { children: ReactNode };
 
-const ActiveLink = (props: AnchorProps) => {
+const ActiveLink = (props: ActiveLinkProps) => {
   const { asPath } = useRouter();
-  let classes = props.className;
-  if (asPath.startsWith(props.href || "")) {
+  let classes = "";
+  if (asPath.startsWith(props.href.toString() || "")) {
     classes = cx(classes, styles.active);
   }
   return (
-    <Link href={props.href || ""}>
-      <a {...props} className={classes}></a>
+    <Link href={props.href || ""} className={classes}>
+      {props.children}
     </Link>
   );
 };

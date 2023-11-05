@@ -26,7 +26,7 @@
         "lib/*"
       ],
       "theme/*": [
-        "themes/zer0pts/*"
+        "themes/cake2022/*"
       ]
     },
     "incremental": true

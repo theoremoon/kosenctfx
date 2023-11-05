@@ -33,13 +33,13 @@ const Login = ({ register, onSubmit }: LoginProps) => {
           <Button type="submit">Login</Button>
         </Right>
       </div>
-      <p>
+      <div>
         <Right>
           <Link href="/passwordreset_request">
             Forgot your password? You can reset your password here.
           </Link>
         </Right>
-      </p>
+      </div>
     </form>
   );
 };

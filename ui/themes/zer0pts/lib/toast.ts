@@ -1,6 +1,6 @@
-import { IToast, useToast } from "@chakra-ui/react";
+import type { Toast } from "@chakra-ui/react";
 
-type ToastF = (option: IToast) => void;
+type ToastF = typeof Toast;
 const toast = (toast: ToastF) => {
   return {
     info: (msg: string) => {

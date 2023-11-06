@@ -14,7 +14,7 @@ const Index = ({ ctf, status }: IndexProps) => {
       </section>
 
       <section style={{ display: "flex", justifyContent: "center" }}>
-        <Image src={nekoImage} unoptimized={true} />
+        <Image src={nekoImage} unoptimized={true} alt="" />
       </section>
 
       <h2>[ About ]</h2>

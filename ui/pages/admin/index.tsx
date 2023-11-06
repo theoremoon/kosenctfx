@@ -77,7 +77,7 @@ const AdminConfig = ({ config: defaultConfig }: AdminConfigProps) => {
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <ErrorMessage errors={errors} name="Error" />
+        <ErrorMessage errors={errors} name="ctf_open" />
 
         <h5 className="mt-4">CTF Config</h5>
         <div className="form-group row">

@@ -63,79 +63,31 @@ const Index = ({ ctf, status }: IndexProps) => {
           .
         </p>
         <ul>
-          {/* TODO */}
-          <li>1st wave: 2022-09-03 14:00:00 JST (UTC+9)</li>
-          <li>2nd wave: 2022-09-03 16:00:00 JST (UTC+9)</li>
-          <li>Survey: 2022-09-04 02:00:00 JST (UTC+9)</li>
+          <li>1st wave: 2023-11-11 14:00:00 JST (UTC+9)</li>
+          <li>2nd wave: 2023-11-11 16:00:00 JST (UTC+9)</li>
+          <li>Survey: 2023-11-12 02:00:00 JST (UTC+9)</li>
         </ul>
       </section>
 
       <h2>[ Prize ]</h2>
       <section>
         <div>
-          {/* TODO */}
-          <li>1st wave: 2022-09-03 14:00:00 JST (UTC+9)</li>
-          <p>Small gifts will be awarded to teams that</p>
-          <ul>
-            <li>Solved a specified problem within the second place</li>
-            <li>
-              Can receive prizes in Japan (Select Japan as your team country to
-              be eligible)
-            </li>
-          </ul>
           <p>
-            <b>One set of prizes</b> will be sent per team. A total five
-            challenges, one in each of the five categories (crypto, pwn, web,
-            rev, cheat) will be subject to the first/second-blood prizes.
-            <b>
-              We will announce which challenges are eligible to the
-              first/second-blood prizes in{" "}
-              <a
-                href="https://discord.gg/mP7TqJastk"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Discord
-              </a>{" "}
-            </b>{" "}
-            before the CTF starts. All of them will be{" "}
-            <b>released in the 2nd wave</b>. (2022-09-03 16:00:00 UTC+9)
-            <br />
-            We may increase the number of prize slots according to the number of
-            sponsors. <br />
+            Small gifts will be awarded to teams that rank in the top 5 who can
+            receive prizes in Japan (by selecting Japan as their team country to
+            be eligible).
+          </p>
+          <p>
             We cannot send the prize abroad. Please understand at least one of
             your team members needs to reside in Japan to be eligible, as
             mentioned above.
           </p>
         </div>
         <div>
-          {/* TODO */}
-          <p>以下のチームにはささやかな賞品を用意しています。</p>
-          <ul>
-            <li>特定の問題を2位以内に解いた</li>
-            <li>
-              日本国内で賞品を受け取れる（チームの国をJapanに設定してください）
-            </li>
-          </ul>
           <p>
-            5つのカテゴリ（crypto, pwn, web, rev,
-            cheat）の各1問、合計5問がfirst/second-blood賞品の対象です。賞品はチームの人数によらず1問につき1セットです。
-            <b>
-              どの問題がfirst/second-blood賞品の対象になるかは、{" "}
-              <a
-                href="https://discord.gg/mP7TqJastk"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Discord
-              </a>{" "}
-              でCTF開始前に公表
-            </b>
-            します。 これらの問題は<b>2nd waveで公開</b>
-            される予定です。（2022-09-03 16:00:00 UTC+9）
-            <br />
-            スポンサーの数に応じて、賞品の枠は増える可能性があります。
-            <br />
+            日本で賞品を受け取れるチームのうち上位5チームにはささやかな賞品が贈られます（チームの国をJapanに設定してください）
+          </p>
+          <p>
             海外への賞品発送には対応していません。前述した通り、賞品を受け取るにはチームメンバーの少なくとも1人が日本国内に居住している必要があります。
           </p>
         </div>
@@ -159,7 +111,6 @@ const Index = ({ ctf, status }: IndexProps) => {
           <li>kusano_k</li>
           <li>kurenaif</li>
         </ul>
-        {/* TODO */}
         <p>
           Also, the infrastructure of this CTF is sponsored by{" "}
           <a

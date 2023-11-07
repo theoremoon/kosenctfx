@@ -109,27 +109,27 @@ const AppWrapper = (props: AppProps) => {
           href="https://fonts.googleapis.com/css2?family=Roboto&display=swap"
           rel="stylesheet"
         />
-        <title>CakeCTF 2022</title>
+        <title>CakeCTF 2023</title>
         <link rel="shortcut icon" href="/favicon-neko.ico" />
-        <meta property="og:url" content="https://2022.cakectf.com/" />
+        <meta property="og:url" content="https://2023.cakectf.com/" />
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="CakeCTF 2022" />
+        <meta property="og:title" content="CakeCTF 2023" />
         <meta
           property="og:description"
-          content="2022-09-03 14:00:00 +09:00 – 2022-09-04 14:00:00 +09:00"
+          content="2023-11-11 14:00:00 +09:00 – 2023-11-12 14:00:00 +09:00"
         />
-        <meta property="og:image" content="https://2022.cakectf.com/neko.png" />
+        <meta property="og:image" content="https://2023.cakectf.com/neko.png" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta property="twitter:domain" content="2022.cakectf.com" />
-        <meta property="twitter:url" content="https://2022.cakectf.com/" />
-        <meta name="twitter:title" content="CakeCTF 2022" />
+        <meta property="twitter:domain" content="2023.cakectf.com" />
+        <meta property="twitter:url" content="https://2023.cakectf.com/" />
+        <meta name="twitter:title" content="CakeCTF 2023" />
         <meta
           name="twitter:description"
-          content="2022-09-03 14:00:00 +09:00 – 2022-09-04 14:00:00 +09:00"
+          content="2023-11-11 14:00:00 +09:00 – 2023-11-12 14:00:00 +09:00"
         />
         <meta
           name="twitter:image"
-          content="https://2022.cakectf.com/neko.png"
+          content="https://2023.cakectf.com/neko.png"
         />
       </Head>
       <App {...props} />

@@ -1,2 +1,2 @@
 export const isStaticMode = false;
-export const revalidateInterval = 60;
+export const revalidateInterval = 5;

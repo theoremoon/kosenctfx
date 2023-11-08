@@ -28,34 +28,42 @@ const AdminLayout = (page: React.ReactNode) => {
           <nav className="navbar navbar-expand-lg bg-light">
             <ul className="navbar-nav">
               <li className="nav-item">
-                <NextLink href="/admin">
-                  <a className="nav-link active" aria-current="page">
-                    Config
-                  </a>
+                <NextLink
+                  href="/admin"
+                  className="nav-link active"
+                  aria-current="page"
+                >
+                  Config
                 </NextLink>
               </li>
 
               <li className="nav-item">
-                <NextLink href="/admin/operations">
-                  <a className="nav-link active" aria-current="page">
-                    operations
-                  </a>
+                <NextLink
+                  href="/admin/operations"
+                  className="nav-link active"
+                  aria-current="page"
+                >
+                  operations
                 </NextLink>
               </li>
 
               <li className="nav-item">
-                <NextLink href="/admin/teams">
-                  <a className="nav-link active" aria-current="page">
-                    teams
-                  </a>
+                <NextLink
+                  href="/admin/teams"
+                  className="nav-link active"
+                  aria-current="page"
+                >
+                  teams
                 </NextLink>
               </li>
 
               <li className="nav-item">
-                <NextLink href="/admin/tasks">
-                  <a className="nav-link active" aria-current="page">
-                    tasks
-                  </a>
+                <NextLink
+                  href="/admin/tasks"
+                  className="nav-link active"
+                  aria-current="page"
+                >
+                  tasks
                 </NextLink>
               </li>
             </ul>

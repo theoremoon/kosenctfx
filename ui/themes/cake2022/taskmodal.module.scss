@@ -88,7 +88,7 @@ $color-dark-brown: #42132A;
 
 .dialog {
   z-index: 2;
-  position: absolute;
+  position: fixed;
   background-color: $color-white;
   width: 75%;
   max-width: 960px;

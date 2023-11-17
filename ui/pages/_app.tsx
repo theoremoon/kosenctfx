@@ -9,6 +9,7 @@ import useAccount from "lib/api/account";
 import { NextPage } from "next";
 import "theme/styles.css";
 import { AllPageProps } from "lib/pages";
+import { MenuItem } from "props/menu";
 
 export type NextPageWithLayout = NextPage & {
   getLayout?: (page: ReactElement) => ReactNode;
@@ -43,19 +44,7 @@ const App = ({ Component, pageProps }: AppPropsWithLayout) => {
     { item: { href: "/ranking", innerText: "Ranking" }, available: true },
   ].flatMap((x) => (x.available ? [x.item] : []));
 
-  const rightMenuItems = [
-    {
-      item: { href: "/admin", innerText: "Admin" },
-      available: account && account.is_admin,
-    },
-    {
-      item: { href: "/profile", innerText: account?.teamname || "" },
-      available: account,
-    },
-    { item: { href: "/login", innerText: "Login" }, available: !account },
-    { item: { href: "/register", innerText: "Register" }, available: !account },
-    { item: { href: "/logout", innerText: "Logout" }, available: account },
-  ].flatMap((x) => (x.available && !isStaticMode ? [x.item] : []));
+  const rightMenuItems: MenuItem[] = [];
 
   if (Component.getLayout !== undefined) {
     return <>{Component.getLayout(<Component />)}</>;

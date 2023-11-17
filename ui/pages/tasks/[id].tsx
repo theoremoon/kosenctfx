@@ -34,6 +34,9 @@ const TasksDefault = ({ taskID, tasks: defaultTasks }: taskProps) => {
   }
 
   const onSubmit: SubmitHandler<FlagSubmitParams> = async (values) => {
+    if (isStaticMode) {
+      return;
+    }
     try {
       const res = await api.post("/submit", {
         flag: values.flag,
